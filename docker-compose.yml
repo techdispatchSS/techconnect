@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: techdispatch-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-techdispatch}
+      POSTGRES_USER: ${POSTGRES_USER:-techdispatch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-techdispatch}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-techdispatch} -d ${POSTGRES_DB:-techdispatch}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  localstack:
+    # Use localstack/localstack-pro instead if LOCALSTACK_AUTH_TOKEN is set below,
+    # since cognito-idp/cognito-identity require a Pro license.
+    image: localstack/localstack:3.8
+    container_name: techdispatch-localstack
+    restart: unless-stopped
+    ports:
+      - "${LOCALSTACK_PORT:-4566}:4566"
+    environment:
+      # cognito-idp/cognito-identity are LocalStack Pro-only; they no-op (501s) on
+      # Community edition unless LOCALSTACK_AUTH_TOKEN is set and the image above
+      # is switched to localstack/localstack-pro.
+      SERVICES: s3,sqs,sns,cognito-idp,cognito-identity,ses
+      DEBUG: ${LOCALSTACK_DEBUG:-0}
+      PERSISTENCE: 1
+      AWS_DEFAULT_REGION: ${AWS_REGION:-us-east-1}
+      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN:-}
+    volumes:
+      - localstack-data:/var/lib/localstack
+      - ./docker/localstack/init:/etc/localstack/init/ready.d
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  postgres-data:
+  localstack-data:

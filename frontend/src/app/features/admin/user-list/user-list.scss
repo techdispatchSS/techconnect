@@ -1,0 +1,113 @@
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  margin: 0;
+  font: var(--mat-sys-headline-small);
+}
+
+.page-subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.filter-search {
+  flex: 1 1 18rem;
+  min-width: 12rem;
+}
+
+.filter-select {
+  flex: 0 1 12rem;
+  min-width: 10rem;
+}
+
+// Keeps a wide table inside its own scroll container so the page itself never scrolls
+// sideways on a 13-inch laptop (PRD §9.4).
+.table-scroll {
+  overflow-x: auto;
+}
+
+.user-table {
+  width: 100%;
+  min-width: 40rem;
+}
+
+.user-row {
+  cursor: pointer;
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+  }
+}
+
+.cell-name {
+  display: block;
+  font-weight: 500;
+}
+
+.cell-email {
+  display: block;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.status-chip {
+  display: inline-block;
+  // 4px / 8px, on the same 0.25rem spacing grid as the rest of the app.
+  padding: 0.25rem 0.5rem;
+  // Full pill, per the documented radius rule: chips are pills, containers are 0.5rem.
+  border-radius: 999px;
+  font: var(--mat-sys-label-small);
+  white-space: nowrap;
+
+  &[data-state='active'] {
+    background: var(--td-status-active-bg);
+    color: var(--td-status-active-fg);
+  }
+
+  &[data-state='pending'] {
+    background: var(--td-status-pending-bg);
+    color: var(--td-status-pending-fg);
+  }
+
+  &[data-state='disabled'] {
+    background: var(--td-status-disabled-bg);
+    color: var(--td-status-disabled-fg);
+  }
+}
+
+.locked-icon {
+  margin-left: 0.35rem;
+  vertical-align: middle;
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+  color: var(--mat-sys-error);
+}
+
+.technician-status {
+  margin-left: 0.5rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-small);
+}
+
+.empty-state {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+}

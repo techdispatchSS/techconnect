@@ -1,0 +1,93 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+.shell-toolbar {
+  position: relative;
+  z-index: 2;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+
+.shell-brand {
+  font: var(--mat-sys-title-medium);
+}
+
+.shell-spacer {
+  flex: 1 1 auto;
+}
+
+.shell-user-name {
+  margin-left: 0.5rem;
+}
+
+.shell-menu-header {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+
+  span {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-body-small);
+  }
+}
+
+.shell-container {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.shell-sidenav {
+  width: 15rem;
+  border-right: 1px solid var(--mat-sys-outline-variant);
+}
+
+.shell-content {
+  // The dashboard must be usable on a 13-inch laptop without horizontal scrolling
+  // (PRD §9.4), so wide content scrolls inside its own container, never the page.
+  overflow-x: hidden;
+
+  // Flex column so the footer sits below a short page's content instead of leaving a gap,
+  // while a tall page still pushes it below the fold exactly as a normal footer would.
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.shell-main {
+  flex: 1 1 auto;
+  padding: 1.5rem 1.5rem 3rem;
+}
+
+.shell-footer {
+  flex: 0 0 auto;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+// Below the tablet breakpoint the fixed sidenav would eat most of the viewport, so hide it
+// and let the toolbar's menu button remain the way in.
+@media (max-width: 767px) {
+  .shell-sidenav {
+    width: 13rem;
+  }
+
+  .shell-main {
+    padding: 1rem 1rem 2.5rem;
+  }
+
+  .shell-footer {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 599px) {
+  .shell-user-name {
+    display: none;
+  }
+}

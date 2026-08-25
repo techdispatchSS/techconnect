@@ -1,0 +1,122 @@
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Audit trail</h1>
+    <p class="page-subtitle">
+      Every change to system access, recorded permanently. These records cannot be edited or deleted
+      by anyone.
+    </p>
+  </div>
+</header>
+
+<section class="filters" aria-label="Filter the audit trail">
+  <mat-form-field class="filter-search">
+    <mat-label>Search by person</mat-label>
+    <input matInput [formControl]="searchControl" autocomplete="off" />
+    <mat-icon matSuffix>search</mat-icon>
+    <mat-hint>Matches the name or email of who acted, or who was affected</mat-hint>
+  </mat-form-field>
+
+  <mat-form-field class="filter-select">
+    <mat-label>Action</mat-label>
+    <mat-select [value]="actionFilter()" (valueChange)="onActionFilter($event)">
+      <mat-option [value]="null">All actions</mat-option>
+      @for (action of actions; track action) {
+        <mat-option [value]="action">{{ actionLabel(action) }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="filter-date">
+    <mat-label>From</mat-label>
+    <input
+      matInput
+      [matDatepicker]="fromPicker"
+      [value]="fromDate()"
+      (dateChange)="onFromDate($event.value)"
+    />
+    <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
+    <mat-datepicker #fromPicker />
+  </mat-form-field>
+
+  <mat-form-field class="filter-date">
+    <mat-label>To</mat-label>
+    <input
+      matInput
+      [matDatepicker]="toPicker"
+      [value]="toDate()"
+      (dateChange)="onToDate($event.value)"
+    />
+    <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
+    <mat-datepicker #toPicker />
+  </mat-form-field>
+
+  @if (hasFilters()) {
+    <button matButton type="button" (click)="clearFilters()">Clear</button>
+  }
+</section>
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+<div class="table-scroll">
+  <table mat-table [dataSource]="entries()" class="audit-table">
+    <ng-container matColumnDef="action">
+      <th mat-header-cell *matHeaderCellDef>Action</th>
+      <td mat-cell *matCellDef="let entry">
+        <span class="audit-action">{{ actionLabel(entry.action) }}</span>
+        @if (entry.details) {
+          <code class="audit-details">{{ entry.details }}</code>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="target">
+      <th mat-header-cell *matHeaderCellDef>User</th>
+      <td mat-cell *matCellDef="let entry">
+        @if (entry.targetUserId) {
+          <a [routerLink]="['/admin/users', entry.targetUserId]">
+            {{ entry.targetName ?? 'View user' }}
+          </a>
+        } @else {
+          <span class="no-target">No user</span>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="actor">
+      <th mat-header-cell *matHeaderCellDef>Performed by</th>
+      <td mat-cell *matCellDef="let entry">{{ entry.actorName ?? 'Unknown' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="when">
+      <th mat-header-cell *matHeaderCellDef>When</th>
+      <td mat-cell *matCellDef="let entry">{{ entry.createdAt | date: 'medium' }}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
+</div>
+
+@if (!loading() && entries().length === 0) {
+  <p class="empty-state">
+    @if (loadFailed()) {
+      Could not load the audit trail.
+      <button matButton type="button" (click)="load()">Try again</button>
+    } @else if (hasFilters()) {
+      No audit entries match these filters.
+    } @else {
+      Nothing recorded yet.
+    }
+  </p>
+}
+
+<mat-paginator
+  [length]="totalElements()"
+  [pageIndex]="pageIndex()"
+  [pageSize]="pageSize()"
+  [pageSizeOptions]="[10, 20, 50]"
+  (page)="onPage($event)"
+  aria-label="Select page of audit entries"
+/>

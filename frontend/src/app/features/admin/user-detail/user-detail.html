@@ -1,0 +1,166 @@
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+} @else if (notFound()) {
+  <p class="empty-state">
+    That user could not be found. <a routerLink="/admin/users">Back to users</a>
+  </p>
+} @else if (user(); as current) {
+  <header class="page-header">
+    <div>
+      <a routerLink="/admin/users" class="back-link">
+        <mat-icon inline>arrow_back</mat-icon> Users
+      </a>
+      <h1 class="page-title">{{ current.name }}</h1>
+      <p class="page-subtitle">{{ current.email }}</p>
+      <p class="page-meta">{{ roleLabels[current.role] }} · {{ statusLabels[current.status] }}</p>
+      @if (current.locked) {
+        <p class="locked-note">Locked after repeated failed sign-ins</p>
+      }
+    </div>
+  </header>
+
+  @if (saving()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (newInviteUrl(); as inviteUrl) {
+    <mat-card class="detail-card invite-card">
+      <h2 class="card-title">New activation link</h2>
+      <p class="card-hint">
+        Send this to {{ current.name }}. It is single-use, expires in 72 hours, and has replaced any
+        link issued earlier.
+      </p>
+      <div class="activation-box">
+        <code class="activation-url">{{ inviteUrl }}</code>
+        <button
+          matIconButton
+          type="button"
+          (click)="copyInviteUrl()"
+          aria-label="Copy activation link"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </div>
+    </mat-card>
+  }
+
+  <div class="detail-grid">
+    <mat-card class="detail-card">
+      <h2 class="card-title">Details</h2>
+
+      @if (isSelf()) {
+        <p class="card-hint">
+          This is your own account. Edit your details from the profile menu in the top-right corner.
+        </p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <mat-form-field class="full-width">
+          <mat-label>Full name</mat-label>
+          <input matInput formControlName="name" [readonly]="!canEdit()" />
+          @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+            <mat-error>Name is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>Phone</mat-label>
+          <input matInput type="tel" formControlName="phone" [readonly]="!canEdit()" />
+          <mat-hint>Used to reach them on site</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>Address</mat-label>
+          <textarea matInput formControlName="address" rows="2" [readonly]="!canEdit()"></textarea>
+          <mat-hint>Used for distance-based job matching</mat-hint>
+        </mat-form-field>
+
+        @if (canEdit()) {
+          <mat-form-field class="full-width">
+            <mat-label>Role</mat-label>
+            <mat-select formControlName="role">
+              <mat-option value="TECHNICIAN">Technician</mat-option>
+              <mat-option value="CONTROLLER">Controller</mat-option>
+              <mat-option value="MANAGER">Manager</mat-option>
+            </mat-select>
+            <mat-hint>Changing the role signs them out of their current session</mat-hint>
+          </mat-form-field>
+        } @else {
+          <dl class="fact-list">
+            <dt>Role</dt>
+            <dd>{{ roleLabels[current.role] }}</dd>
+          </dl>
+        }
+
+        @if (canEdit()) {
+          <div class="card-actions">
+            <button matButton="filled" type="submit" [disabled]="saving()">Save changes</button>
+          </div>
+        }
+      </form>
+    </mat-card>
+
+    <mat-card class="detail-card">
+      <h2 class="card-title">Access</h2>
+      <dl class="fact-list">
+        <dt>Status</dt>
+        <dd>{{ statusLabels[current.status] }}</dd>
+        <dt>Activated</dt>
+        <dd>{{ current.activatedAt ? (current.activatedAt | date: 'medium') : 'Not yet' }}</dd>
+        <dt>Added</dt>
+        <dd>{{ current.createdAt | date: 'medium' }}</dd>
+        @if (current.technicianStatus) {
+          <dt>Availability</dt>
+          <dd>{{ current.technicianStatus }}</dd>
+        }
+      </dl>
+
+      <div class="card-actions">
+        @if (current.status === 'PENDING_ACTIVATION') {
+          <button matButton type="button" (click)="resendInvite()" [disabled]="saving()">
+            <mat-icon>mail</mat-icon>
+            Resend invite
+          </button>
+        }
+        @if (current.status === 'DISABLED') {
+          <button matButton="filled" type="button" (click)="reactivate()" [disabled]="saving()">
+            <mat-icon>person_add</mat-icon>
+            Reactivate
+          </button>
+        } @else if (!isSelf()) {
+          <button
+            matButton
+            type="button"
+            class="danger-button"
+            (click)="deactivate()"
+            [disabled]="saving()"
+          >
+            <mat-icon>person_off</mat-icon>
+            Deactivate
+          </button>
+        }
+      </div>
+    </mat-card>
+  </div>
+
+  <mat-card class="detail-card">
+    <h2 class="card-title">History</h2>
+    @if (auditEntries().length === 0) {
+      <p class="card-hint">No recorded changes yet.</p>
+    } @else {
+      <ul class="audit-list">
+        @for (entry of auditEntries(); track entry.id) {
+          <li class="audit-entry">
+            <span class="audit-action">{{ auditLabels[entry.action] }}</span>
+            <span class="audit-meta">
+              by {{ entry.actorName ?? 'unknown' }} · {{ entry.createdAt | date: 'medium' }}
+            </span>
+            @if (entry.details) {
+              <code class="audit-details">{{ entry.details }}</code>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </mat-card>
+}

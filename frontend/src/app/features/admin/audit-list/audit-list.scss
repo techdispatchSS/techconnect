@@ -1,0 +1,71 @@
+.page-header {
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  margin: 0;
+  font: var(--mat-sys-headline-small);
+}
+
+.page-subtitle {
+  margin: 0.25rem 0 0;
+  max-width: 44rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.filter-search {
+  flex: 1 1 20rem;
+  min-width: 14rem;
+}
+
+.filter-select {
+  flex: 0 1 13rem;
+  min-width: 11rem;
+}
+
+.filter-date {
+  flex: 0 1 10rem;
+  min-width: 9rem;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.audit-table {
+  width: 100%;
+  min-width: 44rem;
+}
+
+.audit-action {
+  display: block;
+  font-weight: 500;
+}
+
+.audit-details {
+  display: block;
+  margin-top: 0.25rem;
+  overflow-wrap: anywhere;
+  color: var(--mat-sys-on-surface-variant);
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+.no-target {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.empty-state {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+}

@@ -1,0 +1,53 @@
+<h2 mat-dialog-title>My profile</h2>
+
+<mat-dialog-content>
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  } @else {
+    @if (errorMessage()) {
+      <p class="dialog-error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    @if (profile(); as current) {
+      <p class="dialog-hint">
+        Signed in as <strong>{{ current.email }}</strong> ({{ current.role }}). Your email address
+        and role can only be changed by an administrator.
+      </p>
+
+      <form [formGroup]="form" id="profile-form" (ngSubmit)="save()">
+        <mat-form-field class="full-width">
+          <mat-label>Full name</mat-label>
+          <input matInput formControlName="name" autocomplete="name" />
+          @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+            <mat-error>Name is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>Phone</mat-label>
+          <input matInput type="tel" formControlName="phone" autocomplete="tel" />
+          <mat-hint>Used to reach you on site</mat-hint>
+        </mat-form-field>
+
+        @if (current.canEditAddress) {
+          <mat-form-field class="full-width">
+            <mat-label>Address</mat-label>
+            <textarea matInput formControlName="address" rows="2"></textarea>
+            <mat-hint>Used for distance-based job matching</mat-hint>
+          </mat-form-field>
+        }
+      </form>
+    }
+  }
+
+  @if (saving()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton type="button" mat-dialog-close [disabled]="saving()">Cancel</button>
+  <button matButton="filled" type="submit" form="profile-form" [disabled]="saving() || loading()">
+    {{ saving() ? 'Saving…' : 'Save changes' }}
+  </button>
+</mat-dialog-actions>

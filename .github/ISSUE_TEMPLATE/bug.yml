@@ -1,0 +1,52 @@
+name: Bug
+description: Something isn't working as expected
+title: "[Bug] "
+labels:
+  - "type: bug"
+  - "status: backlog"
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - "Critical (blocks demo/UAT)"
+        - "High"
+        - "Medium"
+        - "Low"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Backend (Spring Boot)
+        - Frontend (Angular PWA)
+        - Freshdesk integration
+        - AWS infra / deployment
+        - Other
+    validations:
+      required: true

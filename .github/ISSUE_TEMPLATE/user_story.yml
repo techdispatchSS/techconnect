@@ -1,0 +1,58 @@
+name: User Story
+description: A piece of user-facing functionality (controller dashboard, technician PWA, admin portal, etc.)
+title: "[Story] "
+labels:
+  - "type: story"
+  - "status: backlog"
+body:
+  - type: dropdown
+    id: role
+    attributes:
+      label: User role
+      description: Which of the four TechDispatch roles is this for?
+      options:
+        - Client
+        - Controller
+        - Technician
+        - Manager
+        - Admin
+        - Cross-cutting / infra
+    validations:
+      required: true
+  - type: textarea
+    id: story
+    attributes:
+      label: Story
+      description: "As a <role>, I want <capability>, so that <benefit>."
+      placeholder: |
+        As a Controller, I want to see live technician location on the map,
+        so that I can judge who to dispatch to a new incident.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checklist of concrete, testable conditions for "done."
+      placeholder: |
+        - [ ] Controller dashboard shows a marker per active technician
+        - [ ] Marker updates at least every 30s while technician is on a job
+        - [ ] Offline/stale technicians are visually distinguished
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Project phase
+      options:
+        - "Phase 1 (MVP)"
+        - "Phase 2"
+        - "Phase 3"
+    validations:
+      required: true
+  - type: input
+    id: proposal-ref
+    attributes:
+      label: Proposal / PRD reference
+      description: Section of TechDispatch_Proposal_v1.docx this maps to (optional)
+      placeholder: "e.g. §3.3 Technician Mobile Workflow"

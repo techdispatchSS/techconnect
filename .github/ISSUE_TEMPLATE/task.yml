@@ -1,0 +1,35 @@
+name: Task
+description: Technical/infra/admin work that isn't a user-facing story (e.g. AWS setup, CI config, schema migration)
+title: "[Task] "
+labels:
+  - "type: task"
+  - "status: backlog"
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What needs to be done and why
+    validations:
+      required: true
+  - type: textarea
+    id: definition-of-done
+    attributes:
+      label: Definition of done
+      placeholder: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Backend (Spring Boot)
+        - Frontend (Angular PWA)
+        - AWS infra / deployment
+        - CI/CD
+        - Documentation
+        - Client / business (non-code)
+    validations:
+      required: true

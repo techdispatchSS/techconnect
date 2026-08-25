@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question / discussion
+    url: https://github.com/techdispatchSS/techdispatch/discussions
+    about: For open-ended questions that aren't a concrete piece of work yet.

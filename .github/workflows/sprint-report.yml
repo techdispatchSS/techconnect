@@ -1,0 +1,54 @@
+name: Biweekly Sprint Report
+
+on:
+  schedule:
+    # Runs every day at 07:00 UTC; the job itself no-ops unless today
+    # lands on a sprint boundary (see SPRINT_START_DATE below). Cron has
+    # no native "every 2 weeks" unit, so a daily trigger + date-math gate
+    # is the standard way to get a biweekly cadence.
+    - cron: "0 7 * * *"
+  workflow_dispatch: {} # lets you run it on demand from the Actions tab
+
+permissions:
+  issues: write
+  contents: read
+
+env:
+  # Set this to the Monday your first sprint started (YYYY-MM-DD).
+  # Update once; every 14 days after this date the report runs.
+  SPRINT_START_DATE: "2026-08-24"
+
+jobs:
+  sprint-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check sprint boundary
+        id: gate
+        run: |
+          start=$(date -d "$SPRINT_START_DATE" +%s)
+          today=$(date -u +%s)
+          days=$(( (today - start) / 86400 ))
+          if [ "$days" -lt 0 ] || [ $(( days % 14 )) -ne 0 ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.run == 'true' || github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+
+      - name: Generate report
+        if: steps.gate.outputs.run == 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/scripts/generate-sprint-report.sh
+
+      - name: Post report as an issue
+        if: steps.gate.outputs.run == 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          title="Sprint report — $(date -u +%Y-%m-%d)"
+          gh issue create --title "$title" --body-file sprint-report.md --label "type: task"
+          cat sprint-report.md >> "$GITHUB_STEP_SUMMARY"

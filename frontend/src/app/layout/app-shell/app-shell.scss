@@ -1,3 +1,12 @@
+// Matches the reference dashboard's own scheme: a white sidenav rail with a solid black
+// pill marking the active item, a plain white toolbar, and a light-gray page canvas behind
+// both (set on `body` in styles.scss). Nothing here reaches for a fourth color.
+$td-rail-fg: #44464a;
+$td-rail-fg-muted: #6b6d73;
+$td-rail-active-bg: #17181c;
+$td-rail-active-fg: #ffffff;
+$td-rail-hover-bg: rgb(23 24 28 / 5%);
+
 :host {
   display: flex;
   flex-direction: column;
@@ -9,18 +18,54 @@
   z-index: 2;
   gap: 0.5rem;
   flex: 0 0 auto;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
-.shell-brand {
-  font: var(--mat-sys-title-medium);
+.shell-breadcrumb {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font: var(--mat-sys-body-medium);
+}
+
+.shell-breadcrumb-root {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.shell-breadcrumb-sep {
+  color: var(--mat-sys-outline);
+}
+
+.shell-breadcrumb-current {
+  color: var(--mat-sys-on-surface);
+  font-weight: 600;
 }
 
 .shell-spacer {
   flex: 1 1 auto;
 }
 
-.shell-user-name {
-  margin-left: 0.5rem;
+.shell-user {
+  // Overrides matIconButton's default size so the initials chip fills it edge-to-edge,
+  // matching the reference's plain circular profile icon in the same toolbar slot.
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+}
+
+.shell-user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  font: var(--mat-sys-label-medium);
+  letter-spacing: 0;
 }
 
 .shell-menu-header {
@@ -38,11 +83,84 @@
 .shell-container {
   flex: 1 1 auto;
   min-height: 0;
+  background: var(--mat-sys-background);
 }
 
 .shell-sidenav {
-  width: 15rem;
-  border-right: 1px solid var(--mat-sys-outline-variant);
+  width: 16rem;
+  // Floats as its own panel rather than docking flush against the toolbar and viewport
+  // edge — the gray canvas (`.shell-container`'s background) shows through above, below,
+  // and to the left, matching the same card language as `.td-panel`.
+  margin: 1rem 0 1rem 1rem;
+  border-radius: 1rem;
+  background: var(--mat-sys-surface);
+  color: $td-rail-fg;
+  box-shadow:
+    0 1px 2px rgba(15, 15, 18, 0.04),
+    0 6px 20px rgba(15, 15, 18, 0.05);
+}
+
+.shell-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.25rem 1rem;
+}
+
+.shell-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  border-radius: 0.625rem;
+  background: $td-rail-active-bg;
+  color: $td-rail-active-fg;
+  font: var(--mat-sys-title-small);
+  font-weight: 700;
+}
+
+.shell-brand-name {
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-title-medium);
+}
+
+.shell-nav-list {
+  // Without this the list sits flush against the sidenav's top, bottom, left and right
+  // edges, so the active item's pill touches the container walls instead of floating
+  // inside it with a visible gutter.
+  padding: 0.5rem 0.75rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+
+  ::ng-deep .mdc-list-item {
+    border-radius: 0.75rem;
+    color: $td-rail-fg;
+
+    .mdc-list-item__primary-text {
+      color: inherit;
+    }
+
+    .mat-icon {
+      color: $td-rail-fg-muted;
+    }
+
+    &:hover {
+      background: $td-rail-hover-bg;
+    }
+
+    &.mdc-list-item--activated,
+    &[aria-current='page'] {
+      background: $td-rail-active-bg;
+      color: $td-rail-active-fg;
+
+      .mat-icon {
+        color: $td-rail-active-fg;
+      }
+    }
+  }
 }
 
 .shell-content {
@@ -55,16 +173,21 @@
   display: flex;
   flex-direction: column;
   min-height: 100%;
+  background: var(--mat-sys-background);
 }
 
 .shell-main {
   flex: 1 1 auto;
-  padding: 1.5rem 1.5rem 3rem;
+  width: 100%;
+  max-width: 90rem;
+  margin-inline: auto;
+  box-sizing: border-box;
+  padding: 2rem 2rem 3rem;
 }
 
 .shell-footer {
   flex: 0 0 auto;
-  padding: 1rem 1.5rem;
+  padding: 1rem 2rem;
   border-top: 1px solid var(--mat-sys-outline-variant);
   color: var(--mat-sys-on-surface-variant);
   font: var(--mat-sys-body-small);
@@ -78,16 +201,20 @@
   }
 
   .shell-main {
-    padding: 1rem 1rem 2.5rem;
+    padding: 1.25rem 1.25rem 2.5rem;
   }
 
   .shell-footer {
-    padding: 1rem;
+    padding: 1rem 1.25rem;
   }
 }
 
 @media (max-width: 599px) {
-  .shell-user-name {
+  .shell-breadcrumb-root {
+    display: none;
+  }
+
+  .shell-breadcrumb-sep {
     display: none;
   }
 }

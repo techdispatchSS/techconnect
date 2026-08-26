@@ -13,6 +13,21 @@ const PUBLIC_PATHS = [
 ];
 
 /**
+ * True for a request the browser will resolve against this page's own origin: a relative
+ * URL (`apiPrefixInterceptor` rewrites every real API call to one of these, e.g.
+ * `/api/v1/...`), or an absolute URL that explicitly names this origin.
+ *
+ * This is what the token gets attached to — never the inverse (a denylist of "public"
+ * paths). A denylist only protects the specific third-party domains someone thought to
+ * list; an allowlist means a session token can never leak to a domain nobody has written
+ * yet, which matters the day a feature calls an absolute URL (a maps API, an analytics
+ * endpoint, any CDN) and nobody remembers to update this file.
+ */
+function isSameOrigin(url: string): boolean {
+  return !/^https?:\/\//i.test(url) || url.startsWith(location.origin);
+}
+
+/**
  * Attaches the bearer token and treats a 401 as the end of the session.
  *
  * The backend revokes tokens on offboarding or a password change rather than waiting for
@@ -26,7 +41,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const isPublic = PUBLIC_PATHS.some((path) => req.url.includes(path));
 
   const request =
-    token && !isPublic ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+    token && !isPublic && isSameOrigin(req.url)
+      ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+      : req;
 
   return next(request).pipe(
     catchError((error: unknown) => {

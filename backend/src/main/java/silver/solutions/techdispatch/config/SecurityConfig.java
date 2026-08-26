@@ -75,6 +75,10 @@ public class SecurityConfig {
                                 "/v1/auth/reset-password")
                         .permitAll()
                         .requestMatchers("/actuator/health/**").permitAll()
+                        // Docs are additionally disabled outright under the "prod" profile
+                        // (see application-prod.properties) so they 404 instead of merely
+                        // being access-controlled — a permitAll rule here still hands out
+                        // the full API surface pre-auth wherever that profile isn't active.
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**")
                         .permitAll()
                         // FR-01: administration of controllers and technicians is the

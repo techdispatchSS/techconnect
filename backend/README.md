@@ -17,9 +17,15 @@ Copy `.env.example` to `.env` and set at least:
 
 | Variable | Purpose |
 |---|---|
-| `TECHDISPATCH_JWT_SECRET` | HMAC signing key, **32+ bytes**. `openssl rand -base64 48` |
+| `TECHDISPATCH_JWT_SECRET` | HMAC signing key, **32+ bytes**, **required — no default**. `openssl rand -base64 48` |
 | `TECHDISPATCH_BOOTSTRAP_ADMIN_EMAIL` | First-run Manager (see below) |
 | `POSTGRES_PORT` | Host port of the containerised Postgres |
+
+`TECHDISPATCH_JWT_SECRET` has no fallback value — the app refuses to start without it, in
+any environment including local dev. This is deliberate: a default that actually works is a
+secret published in source control, and anyone who reads the repo could forge a valid token
+for any user. Generate a fresh one per environment; never reuse a secret across dev, staging,
+and prod, and never commit a real value into `.env.example`.
 
 Then:
 

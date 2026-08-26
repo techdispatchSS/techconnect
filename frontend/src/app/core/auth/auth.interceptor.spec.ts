@@ -69,4 +69,24 @@ describe('authInterceptor', () => {
 
     expect(logout).not.toHaveBeenCalled();
   });
+
+  it('never attaches the token to a third-party absolute URL', () => {
+    // Regression guard: attachment must be an allowlist of same-origin requests, not a
+    // denylist of known "public" paths. A denylist only protects domains someone thought
+    // to list; it does nothing the day a feature calls an absolute URL (a maps API, an
+    // analytics endpoint, any CDN) that was never added to PUBLIC_PATHS.
+    http.get('https://maps.googleapis.com/maps/api/geocode/json').subscribe();
+
+    const request = controller.expectOne('https://maps.googleapis.com/maps/api/geocode/json');
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    request.flush({});
+  });
+
+  it('still attaches the token when an absolute URL names this same origin', () => {
+    http.get(`${location.origin}/api/v1/admin/users`).subscribe();
+
+    const request = controller.expectOne(`${location.origin}/api/v1/admin/users`);
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
+    request.flush({});
+  });
 });

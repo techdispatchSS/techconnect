@@ -28,8 +28,11 @@ jobs:
       - name: Build
         # -DskipTests still compiles test sources (catching broken test code) without
         # running them — the integration suite needs Testcontainers/Docker and belongs in
-        # its own job, not gating whether the app builds.
-        run: ./mvnw -B -DskipTests clean package
+        # its own job, not gating whether the app builds. `chmod` guards against the repo
+        # being developed on Windows, where mvnw's executable bit doesn't survive a commit.
+        run: |
+          chmod +x mvnw
+          ./mvnw -B -DskipTests clean package
 
   frontend-build:
     runs-on: ubuntu-latest

@@ -1,4 +1,4 @@
-package silver.solutions.techdispatch.common;
+package silver.solutions.techdispatch.exception;
 
 import org.springframework.http.HttpStatus;
 

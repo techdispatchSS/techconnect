@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
-import silver.solutions.techdispatch.domain.User;
-import silver.solutions.techdispatch.domain.UserRole;
-import silver.solutions.techdispatch.domain.UserStatus;
+import silver.solutions.techdispatch.entity.User;
+import silver.solutions.techdispatch.entity.UserRole;
+import silver.solutions.techdispatch.entity.UserStatus;
 
 /** Query predicates backing the admin portal's user search. */
 public final class UserSpecifications {

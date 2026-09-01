@@ -1,4 +1,4 @@
-package silver.solutions.techdispatch.auth;
+package silver.solutions.techdispatch.service;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -10,10 +10,10 @@ import java.util.HexFormat;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import silver.solutions.techdispatch.common.ApiException;
+import silver.solutions.techdispatch.exception.ApiException;
 import silver.solutions.techdispatch.config.TechDispatchProperties;
-import silver.solutions.techdispatch.domain.TokenPurpose;
-import silver.solutions.techdispatch.domain.UserActivationToken;
+import silver.solutions.techdispatch.entity.TokenPurpose;
+import silver.solutions.techdispatch.entity.UserActivationToken;
 import silver.solutions.techdispatch.repository.UserActivationTokenRepository;
 
 /**

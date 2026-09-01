@@ -1,134 +1,253 @@
-<header class="page-header">
-  <div>
-    <h1 class="page-title">Users</h1>
-    <p class="page-subtitle">Onboard and offboard controllers and technicians.</p>
-  </div>
-  <button matButton="filled" type="button" (click)="addUser()">
-    <mat-icon>person_add</mat-icon>
-    Add user
-  </button>
-</header>
+<div class="ul-layout">
+  <section class="ul-directory">
+    <div class="ul-toolbar">
+      <div class="admin-seg" role="tablist" aria-label="Filter by role">
+        @for (tab of roleTabs; track tab.label) {
+          <label class="admin-seg-opt" [class.admin-seg-opt--active]="roleFilter() === tab.role">
+            <input
+              type="radio"
+              name="roletab"
+              [checked]="roleFilter() === tab.role"
+              (change)="onRoleTab(tab.role)"
+            />
+            <span>{{ tab.label }}</span>
+          </label>
+        }
+      </div>
 
-<div class="td-panel">
-  <section class="filters" aria-label="Filter users">
-    <mat-form-field class="filter-search">
-      <mat-label>Search name or email</mat-label>
-      <input matInput [formControl]="searchControl" autocomplete="off" />
-      <mat-icon matSuffix>search</mat-icon>
-    </mat-form-field>
+      <label class="ul-search">
+        <app-admin-icon name="search" />
+        <input class="admin-input" placeholder="Search people, email…" [formControl]="searchControl" />
+      </label>
 
-    <mat-form-field class="filter-select">
-      <mat-label>Role</mat-label>
-      <mat-select [value]="roleFilter()" (valueChange)="onRoleFilter($event)">
-        <mat-option [value]="null">All roles</mat-option>
-        <mat-option value="CONTROLLER">Controller</mat-option>
-        <mat-option value="TECHNICIAN">Technician</mat-option>
-        <mat-option value="MANAGER">Manager</mat-option>
-      </mat-select>
-    </mat-form-field>
+      <select
+        class="admin-input ul-status-select"
+        [value]="statusFilter() ?? ''"
+        (change)="onStatusFilter($any($event.target).value)"
+      >
+        <option value="">All statuses</option>
+        <option value="ACTIVE">Active</option>
+        <option value="PENDING_ACTIVATION">Pending activation</option>
+        <option value="DISABLED">Deactivated</option>
+      </select>
 
-    <mat-form-field class="filter-select">
-      <mat-label>Status</mat-label>
-      <mat-select [value]="statusFilter()" (valueChange)="onStatusFilter($event)">
-        <mat-option [value]="null">All statuses</mat-option>
-        <mat-option value="ACTIVE">Active</mat-option>
-        <mat-option value="PENDING_ACTIVATION">Pending activation</mat-option>
-        <mat-option value="DISABLED">Deactivated</mat-option>
-      </mat-select>
-    </mat-form-field>
+      @if (hasFilters()) {
+        <button type="button" class="admin-btn admin-btn-ghost" (click)="roleFilter.set(null); statusFilter.set(null); searchControl.setValue(''); pageIndex.set(0); load()">
+          Clear
+        </button>
+      }
+    </div>
 
-    @if (hasFilters()) {
-      <button matButton type="button" (click)="clearFilters()">Clear</button>
+    <div class="ul-result-line">{{ resultLine() }}</div>
+
+    @if (loading()) {
+      <div class="admin-progress"></div>
+    }
+
+    <div class="admin-blueprint ul-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th style="width: 34%">Name</th>
+            <th>Role</th>
+            <th>Access</th>
+            <th style="text-align: right">Phone</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr
+              data-clickable
+              [attr.data-selected]="selected()?.id === user.id ? '' : null"
+              (click)="select(user)"
+            >
+              <td>
+                <span class="ul-name-cell">
+                  <span class="admin-avatar" style="width: 28px; height: 28px; font-size: 11px">{{
+                    initials(user.name)
+                  }}</span>
+                  <span class="ul-name-meta">
+                    <span class="ul-name">{{ user.name }}</span>
+                    <span class="ul-email">{{ user.email }}</span>
+                  </span>
+                </span>
+              </td>
+              <td>{{ roleLabels[user.role] }}</td>
+              <td>
+                <span [class]="statusTagClass(user)">{{ statusLabels[user.status] }}</span>
+                @if (user.locked) {
+                  <app-admin-icon name="lock" />
+                }
+              </td>
+              <td style="text-align: right">{{ user.phone || '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (!loading() && users().length === 0) {
+      <p class="admin-empty">
+        @if (loadFailed()) {
+          Could not load users. Check your connection and
+          <button type="button" class="admin-btn admin-btn-ghost" (click)="load()">try again</button>.
+        } @else if (hasFilters()) {
+          No people match these filters.
+        } @else {
+          No people yet.
+        }
+      </p>
+    }
+
+    @if (totalElements() > 0) {
+      <div class="ul-pager">
+        <span>Showing {{ pageFrom() }}–{{ pageTo() }} of {{ totalElements() }}</span>
+        <span class="ul-pager-buttons">
+          <button type="button" class="admin-btn admin-btn-secondary" [disabled]="pageIndex() === 0" (click)="onPrevPage()">
+            Previous
+          </button>
+          <button type="button" class="admin-btn admin-btn-secondary" [disabled]="pageTo() >= totalElements()" (click)="onNextPage()">
+            Next
+          </button>
+        </span>
+      </div>
     }
   </section>
 
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
-  }
+  <aside class="admin-blueprint ul-panel">
+    @if (selectedLoading()) {
+      <div class="admin-progress"></div>
+      <p class="admin-hint">Loading…</p>
+    } @else if (selected(); as sel) {
+      <div class="ul-panel-head">
+        <span class="admin-avatar" style="width: 44px; height: 44px; font-size: 15px">{{ initials(sel.name) }}</span>
+        <span class="ul-panel-head-meta">
+          <span class="ul-panel-head-name">{{ sel.name }}</span>
+          <span class="admin-hint">{{ roleLabels[sel.role] }} · {{ sel.email }}</span>
+        </span>
+        <span [class]="statusTagClass(sel)">{{ statusLabels[sel.status] }}</span>
+      </div>
 
-  <div class="table-scroll">
-    <table mat-table [dataSource]="users()" class="user-table">
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Name</th>
-        <td mat-cell *matCellDef="let user">
-          <span class="cell-name">{{ user.name }}</span>
-          <span class="cell-email">{{ user.email }}</span>
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="role">
-        <th mat-header-cell *matHeaderCellDef>Role</th>
-        <td mat-cell *matCellDef="let user">{{ roleLabel(user.role) }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="status">
-        <th mat-header-cell *matHeaderCellDef>Status</th>
-        <td mat-cell *matCellDef="let user">
-          <span class="status-chip" [attr.data-state]="statusAppearance(user)">
-            {{ statusLabel(user.status) }}
-          </span>
-          @if (user.locked) {
-            <mat-icon
-              class="locked-icon"
-              matTooltip="Locked after repeated failed sign-ins"
-              aria-label="Account locked"
-              >lock</mat-icon
-            >
-          }
-          @if (user.technicianStatus) {
-            <span class="technician-status">{{ user.technicianStatus }}</span>
-          }
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="phone">
-        <th mat-header-cell *matHeaderCellDef>Phone</th>
-        <td mat-cell *matCellDef="let user">{{ user.phone || 'Not set' }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
-        <td mat-cell *matCellDef="let user">
-          <button
-            matIconButton
-            type="button"
-            (click)="openUser(user)"
-            [attr.aria-label]="'Manage ' + user.name"
-          >
-            <mat-icon>chevron_right</mat-icon>
-          </button>
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr
-        mat-row
-        *matRowDef="let row; columns: displayedColumns"
-        class="user-row"
-        (click)="openUser(row)"
-      ></tr>
-    </table>
-  </div>
-
-  @if (!loading() && users().length === 0) {
-    <p class="empty-state">
-      @if (loadFailed()) {
-        Could not load users. Check your connection and
-        <button matButton type="button" (click)="load()">try again</button>.
-      } @else if (hasFilters()) {
-        No users match these filters.
-      } @else {
-        No users yet. Add your first controller or technician to get started.
+      @if (panelSaving()) {
+        <div class="admin-progress"></div>
       }
-    </p>
-  }
 
-  <mat-paginator
-    [length]="totalElements()"
-    [pageIndex]="pageIndex()"
-    [pageSize]="pageSize()"
-    [pageSizeOptions]="[10, 20, 50]"
-    (page)="onPage($event)"
-    aria-label="Select page of users"
-  />
+      @if (newInviteUrl(); as inviteUrl) {
+        <div class="admin-blueprint admin-invite-box">
+          <span class="admin-hint">New activation link — single-use, expires in 72 hours.</span>
+          <div class="admin-invite-row">
+            <code class="admin-invite-url">{{ inviteUrl }}</code>
+            <button type="button" class="admin-btn admin-btn-icon" (click)="copyInviteUrl()" aria-label="Copy activation link">
+              <app-admin-icon name="copy" />
+            </button>
+          </div>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="ul-form">
+        <h6 class="admin-section-title">Identity</h6>
+        <div class="admin-field">
+          <label for="ul-name">Full name</label>
+          <input id="ul-name" class="admin-input" formControlName="name" />
+        </div>
+        <div class="admin-field">
+          <span class="admin-field-label">Email (login)</span>
+          <div class="admin-input-static">{{ sel.email }}</div>
+        </div>
+        <div class="admin-field">
+          <label for="ul-phone">Mobile</label>
+          <input id="ul-phone" class="admin-input" type="tel" formControlName="phone" />
+        </div>
+
+        <h6 class="admin-section-title">Role &amp; location</h6>
+        <div class="admin-field">
+          <label for="ul-role">Role</label>
+          <select id="ul-role" class="admin-input" formControlName="role">
+            <option value="TECHNICIAN">Technician</option>
+            <option value="CONTROLLER">Controller</option>
+            <option value="MANAGER">Manager</option>
+          </select>
+          <p class="admin-hint">Changing the role signs them out of their current session.</p>
+        </div>
+        <div class="ul-address-fields" formGroupName="address">
+          <p class="admin-hint">Used for distance-based job matching — every field is required.</p>
+          <div class="admin-field">
+            <label for="ul-street">Street</label>
+            <input id="ul-street" class="admin-input" formControlName="street" />
+          </div>
+          <div class="admin-field">
+            <label for="ul-suburb">Suburb</label>
+            <input id="ul-suburb" class="admin-input" formControlName="suburb" />
+          </div>
+          <div class="admin-field">
+            <label for="ul-city">City / town</label>
+            <input id="ul-city" class="admin-input" formControlName="city" />
+          </div>
+          <div class="admin-field">
+            <label for="ul-province">Province</label>
+            <select id="ul-province" class="admin-input" formControlName="province">
+              <option value="" disabled>Select a province</option>
+              @for (province of provinces; track province) {
+                <option [value]="province">{{ provinceLabels[province] }}</option>
+              }
+            </select>
+          </div>
+          <div class="admin-field">
+            <label for="ul-postal-code">Postal code</label>
+            <input id="ul-postal-code" class="admin-input" formControlName="postalCode" inputmode="numeric" />
+            @if (form.controls.address.controls.postalCode.hasError('pattern')) {
+              <p class="admin-field-error">Enter a 4-digit postal code</p>
+            }
+          </div>
+        </div>
+
+        <h6 class="admin-section-title">Account access</h6>
+        <div class="ul-fact-row">
+          <span class="admin-hint">Activated</span>
+          <span>{{ sel.activatedAt ? (sel.activatedAt | date: 'medium') : 'Not yet' }}</span>
+        </div>
+        <div class="ul-fact-row">
+          <span class="admin-hint">Added</span>
+          <span>{{ sel.createdAt | date: 'medium' }}</span>
+        </div>
+        @if (sel.technicianStatus) {
+          <div class="ul-fact-row">
+            <span class="admin-hint">Availability</span>
+            <span>{{ sel.technicianStatus }}</span>
+          </div>
+        }
+        @if (sel.locked) {
+          <p class="ul-locked-note"><app-admin-icon name="lock" /> Locked after repeated failed sign-ins</p>
+        }
+
+        <div class="ul-status-actions">
+          @if (sel.status === 'PENDING_ACTIVATION') {
+            <button type="button" class="admin-btn admin-btn-secondary" [disabled]="panelSaving()" (click)="resendInvite()">
+              <app-admin-icon name="mail" /> Resend invite
+            </button>
+          }
+          @if (sel.status === 'DISABLED') {
+            <button type="button" class="admin-btn admin-btn-secondary" [disabled]="panelSaving()" (click)="reactivate()">
+              Reactivate
+            </button>
+          } @else {
+            <button type="button" class="admin-btn admin-btn-secondary admin-btn-danger" [disabled]="panelSaving()" (click)="deactivate()">
+              Deactivate
+            </button>
+          }
+        </div>
+
+        <div class="ul-form-actions">
+          <button type="submit" class="admin-btn admin-btn-primary admin-blueprint" [disabled]="panelSaving() || form.invalid">
+            Save changes
+          </button>
+          <button type="button" class="admin-btn admin-btn-secondary" [disabled]="panelSaving()" (click)="cancelEdit()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    } @else {
+      <p class="admin-empty">Select someone from the directory to view and edit their details.</p>
+    }
+  </aside>
 </div>

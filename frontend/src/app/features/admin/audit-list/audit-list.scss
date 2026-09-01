@@ -1,71 +1,109 @@
-.page-header {
-  margin-bottom: 1.5rem;
-}
-
-.page-title {
-  margin: 0;
-  font: var(--mat-sys-headline-small);
-}
-
-.page-subtitle {
-  margin: 0.25rem 0 0;
-  max-width: 44rem;
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-body-medium);
-}
-
-.filters {
+.al-layout {
   display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px 32px 40px;
+}
+
+.al-subtitle {
+  max-width: 44rem;
+  margin: 0;
+}
+
+.al-active-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--admin-color-accent);
+  background: var(--admin-accent-100);
+  color: var(--admin-accent-800);
+  font-size: 13px;
+  width: fit-content;
+
+  .admin-btn {
+    margin-left: 8px;
+  }
+}
+
+.al-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
 }
 
-.filter-search {
-  flex: 1 1 20rem;
-  min-width: 14rem;
+.al-search {
+  position: relative;
+  flex: 1 1 220px;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+
+  app-admin-icon {
+    position: absolute;
+    left: 9px;
+    opacity: 0.5;
+  }
+
+  input {
+    padding-left: 32px;
+  }
 }
 
-.filter-select {
-  flex: 0 1 13rem;
-  min-width: 11rem;
+.al-select {
+  flex: 0 1 14rem;
+  min-width: 12rem;
 }
 
-.filter-date {
+.al-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   flex: 0 1 10rem;
-  min-width: 9rem;
 }
 
-.table-scroll {
+.al-table-wrap {
+  background: var(--admin-color-surface);
+  padding: 4px 14px 10px;
   overflow-x: auto;
 }
 
-.audit-table {
-  width: 100%;
-  min-width: 44rem;
-}
-
-.audit-action {
+.al-action {
   display: block;
   font-weight: 500;
 }
 
-.audit-details {
+.al-details {
   display: block;
-  margin-top: 0.25rem;
+  margin-top: 3px;
   overflow-wrap: anywhere;
-  color: var(--mat-sys-on-surface-variant);
+  color: color-mix(in srgb, var(--admin-color-text) 55%, transparent);
   font-family: monospace;
-  font-size: 0.75rem;
+  font-size: 11px;
 }
 
-.no-target {
-  color: var(--mat-sys-on-surface-variant);
+.al-pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--admin-color-text) 55%, transparent);
 }
 
-.empty-state {
-  padding: 2rem 1rem;
-  text-align: center;
-  color: var(--mat-sys-on-surface-variant);
+.al-pager-buttons {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+
+  .admin-btn {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+}
+
+@media (max-width: 599px) {
+  .al-layout {
+    padding: 16px;
+  }
 }

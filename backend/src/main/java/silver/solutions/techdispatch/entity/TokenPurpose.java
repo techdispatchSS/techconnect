@@ -1,4 +1,4 @@
-package silver.solutions.techdispatch.domain;
+package silver.solutions.techdispatch.entity;
 
 public enum TokenPurpose {
     ACTIVATION,

@@ -4,8 +4,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import silver.solutions.techdispatch.domain.User;
-import silver.solutions.techdispatch.domain.UserRole;
+import silver.solutions.techdispatch.entity.User;
+import silver.solutions.techdispatch.entity.UserRole;
 
 /**
  * Optional filtering for the admin user list is expressed with {@link JpaSpecificationExecutor}

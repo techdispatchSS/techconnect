@@ -18,11 +18,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import silver.solutions.techdispatch.AbstractPostgresIntegrationTest;
-import silver.solutions.techdispatch.domain.TechnicianStatus;
-import silver.solutions.techdispatch.domain.User;
-import silver.solutions.techdispatch.domain.UserRole;
-import silver.solutions.techdispatch.domain.UserStatus;
-import silver.solutions.techdispatch.notification.NotificationService;
+import silver.solutions.techdispatch.entity.TechnicianStatus;
+import silver.solutions.techdispatch.entity.User;
+import silver.solutions.techdispatch.entity.UserRole;
+import silver.solutions.techdispatch.entity.UserStatus;
+import silver.solutions.techdispatch.service.NotificationService;
 import silver.solutions.techdispatch.repository.TechnicianProfileRepository;
 import silver.solutions.techdispatch.repository.UserRepository;
 
@@ -37,6 +37,17 @@ import silver.solutions.techdispatch.repository.UserRepository;
 class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
 
     private static final String MANAGER_PASSWORD = "ManagerPassw0rd!23";
+
+    /** A fully valid structured address, reused wherever a test needs one but isn't itself
+     * asserting on its contents. */
+    private static final String VALID_ADDRESS = """
+            {"street":"12 Long Street","suburb":"Gardens","city":"Cape Town",
+             "province":"WESTERN_CAPE","postalCode":"8001"}""";
+
+    /** What {@link #createTechnician} onboards every test technician with. */
+    private static final String TECHNICIAN_ADDRESS = """
+            {"street":"1 Test Street","suburb":"Umhlanga","city":"Durban",
+             "province":"KWAZULU_NATAL","postalCode":"4001"}""";
 
     @Autowired private MockMvc mvc;
     @Autowired private UserRepository users;
@@ -56,12 +67,16 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"Thabo Mokoena","email":"%s","phone":"+27821234567",
-                                 "address":"12 Long Street, Cape Town","role":"TECHNICIAN"}
-                                """.formatted(email)))
+                                 "address":%s,"role":"TECHNICIAN"}
+                                """.formatted(email, VALID_ADDRESS)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.user.status").value("PENDING_ACTIVATION"))
                 .andExpect(jsonPath("$.user.technicianStatus").value("OFFLINE"))
-                .andExpect(jsonPath("$.user.address").value("12 Long Street, Cape Town"))
+                .andExpect(jsonPath("$.user.address.street").value("12 Long Street"))
+                .andExpect(jsonPath("$.user.address.suburb").value("Gardens"))
+                .andExpect(jsonPath("$.user.address.city").value("Cape Town"))
+                .andExpect(jsonPath("$.user.address.province").value("WESTERN_CAPE"))
+                .andExpect(jsonPath("$.user.address.postalCode").value("8001"))
                 // Returned to the Manager so onboarding works before any mail provider exists.
                 .andExpect(jsonPath("$.activationUrl").value(
                         org.hamcrest.Matchers.containsString("/activate?token=")))
@@ -93,9 +108,9 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                         .header("Authorization", "Bearer " + managerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"Impostor","email":"%s","address":"1 Main Rd",
+                                {"name":"Impostor","email":"%s","address":%s,
                                  "role":"TECHNICIAN"}
-                                """.formatted(email.toUpperCase())))
+                                """.formatted(email.toUpperCase(), VALID_ADDRESS)))
                 .andExpect(status().isConflict());
     }
 
@@ -105,9 +120,9 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                         .header("Authorization", "Bearer " + managerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"Second Manager","email":"%s","address":"9 Rivonia Rd",
+                                {"name":"Second Manager","email":"%s","address":%s,
                                  "role":"MANAGER"}
-                                """.formatted(unique("manager2"))))
+                                """.formatted(unique("manager2"), VALID_ADDRESS)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.user.role").value("MANAGER"))
                 // Managers have no dispatch availability, so no technician profile is created.
@@ -153,7 +168,8 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"Renamed","role":"TECHNICIAN"}"""))
+                                {"name":"Renamed","address":%s,"role":"TECHNICIAN"}"""
+                                .formatted(VALID_ADDRESS)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -161,7 +177,7 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
     @Test
     void letsAManagerEditTheirOwnProfileIncludingAddress() throws Exception {
         String email = unique("profile");
-        manager(email);
+        User self = manager(email);
         String token = tokenFor(email, MANAGER_PASSWORD);
 
         mvc.perform(put("/v1/auth/me")
@@ -169,11 +185,43 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"Renamed Manager","phone":"+27110000000",
-                                 "address":"5 Sandton Drive"}"""))
+                                 "address":%s}""".formatted(VALID_ADDRESS)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Renamed Manager"))
-                .andExpect(jsonPath("$.address").value("5 Sandton Drive"))
+                .andExpect(jsonPath("$.address.street").value("12 Long Street"))
+                .andExpect(jsonPath("$.address.province").value("WESTERN_CAPE"))
                 .andExpect(jsonPath("$.canEditAddress").value(true));
+
+        // A self-edit lands in the audit trail too (FR-09), distinguishable from a Manager
+        // editing someone else by its own action rather than actor-equals-target.
+        mvc.perform(get("/v1/admin/audit")
+                        .param("targetUserId", self.getId().toString())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].action").value("SELF_PROFILE_UPDATED"))
+                .andExpect(jsonPath("$.content[0].actorUserId").value(self.getId().toString()));
+    }
+
+    /** A no-op save (nothing actually changed) must not clutter the trail with an empty entry. */
+    @Test
+    void doesNotAuditAProfileSaveThatChangedNothing() throws Exception {
+        String email = unique("noopprofile");
+        User self = manager(email);
+        String token = tokenFor(email, MANAGER_PASSWORD);
+
+        mvc.perform(put("/v1/auth/me")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Test Manager","phone":null}"""))
+                .andExpect(status().isOk());
+
+        mvc.perform(get("/v1/admin/audit")
+                        .param("targetUserId", self.getId().toString())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     /**
@@ -191,11 +239,14 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"Renamed Tech","phone":"+27115555555",
-                                 "address":"Somewhere I Chose"}"""))
+                                 "address":%s}""".formatted(VALID_ADDRESS)))
                 .andExpect(status().isOk())
-                // The name change is honoured; the address is silently ignored.
+                // The name change is honoured; the address change is silently ignored — it
+                // still reads back as the one set at onboarding, not the WESTERN_CAPE one just
+                // submitted.
                 .andExpect(jsonPath("$.name").value("Renamed Tech"))
-                .andExpect(jsonPath("$.address").value("1 Test Street, Durban"))
+                .andExpect(jsonPath("$.address.street").value("1 Test Street"))
+                .andExpect(jsonPath("$.address.province").value("KWAZULU_NATAL"))
                 .andExpect(jsonPath("$.canEditAddress").value(false));
     }
 
@@ -482,8 +533,8 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"Test Technician","email":"%s",
-                                 "address":"1 Test Street, Durban","role":"TECHNICIAN"}
-                                """.formatted(email)))
+                                 "address":%s,"role":"TECHNICIAN"}
+                                """.formatted(email, TECHNICIAN_ADDRESS)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
     }

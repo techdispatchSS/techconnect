@@ -1,12 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AccountService } from '../../../core/auth/account.service';
@@ -25,16 +19,7 @@ export type SetPasswordMode = 'ACTIVATE' | 'RESET';
  */
 @Component({
   selector: 'app-set-password',
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressBarModule,
-  ],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './set-password.html',
   styleUrl: '../auth-page.scss',
 })

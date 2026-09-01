@@ -1,4 +1,4 @@
-package silver.solutions.techdispatch.notification;
+package silver.solutions.techdispatch.service.implementation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,7 +7,8 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import silver.solutions.techdispatch.config.TechDispatchProperties;
-import silver.solutions.techdispatch.domain.User;
+import silver.solutions.techdispatch.entity.User;
+import silver.solutions.techdispatch.service.NotificationService;
 
 /**
  * SMTP delivery. In local development this points at the Mailpit container from

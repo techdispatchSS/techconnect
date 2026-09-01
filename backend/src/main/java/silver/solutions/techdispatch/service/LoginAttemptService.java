@@ -1,4 +1,4 @@
-package silver.solutions.techdispatch.auth;
+package silver.solutions.techdispatch.service;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import silver.solutions.techdispatch.config.TechDispatchProperties;
-import silver.solutions.techdispatch.domain.User;
+import silver.solutions.techdispatch.entity.User;
 import silver.solutions.techdispatch.repository.UserRepository;
 
 /**

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { Address, AddressRequest } from '../address.models';
 import { UserRole } from './auth.models';
 
 /** The signed-in user's own record, as returned by `GET /auth/me`. */
@@ -10,7 +11,7 @@ export interface Profile {
   email: string;
   name: string;
   phone: string | null;
-  address: string | null;
+  address: Address | null;
   role: UserRole;
   /**
    * True for Managers only. A technician's address is the origin point for distance-based
@@ -22,7 +23,9 @@ export interface Profile {
 export interface UpdateProfileRequest {
   name: string;
   phone: string | null;
-  address: string | null;
+  /** Omit entirely for a role other than MANAGER — the backend ignores it either way, but a
+   * Controller or Technician has no complete address to submit just to change their phone. */
+  address?: AddressRequest;
 }
 
 /** Account lifecycle calls that do not themselves establish a session. */

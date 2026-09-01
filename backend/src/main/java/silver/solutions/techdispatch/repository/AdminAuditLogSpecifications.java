@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
-import silver.solutions.techdispatch.domain.AdminAuditAction;
-import silver.solutions.techdispatch.domain.AdminAuditLog;
+import silver.solutions.techdispatch.entity.AdminAuditAction;
+import silver.solutions.techdispatch.entity.AdminAuditLog;
 
 /** Query predicates backing the searchable, filterable audit trail (FR-09). */
 public final class AdminAuditLogSpecifications {

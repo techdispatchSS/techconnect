@@ -1,4 +1,4 @@
-package silver.solutions.techdispatch.common;
+package silver.solutions.techdispatch.exception;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

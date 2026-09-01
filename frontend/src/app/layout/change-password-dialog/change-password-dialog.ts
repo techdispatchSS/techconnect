@@ -1,11 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, ViewEncapsulation, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { AccountService } from '../../core/auth/account.service';
@@ -20,15 +16,13 @@ import {
 /** Self-service password change, available to every role from the toolbar menu. */
 @Component({
   selector: 'app-change-password-dialog',
-  imports: [
-    ReactiveFormsModule,
-    MatButtonModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatProgressBarModule,
-  ],
+  imports: [ReactiveFormsModule, MatDialogModule],
   templateUrl: './change-password-dialog.html',
+  styleUrl: './change-password-dialog.scss',
+  // See profile-dialog.ts for why: this dialog's content portals to <body>, outside the
+  // component tree, so scoped encapsulation (and any ancestor's CSS custom properties)
+  // wouldn't reach it either way.
+  encapsulation: ViewEncapsulation.None,
 })
 export class ChangePasswordDialog {
   private readonly fb = inject(FormBuilder);

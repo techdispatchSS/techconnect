@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import silver.solutions.techdispatch.domain.TokenPurpose;
-import silver.solutions.techdispatch.domain.UserActivationToken;
+import silver.solutions.techdispatch.entity.TokenPurpose;
+import silver.solutions.techdispatch.entity.UserActivationToken;
 
 public interface UserActivationTokenRepository extends JpaRepository<UserActivationToken, UUID> {
 

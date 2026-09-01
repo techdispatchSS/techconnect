@@ -31,15 +31,14 @@ interface NavItem {
 }
 
 /**
- * Navigation for the whole product. Only the admin entry is live in this milestone; the
- * incident and job areas are declared here so the controller dashboard and technician PWA
- * drop into an existing frame rather than needing the shell rebuilt around them.
+ * Navigation for the non-admin product surface. The Manager admin portal has its own
+ * dedicated shell (`AdminShell`) and never reaches this one; these entries are declared here
+ * so the controller dashboard and technician PWA drop into an existing frame rather than
+ * needing the shell rebuilt around them once they exist.
  */
 const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Incidents', icon: 'inbox', route: '/incidents', roles: ['CONTROLLER'] },
   { label: 'My jobs', icon: 'construction', route: '/jobs', roles: ['TECHNICIAN'] },
-  { label: 'Users', icon: 'group', route: '/admin/users', roles: ['MANAGER'] },
-  { label: 'Audit trail', icon: 'history', route: '/admin/audit', roles: ['MANAGER'] },
 ];
 
 @Component({
@@ -158,11 +157,14 @@ export class AppShell implements OnInit {
   }
 
   editProfile(): void {
-    this.dialog.open(ProfileDialog, { width: '28rem' });
+    // Same dialog the admin portal opens — its content now follows that design system
+    // regardless of which shell opens it (see profile-dialog.ts), so the panel class keeps
+    // the outer frame square to match rather than clashing with the squared-off content.
+    this.dialog.open(ProfileDialog, { width: '28rem', panelClass: 'pd-dialog-panel' });
   }
 
   changePassword(): void {
-    this.dialog.open(ChangePasswordDialog, { width: '26rem' });
+    this.dialog.open(ChangePasswordDialog, { width: '26rem', panelClass: 'cpd-dialog-panel' });
   }
 
   logout(): void {

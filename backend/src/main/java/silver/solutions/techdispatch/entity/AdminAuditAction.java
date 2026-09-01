@@ -1,4 +1,4 @@
-package silver.solutions.techdispatch.domain;
+package silver.solutions.techdispatch.entity;
 
 /**
  * Administrative actions recorded in {@code admin_audit_log}. FR-09 mandates an audit
@@ -11,5 +11,8 @@ public enum AdminAuditAction {
     USER_ROLE_CHANGED,
     USER_DEACTIVATED,
     USER_REACTIVATED,
-    INVITE_RESENT
+    INVITE_RESENT,
+    /** Self-service edit from the profile menu — actor and target are the same user, unlike
+     * {@link #USER_UPDATED}, which is a Manager editing someone else. */
+    SELF_PROFILE_UPDATED
 }

@@ -6,12 +6,12 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import silver.solutions.techdispatch.auth.ActivationTokenService;
-import silver.solutions.techdispatch.domain.TokenPurpose;
-import silver.solutions.techdispatch.domain.User;
-import silver.solutions.techdispatch.domain.UserRole;
-import silver.solutions.techdispatch.domain.UserStatus;
-import silver.solutions.techdispatch.notification.NotificationService;
+import silver.solutions.techdispatch.service.ActivationTokenService;
+import silver.solutions.techdispatch.entity.TokenPurpose;
+import silver.solutions.techdispatch.entity.User;
+import silver.solutions.techdispatch.entity.UserRole;
+import silver.solutions.techdispatch.entity.UserStatus;
+import silver.solutions.techdispatch.service.NotificationService;
 import silver.solutions.techdispatch.repository.UserRepository;
 
 /**

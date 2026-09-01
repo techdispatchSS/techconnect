@@ -1,30 +1,25 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 
+interface HeroStat {
+  readonly value: string;
+  readonly label: string;
+}
+
+// No support inbox is configured anywhere in the backend (techdispatch.mail.from is a
+// no-reply *sending* address only) — this is a placeholder. Swap it for wherever sign-in
+// trouble should actually land before this ships.
+const SUPPORT_EMAIL = 'support@techdispatch.co.za';
+
 @Component({
   selector: 'app-login',
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressBarModule,
-  ],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
-  styleUrl: '../auth-page.scss',
+  styleUrl: './login.scss',
 })
 export class Login {
   private readonly fb = inject(FormBuilder);
@@ -36,13 +31,36 @@ export class Login {
   readonly errorMessage = signal<string | null>(null);
   readonly hidePassword = signal(true);
 
+  // Placeholder brand copy, not wired to a real count — swap for real figures once there's
+  // somewhere to source them from an unauthenticated screen.
+  readonly heroStats: readonly HeroStat[] = [
+    { value: '24/7', label: 'Field coverage' },
+    { value: '8h', label: 'Session length' },
+    { value: '3', label: 'Roles, one board' },
+  ];
+
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
+    remember: [true],
   });
 
   togglePassword(): void {
     this.hidePassword.update((hidden) => !hidden);
+  }
+
+  /** Pre-fills the message with what the recipient needs — including the email they were
+   * trying to sign in with, if they'd already typed one — so a struggling technician doesn't
+   * have to compose a support request from a blank subject line. */
+  contactHref(): string {
+    const typedEmail = this.form.controls.email.value.trim();
+    const subject = encodeURIComponent('Trouble signing in to TechDispatch');
+    const body = encodeURIComponent(
+      `Hi,\n\nI'm having trouble signing in to TechDispatch.\n\n` +
+        `My email: ${typedEmail || '(enter the email you sign in with)'}\n` +
+        `What's happening: \n`,
+    );
+    return `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
   }
 
   submit(): void {
@@ -54,9 +72,9 @@ export class Login {
     this.submitting.set(true);
     this.errorMessage.set(null);
 
-    const { email, password } = this.form.getRawValue();
+    const { email, password, remember } = this.form.getRawValue();
 
-    this.auth.login(email, password).subscribe({
+    this.auth.login(email, password, remember).subscribe({
       next: (response) => {
         this.submitting.set(false);
         // Honour where the guard was taking them, falling back to their role's home.

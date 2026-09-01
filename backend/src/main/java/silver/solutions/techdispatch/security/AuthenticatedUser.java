@@ -1,7 +1,7 @@
 package silver.solutions.techdispatch.security;
 
 import java.util.UUID;
-import silver.solutions.techdispatch.domain.UserRole;
+import silver.solutions.techdispatch.entity.UserRole;
 
 /**
  * The authenticated principal exposed to controllers. Resolved from the JWT on every

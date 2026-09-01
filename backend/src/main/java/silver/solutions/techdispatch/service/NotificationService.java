@@ -1,6 +1,6 @@
-package silver.solutions.techdispatch.notification;
+package silver.solutions.techdispatch.service;
 
-import silver.solutions.techdispatch.domain.User;
+import silver.solutions.techdispatch.entity.User;
 
 /**
  * Outbound notifications (PRD FR-08).

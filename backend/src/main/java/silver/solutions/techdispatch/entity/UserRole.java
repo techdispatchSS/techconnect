@@ -1,4 +1,4 @@
-package silver.solutions.techdispatch.domain;
+package silver.solutions.techdispatch.entity;
 
 /**
  * PRD FR-01. There is deliberately no separate ADMIN role: the Manager holds the

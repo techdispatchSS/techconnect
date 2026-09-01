@@ -2,7 +2,7 @@ package silver.solutions.techdispatch;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import silver.solutions.techdispatch.notification.NotificationService;
+import silver.solutions.techdispatch.service.NotificationService;
 
 /**
  * Smoke test: the context must wire up and Flyway must migrate cleanly against a real

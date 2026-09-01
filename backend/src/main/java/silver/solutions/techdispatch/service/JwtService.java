@@ -1,4 +1,4 @@
-package silver.solutions.techdispatch.security;
+package silver.solutions.techdispatch.service;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -12,7 +12,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.stereotype.Service;
 import silver.solutions.techdispatch.config.TechDispatchProperties;
-import silver.solutions.techdispatch.domain.User;
+import silver.solutions.techdispatch.entity.User;
 
 /**
  * Mints the self-issued JWTs described in PRD §8.1. There is no external identity

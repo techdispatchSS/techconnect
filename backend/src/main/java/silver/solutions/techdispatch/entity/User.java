@@ -1,6 +1,7 @@
-package silver.solutions.techdispatch.domain;
+package silver.solutions.techdispatch.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -49,11 +50,12 @@ public class User {
     private String phone;
 
     /**
-     * Postal address. For technicians this is the origin point for distance-based job
-     * matching (Phase 2), which is why only a Manager may change it — a technician editing
+     * Structured postal address. For technicians this is the origin point for distance-based
+     * job matching (Phase 2), which is why only a Manager may change it — a technician editing
      * their own address would be editing dispatch logic.
      */
-    private String address;
+    @Embedded
+    private Address address;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

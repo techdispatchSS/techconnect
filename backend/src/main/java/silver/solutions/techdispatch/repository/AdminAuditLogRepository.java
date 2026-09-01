@@ -5,7 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.Repository;
-import silver.solutions.techdispatch.domain.AdminAuditLog;
+import silver.solutions.techdispatch.entity.AdminAuditLog;
 
 /**
  * Deliberately extends the bare {@link Repository} marker rather than {@code JpaRepository}.

@@ -1,4 +1,4 @@
-package silver.solutions.techdispatch.domain;
+package silver.solutions.techdispatch.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

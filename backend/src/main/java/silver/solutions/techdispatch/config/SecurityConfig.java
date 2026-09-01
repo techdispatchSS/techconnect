@@ -16,8 +16,8 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import silver.solutions.techdispatch.security.JwtService;
 import silver.solutions.techdispatch.security.TechDispatchJwtAuthenticationConverter;
+import silver.solutions.techdispatch.service.JwtService;
 
 /**
  * Self-issued JWT security (PRD FR-01, §8.1, §9.2). No external identity provider is

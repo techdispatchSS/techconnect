@@ -1,4 +1,4 @@
-package silver.solutions.techdispatch.common;
+package silver.solutions.techdispatch.dto.response.common;
 
 import java.util.List;
 import java.util.function.Function;

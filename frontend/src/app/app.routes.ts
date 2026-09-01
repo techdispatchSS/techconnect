@@ -30,19 +30,23 @@ export const routes: Routes = [
     title: 'Forgot your password · TechDispatch',
   },
 
-  // --- Authenticated: everything inside the application shell ---
+  // --- Admin portal: its own dedicated shell (Manager-only), not nested inside the
+  // generic AppShell — see admin-shell.ts. ---
+  {
+    path: 'admin',
+    loadComponent: () => import('./features/admin/admin-shell/admin-shell').then((m) => m.AdminShell),
+    // A usability guard only — the backend enforces the same rule on every request.
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['MANAGER'] },
+    loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes),
+  },
+
+  // --- Authenticated: everything else inside the application shell ---
   {
     path: '',
     loadComponent: () => import('./layout/app-shell/app-shell').then((m) => m.AppShell),
     canActivate: [authGuard],
     children: [
-      {
-        path: 'admin',
-        // A usability guard only — the backend enforces the same rule on every request.
-        canActivate: [roleGuard],
-        data: { roles: ['MANAGER'] },
-        loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes),
-      },
       {
         path: 'forbidden',
         loadComponent: () =>

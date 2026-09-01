@@ -1,4 +1,4 @@
-package silver.solutions.techdispatch.domain;
+package silver.solutions.techdispatch.entity;
 
 public enum UserStatus {
     /** Created by a Manager but has never set a password. Cannot log in. */

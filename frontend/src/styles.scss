@@ -59,10 +59,8 @@ html {
   --mat-sys-inverse-on-surface: #ffffff;
   --mat-sys-inverse-primary: #d6d7db;
 
-  // `mat-card` is the other raised-surface container in the app (login, user detail,
-  // dialogs). Pinned to the exact same white/radius/shadow as `.td-panel` below so every
-  // card in the product reads as one family instead of two: Material's stock elevated card
-  // otherwise ships a tinted off-white fill and a harsher, untinted drop shadow.
+  // The remaining `mat-card` usage (the "forbidden" page). Kept rounded/white rather than
+  // the monochrome default so it still reads as a raised surface on the gray canvas.
   --mat-card-elevated-container-color: #ffffff;
   --mat-card-elevated-container-shape: 1rem;
   --mat-card-elevated-container-elevation:
@@ -97,34 +95,11 @@ a {
   color: var(--mat-sys-primary);
   text-underline-offset: 0.2em;
 }
-/* --- Semantic status tokens ---
- *
- * Account status is not decoration, it is data: a Manager scanning the user table must be
- * able to tell Active from Pending from Deactivated without reading the label. The Material
- * theme is azure primary with a blue tertiary, so mapping statuses onto theme roles gave
- * Active and Pending near-identical pale blues (rgb(224,224,255) vs rgb(218,226,249)) and
- * destroyed that at-a-glance read.
- *
- * These are semantic tokens in the same category as Material's own `error` role, not a second
- * accent palette. The page accent is monochrome throughout — status is the one place color
- * carries meaning, which is exactly why it must not compete with a decorative accent.
- */
-:root {
-  --td-status-active-bg: #d3efdd;
-  --td-status-active-fg: #0d4a29;
-  --td-status-pending-bg: #fbe9c8;
-  --td-status-pending-fg: #6b4400;
-  --td-status-disabled-bg: #ffdad6;
-  --td-status-disabled-fg: #93000a;
-}
-
 /* --- Shared utility classes used across forms and dialogs --- */
 
-.full-width {
-  width: 100%;
-}
-
-// Material dialogs lay their fields out in a column with consistent spacing.
+// Material dialogs lay their fields out in a column with consistent spacing. Still relevant
+// even though the profile/change-password dialogs style their own `<form>` beyond this — they
+// keep a plain `<form>` inside `<mat-dialog-content>`, so this still applies to them.
 mat-dialog-content form {
   display: flex;
   flex-direction: column;
@@ -132,44 +107,8 @@ mat-dialog-content form {
   padding-top: 0.5rem;
 }
 
-.dialog-error {
-  margin: 0 0 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  background: var(--mat-sys-error-container);
-  color: var(--mat-sys-on-error-container);
-  font: var(--mat-sys-body-small);
-}
-
-.dialog-hint {
-  margin: 0 0 0.5rem;
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-body-small);
-}
-
 // Destructive confirmations read as dangerous rather than routine.
 .confirm-destructive {
   --mat-button-filled-container-color: var(--mat-sys-error);
   --mat-button-filled-label-text-color: var(--mat-sys-on-error);
-}
-
-/* --- Panel: the raised-white-surface-on-gray-canvas container used for every content
- * section (tables, filter bars) that isn't already a `mat-card`. Same corner radius and
- * shadow language as `mat-card` so a table panel and a detail card read as the same family
- * of surface, not two different systems. */
-.td-panel {
-  background: var(--mat-sys-surface);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 1rem;
-  box-shadow:
-    0 1px 2px rgba(15, 15, 18, 0.04),
-    0 6px 20px rgba(15, 15, 18, 0.05);
-  padding: 1.5rem;
-}
-
-@media (max-width: 599px) {
-  .td-panel {
-    padding: 1rem;
-    border-radius: 0.75rem;
-  }
 }

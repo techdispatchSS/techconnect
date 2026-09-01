@@ -1,21 +1,12 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule } from '@angular/material/table';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { AdminUserService } from '../admin-user.service';
 import { AUDIT_ACTION_LABELS, AdminAuditAction, AuditEntry } from '../admin.models';
+import { AdminIcon } from '../ui/admin-icon/admin-icon';
 
 /**
  * Read-only view of the administrative audit trail (FR-09). There is no edit or delete
@@ -23,34 +14,23 @@ import { AUDIT_ACTION_LABELS, AdminAuditAction, AuditEntry } from '../admin.mode
  *
  * <p>All searching and filtering is delegated to the server. An audit log is append-only and
  * retained for two years (§9.5), so it can never be loaded into the browser to filter there.
+ *
+ * <p>A `?targetUserId=&name=` deep link (from the People directory's panel) pins the real
+ * `targetUserId` API filter rather than faking it through the free-text search box.
  */
 @Component({
   selector: 'app-audit-list',
-  providers: [provideNativeDateAdapter()],
-  imports: [
-    DatePipe,
-    ReactiveFormsModule,
-    RouterLink,
-    MatButtonModule,
-    MatDatepickerModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatPaginatorModule,
-    MatProgressBarModule,
-    MatSelectModule,
-    MatTableModule,
-  ],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, AdminIcon],
   templateUrl: './audit-list.html',
   styleUrl: './audit-list.scss',
 })
 export class AuditList implements OnInit {
   private readonly adminUsers = inject(AdminUserService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  readonly displayedColumns = ['action', 'target', 'actor', 'when'] as const;
-
-  /** Drives the action dropdown, so it can never drift from the labels map. */
   readonly actions = Object.keys(AUDIT_ACTION_LABELS) as AdminAuditAction[];
+  readonly actionLabels = AUDIT_ACTION_LABELS;
 
   readonly entries = signal<AuditEntry[]>([]);
   readonly totalElements = signal(0);
@@ -61,11 +41,17 @@ export class AuditList implements OnInit {
 
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly actionFilter = signal<AdminAuditAction | null>(null);
-  readonly fromDate = signal<Date | null>(null);
-  readonly toDate = signal<Date | null>(null);
+  readonly fromDate = signal<string | null>(null);
+  readonly toDate = signal<string | null>(null);
+
+  readonly targetUserId = signal<string | null>(null);
+  readonly targetUserName = signal<string | null>(null);
 
   ngOnInit(): void {
-    // Debounced so typing a name does not fire a request per keystroke.
+    const params = this.route.snapshot.queryParamMap;
+    this.targetUserId.set(params.get('targetUserId'));
+    this.targetUserName.set(params.get('name'));
+
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(() => this.reload());
@@ -79,11 +65,11 @@ export class AuditList implements OnInit {
 
     this.adminUsers
       .audit({
-        targetUserId: null,
+        targetUserId: this.targetUserId(),
         action: this.actionFilter(),
         q: this.searchControl.value,
-        from: isoDate(this.fromDate()),
-        to: isoDate(this.toDate()),
+        from: this.fromDate(),
+        to: this.toDate(),
         page: this.pageIndex(),
         size: this.pageSize(),
       })
@@ -102,24 +88,41 @@ export class AuditList implements OnInit {
       });
   }
 
-  onActionFilter(action: AdminAuditAction | null): void {
-    this.actionFilter.set(action);
+  onActionFilter(value: string): void {
+    this.actionFilter.set((value || null) as AdminAuditAction | null);
     this.reload();
   }
 
-  onFromDate(date: Date | null): void {
-    this.fromDate.set(date);
+  onFromDate(value: string): void {
+    this.fromDate.set(value || null);
     this.reload();
   }
 
-  onToDate(date: Date | null): void {
-    this.toDate.set(date);
+  onToDate(value: string): void {
+    this.toDate.set(value || null);
     this.reload();
   }
 
-  onPage(event: PageEvent): void {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
+  clearTargetUser(): void {
+    this.targetUserId.set(null);
+    this.targetUserName.set(null);
+    void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+    this.reload();
+  }
+
+  onPrevPage(): void {
+    if (this.pageIndex() === 0) {
+      return;
+    }
+    this.pageIndex.update((i) => i - 1);
+    this.load();
+  }
+
+  onNextPage(): void {
+    if ((this.pageIndex() + 1) * this.pageSize() >= this.totalElements()) {
+      return;
+    }
+    this.pageIndex.update((i) => i + 1);
     this.load();
   }
 
@@ -128,7 +131,7 @@ export class AuditList implements OnInit {
     this.fromDate.set(null);
     this.toDate.set(null);
     this.searchControl.setValue('', { emitEvent: false });
-    this.reload();
+    this.clearTargetUser();
   }
 
   hasFilters(): boolean {
@@ -136,28 +139,17 @@ export class AuditList implements OnInit {
       this.actionFilter() !== null ||
       this.fromDate() !== null ||
       this.toDate() !== null ||
+      this.targetUserId() !== null ||
       this.searchControl.value.trim().length > 0
     );
   }
 
-  /** `*matCellDef="let entry"` is untyped, so the label is resolved through an accessor. */
   actionLabel(action: AdminAuditAction): string {
     return AUDIT_ACTION_LABELS[action];
   }
 
-  /** Any filter change invalidates the current page offset. */
   private reload(): void {
     this.pageIndex.set(0);
     this.load();
   }
-}
-
-/** Formats as local `yyyy-MM-dd`; the API treats the range as whole days. */
-function isoDate(date: Date | null): string | null {
-  if (!date) {
-    return null;
-  }
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
 }

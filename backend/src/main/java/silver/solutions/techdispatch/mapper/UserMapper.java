@@ -6,6 +6,7 @@ import silver.solutions.techdispatch.dto.response.auth.ProfileResponse;
 import silver.solutions.techdispatch.entity.TechnicianStatus;
 import silver.solutions.techdispatch.entity.User;
 import silver.solutions.techdispatch.entity.UserRole;
+import silver.solutions.techdispatch.entity.UserStatus;
 
 @Component
 public class UserMapper {
@@ -22,7 +23,7 @@ public class UserMapper {
                 user.getName(),
                 user.getEmail(),
                 user.getPhone(),
-                addressMapper.toAddressResponse(user.getAddress()),
+                addressMapper.toAddressResponse(user.getAddress()).orElse(null),
                 user.getRole(),
                 user.getStatus(),
                 technicianStatus,
@@ -37,8 +38,24 @@ public class UserMapper {
                 user.getEmail(),
                 user.getName(),
                 user.getPhone(),
-                addressMapper.toAddressResponse(user.getAddress()),
+                addressMapper.toAddressResponse(user.getAddress()).orElse(null),
                 user.getRole(),
                 user.getRole() == UserRole.MANAGER);
+    }
+
+    /** Builds a user with no address, phone or {@code createdBy} — only the bootstrap Manager
+     * (see {@code BootstrapAdminRunner}) is ever constructed this way; every user onboarded
+     * through the admin portal goes through {@code AdminUserService.create} instead, which
+     * has those fields to set. Email keeps whatever case the caller supplied, matching
+     * {@code AdminUserService.create} — lookups are case-insensitive
+     * ({@code UserRepository.findByEmailIgnoreCase}), so normalising it here would just be an
+     * inconsistency, not a correctness fix. */
+    public User toUser(String email, String name, UserRole role, UserStatus status) {
+        User user = new User();
+        user.setEmail(email.trim());
+        user.setName(name);
+        user.setRole(role);
+        user.setStatus(status);
+        return user;
     }
 }

@@ -6,13 +6,14 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import silver.solutions.techdispatch.service.ActivationTokenService;
 import silver.solutions.techdispatch.entity.TokenPurpose;
 import silver.solutions.techdispatch.entity.User;
 import silver.solutions.techdispatch.entity.UserRole;
 import silver.solutions.techdispatch.entity.UserStatus;
-import silver.solutions.techdispatch.service.NotificationService;
+import silver.solutions.techdispatch.mapper.UserMapper;
 import silver.solutions.techdispatch.repository.UserRepository;
+import silver.solutions.techdispatch.service.ActivationTokenService;
+import silver.solutions.techdispatch.service.NotificationService;
 
 /**
  * Resolves the chicken-and-egg problem in M-06: only a Manager can create users, so a fresh
@@ -29,16 +30,19 @@ public class BootstrapAdminRunner implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(BootstrapAdminRunner.class);
 
     private final UserRepository users;
+    private final UserMapper userMapper;
     private final ActivationTokenService activationTokens;
     private final NotificationService notifications;
     private final TechDispatchProperties properties;
 
     public BootstrapAdminRunner(
             UserRepository users,
+            UserMapper userMapper,
             ActivationTokenService activationTokens,
             NotificationService notifications,
             TechDispatchProperties properties) {
         this.users = users;
+        this.userMapper = userMapper;
         this.activationTokens = activationTokens;
         this.notifications = notifications;
         this.properties = properties;
@@ -68,11 +72,9 @@ public class BootstrapAdminRunner implements ApplicationRunner {
             return;
         }
 
-        User admin = new User();
-        admin.setEmail(email.trim());
-        admin.setName(properties.bootstrapAdmin().name());
-        admin.setRole(UserRole.MANAGER);
-        admin.setStatus(UserStatus.PENDING_ACTIVATION);
+        User admin = userMapper.toUser(
+                email, properties.bootstrapAdmin().name(), UserRole.MANAGER,
+                UserStatus.PENDING_ACTIVATION);
         users.save(admin);
 
         String token = activationTokens.issue(admin.getId(), TokenPurpose.ACTIVATION);

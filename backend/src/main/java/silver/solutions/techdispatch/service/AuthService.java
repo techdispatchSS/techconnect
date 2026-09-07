@@ -1,9 +1,6 @@
 package silver.solutions.techdispatch.service;
 
 import java.time.Instant;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -15,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import silver.solutions.techdispatch.dto.request.auth.UpdateProfileRequest;
 import silver.solutions.techdispatch.dto.response.auth.LoginResponse;
 import silver.solutions.techdispatch.dto.response.auth.ProfileResponse;
-import silver.solutions.techdispatch.entity.Address;
 import silver.solutions.techdispatch.entity.AdminAuditAction;
 import silver.solutions.techdispatch.entity.TokenPurpose;
 import silver.solutions.techdispatch.entity.User;
@@ -25,6 +21,8 @@ import silver.solutions.techdispatch.exception.ApiException;
 import silver.solutions.techdispatch.mapper.AddressMapper;
 import silver.solutions.techdispatch.mapper.UserMapper;
 import silver.solutions.techdispatch.repository.UserRepository;
+import silver.solutions.techdispatch.util.ChangeTracker;
+import silver.solutions.techdispatch.util.Strings;
 
 /** Login, activation, and password lifecycle (PRD FR-01, §8.1, §9.2). */
 @Service
@@ -162,34 +160,20 @@ public class AuthService {
     @Transactional
     public ProfileResponse updateProfile(UUID userId, UpdateProfileRequest request) {
         User user = require(userId);
-        Map<String, Object> changes = new LinkedHashMap<>();
+        ChangeTracker tracker = new ChangeTracker();
 
-        String name = request.name().trim();
-        if (!user.getName().equals(name)) {
-            changes.put("name", Map.of("from", user.getName(), "to", name));
-            user.setName(name);
-        }
-
-        String phone = blankToNull(request.phone());
-        if (!Objects.equals(user.getPhone(), phone)) {
-            changes.put("phone", Map.of("from", String.valueOf(user.getPhone()),
-                    "to", String.valueOf(phone)));
-            user.setPhone(phone);
-        }
+        tracker.apply("name", user.getName(), request.name().trim(), user::setName);
+        tracker.apply("phone", user.getPhone(), Strings.blankToNull(request.phone()), user::setPhone);
 
         if (user.getRole() == UserRole.MANAGER && request.address() != null) {
-            Address address = addressMapper.toEntity(request.address());
-            if (!Objects.equals(user.getAddress(), address)) {
-                changes.put("address", Map.of("from", String.valueOf(user.getAddress()),
-                        "to", String.valueOf(address)));
-                user.setAddress(address);
-            }
+            tracker.apply("address", user.getAddress(), addressMapper.toEntity(request.address()),
+                    user::setAddress);
         }
 
         users.save(user);
 
-        if (!changes.isEmpty()) {
-            audit.record(userId, AdminAuditAction.SELF_PROFILE_UPDATED, userId, changes);
+        if (!tracker.isEmpty()) {
+            audit.record(userId, AdminAuditAction.SELF_PROFILE_UPDATED, userId, tracker.changes());
         }
 
         return userMapper.toProfileResponse(user);
@@ -278,10 +262,6 @@ public class AuthService {
 
     private void clearLockState(User user) {
         loginAttempts.clear(user);
-    }
-
-    private static String blankToNull(String value) {
-        return (value == null || value.isBlank()) ? null : value.trim();
     }
 
     private static ApiException unauthorized(String message) {

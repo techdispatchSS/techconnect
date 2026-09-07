@@ -1,5 +1,6 @@
 package silver.solutions.techdispatch.mapper;
 
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 import silver.solutions.techdispatch.dto.request.common.AddressRequest;
 import silver.solutions.techdispatch.dto.response.common.AddressResponse;
@@ -17,17 +18,17 @@ public class AddressMapper {
                 request.postalCode());
     }
 
-    /** Null in, null out — the bootstrap Manager has no address at all (see {@link
-     * Address}'s javadoc). */
-    public AddressResponse toAddressResponse(Address address) {
-        if (address == null) {
-            return null;
-        }
-        return new AddressResponse(
-                address.getStreet(),
-                address.getSuburb(),
-                address.getCity(),
-                address.getProvince(),
-                address.getPostalCode());
+    /**
+     * Empty in, empty out — the bootstrap Manager has no address at all (see {@link
+     * Address}'s javadoc). {@link Optional} rather than a bare {@code null} return makes that
+     * a fact callers must handle explicitly, not one they can forget to check.
+     */
+    public Optional<AddressResponse> toAddressResponse(Address address) {
+        return Optional.ofNullable(address).map(a -> new AddressResponse(
+                a.getStreet(),
+                a.getSuburb(),
+                a.getCity(),
+                a.getProvince(),
+                a.getPostalCode()));
     }
 }

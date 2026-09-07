@@ -1,9 +1,7 @@
 package silver.solutions.techdispatch.service;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +16,6 @@ import silver.solutions.techdispatch.dto.response.admin.CreateUserResponse;
 import silver.solutions.techdispatch.dto.response.admin.InviteResponse;
 import silver.solutions.techdispatch.dto.response.admin.UserResponse;
 import silver.solutions.techdispatch.dto.response.common.PageResponse;
-import silver.solutions.techdispatch.entity.Address;
 import silver.solutions.techdispatch.entity.AdminAuditAction;
 import silver.solutions.techdispatch.entity.TechnicianProfile;
 import silver.solutions.techdispatch.entity.TechnicianStatus;
@@ -32,6 +29,8 @@ import silver.solutions.techdispatch.mapper.UserMapper;
 import silver.solutions.techdispatch.repository.TechnicianProfileRepository;
 import silver.solutions.techdispatch.repository.UserRepository;
 import silver.solutions.techdispatch.repository.UserSpecifications;
+import silver.solutions.techdispatch.util.ChangeTracker;
+import silver.solutions.techdispatch.util.Strings;
 
 /**
  * Onboarding and offboarding of Controllers and Technicians (PRD §2 MVP scope, story M-06).
@@ -112,7 +111,7 @@ public class AdminUserService {
         User user = new User();
         user.setName(request.name().trim());
         user.setEmail(request.email().trim());
-        user.setPhone(blankToNull(request.phone()));
+        user.setPhone(Strings.blankToNull(request.phone()));
         user.setAddress(addressMapper.toEntity(request.address()));
         user.setRole(role);
         user.setStatus(UserStatus.PENDING_ACTIVATION);
@@ -145,32 +144,19 @@ public class AdminUserService {
                     "Edit your own details from your profile menu, not the user list.");
         }
 
-        Map<String, Object> changes = new LinkedHashMap<>();
-        if (!user.getName().equals(request.name().trim())) {
-            changes.put("name", Map.of("from", user.getName(), "to", request.name().trim()));
-            user.setName(request.name().trim());
-        }
-
-        String phone = blankToNull(request.phone());
-        if (!Objects.equals(user.getPhone(), phone)) {
-            changes.put("phone", Map.of("from", String.valueOf(user.getPhone()),
-                    "to", String.valueOf(phone)));
-            user.setPhone(phone);
-        }
+        ChangeTracker tracker = new ChangeTracker();
+        tracker.apply("name", user.getName(), request.name().trim(), user::setName);
+        tracker.apply("phone", user.getPhone(), Strings.blankToNull(request.phone()), user::setPhone);
 
         // Only a Manager reaches this method at all, which is what enforces "the admin is the
         // only one able to change an address".
-        Address address = addressMapper.toEntity(request.address());
-        if (!Objects.equals(user.getAddress(), address)) {
-            changes.put("address", Map.of("from", String.valueOf(user.getAddress()),
-                    "to", String.valueOf(address)));
-            user.setAddress(address);
-        }
+        tracker.apply("address", user.getAddress(), addressMapper.toEntity(request.address()),
+                user::setAddress);
 
         boolean roleChanged = user.getRole() != newRole;
         UserRole previousRole = user.getRole();
         if (roleChanged) {
-            changes.put("role", Map.of("from", previousRole.name(), "to", newRole.name()));
+            tracker.record("role", previousRole.name(), newRole.name());
             user.setRole(newRole);
             // A role change alters what the token's authorities should be, so the old token
             // must not keep working with the old role for the rest of its 8 hours.
@@ -181,9 +167,9 @@ public class AdminUserService {
 
         if (roleChanged) {
             syncTechnicianProfile(user, previousRole);
-            audit.record(actorId, AdminAuditAction.USER_ROLE_CHANGED, user.getId(), changes);
-        } else if (!changes.isEmpty()) {
-            audit.record(actorId, AdminAuditAction.USER_UPDATED, user.getId(), changes);
+            audit.record(actorId, AdminAuditAction.USER_ROLE_CHANGED, user.getId(), tracker.changes());
+        } else if (!tracker.isEmpty()) {
+            audit.record(actorId, AdminAuditAction.USER_UPDATED, user.getId(), tracker.changes());
         }
 
         return userMapper.toUserResponse(user, technicianStatusOf(user));
@@ -334,9 +320,5 @@ public class AdminUserService {
 
     private User require(UUID id) {
         return users.findById(id).orElseThrow(() -> ApiException.notFound("User not found"));
-    }
-
-    private static String blankToNull(String value) {
-        return (value == null || value.isBlank()) ? null : value.trim();
     }
 }

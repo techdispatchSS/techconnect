@@ -7,27 +7,27 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
-    title: 'Sign in · TechDispatch',
+    title: 'Sign in · TechConnect',
   },
   {
     path: 'activate',
     loadComponent: () =>
       import('./features/auth/set-password/set-password').then((m) => m.SetPassword),
     data: { mode: 'ACTIVATE' },
-    title: 'Activate your account · TechDispatch',
+    title: 'Activate your account · TechConnect',
   },
   {
     path: 'reset-password',
     loadComponent: () =>
       import('./features/auth/set-password/set-password').then((m) => m.SetPassword),
     data: { mode: 'RESET' },
-    title: 'Reset your password · TechDispatch',
+    title: 'Reset your password · TechConnect',
   },
   {
     path: 'forgot-password',
     loadComponent: () =>
       import('./features/auth/forgot-password/forgot-password').then((m) => m.ForgotPassword),
-    title: 'Forgot your password · TechDispatch',
+    title: 'Forgot your password · TechConnect',
   },
 
   // --- Admin portal: its own dedicated shell (Manager-only), not nested inside the
@@ -51,7 +51,7 @@ export const routes: Routes = [
         path: 'forbidden',
         loadComponent: () =>
           import('./features/errors/forbidden/forbidden').then((m) => m.Forbidden),
-        title: 'Not available · TechDispatch',
+        title: 'Not available · TechConnect',
       },
       // Root redirects by role, which is resolved at navigation time rather than baked in.
       {

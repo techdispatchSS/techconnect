@@ -10,7 +10,7 @@
 		<!-- lookup parent from repository -->
 	</parent>
 	<groupId>silver.solutions</groupId>
-	<artifactId>techdispatch</artifactId>
+	<artifactId>techconnect</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<name/>
 	<scm>

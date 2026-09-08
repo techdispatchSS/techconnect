@@ -7,25 +7,25 @@ export const adminRoutes: Routes = [
   {
     path: 'users',
     loadComponent: () => import('./user-list/user-list').then((m) => m.UserList),
-    title: 'Users · TechDispatch',
+    title: 'Users · TechConnect',
     data: { heading: 'People directory' },
   },
   {
     path: 'users/new',
     loadComponent: () => import('./user-create/user-create').then((m) => m.UserCreate),
-    title: 'Add a user · TechDispatch',
+    title: 'Add a user · TechConnect',
     data: { heading: 'Add a user' },
   },
   {
     path: 'invites',
     loadComponent: () => import('./invites/invites').then((m) => m.Invites),
-    title: 'Invites · TechDispatch',
+    title: 'Invites · TechConnect',
     data: { heading: 'Invites & activation' },
   },
   {
     path: 'audit',
     loadComponent: () => import('./audit-list/audit-list').then((m) => m.AuditList),
-    title: 'Audit trail · TechDispatch',
+    title: 'Audit trail · TechConnect',
     data: { heading: 'Audit trail' },
   },
 ];

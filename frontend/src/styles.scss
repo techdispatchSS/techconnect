@@ -106,9 +106,3 @@ mat-dialog-content form {
   gap: 0.25rem;
   padding-top: 0.5rem;
 }
-
-// Destructive confirmations read as dangerous rather than routine.
-.confirm-destructive {
-  --mat-button-filled-container-color: var(--mat-sys-error);
-  --mat-button-filled-label-text-color: var(--mat-sys-on-error);
-}

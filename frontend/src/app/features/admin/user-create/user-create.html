@@ -33,7 +33,32 @@
   </div>
 } @else {
   <div class="uc-layout">
-    <section class="admin-blueprint uc-form-card">
+    <section class="uc-form-and-steps">
+      <div class="uc-steps">
+        <div class="uc-step uc-step--active">
+          <span class="uc-step-n">1</span>
+          <span class="uc-step-meta">
+            <span class="uc-step-label">Details</span>
+            <span class="uc-step-hint">Name, contact, role</span>
+          </span>
+        </div>
+        <div class="uc-step">
+          <span class="uc-step-n">2</span>
+          <span class="uc-step-meta">
+            <span class="uc-step-label">Role &amp; access</span>
+            <span class="uc-step-hint">Permissions and region</span>
+          </span>
+        </div>
+        <div class="uc-step">
+          <span class="uc-step-n">3</span>
+          <span class="uc-step-meta">
+            <span class="uc-step-label">Send invite</span>
+            <span class="uc-step-hint">Link to set password</span>
+          </span>
+        </div>
+      </div>
+
+    <div class="admin-blueprint uc-form-card">
       @if (errorMessage()) {
         <p class="uc-error" role="alert">{{ errorMessage() }}</p>
       }
@@ -57,7 +82,7 @@
               class="admin-input"
               type="email"
               formControlName="email"
-              placeholder="name&#64;techdispatch.co.za"
+              placeholder="name&#64;techconnect.app"
               autocomplete="off"
               autocapitalize="none"
             />
@@ -161,9 +186,11 @@
       @if (submitting()) {
         <div class="admin-progress"></div>
       }
+    </div>
     </section>
 
-    <aside class="admin-blueprint uc-info-card">
+    <aside class="uc-info-col">
+    <div class="admin-blueprint uc-info-card">
       <h6 class="admin-section-title">What happens next</h6>
       <div class="uc-flow-step">
         <span class="uc-flow-n">1</span>
@@ -186,6 +213,19 @@
           <span class="admin-hint">The user chooses their own password — no temporary password ever passes through you.</span>
         </span>
       </div>
+    </div>
+
+    <div class="uc-preview-card">
+      <span class="uc-preview-kicker">Invite email preview</span>
+      <span class="uc-preview-title">You've been added to TechConnect</span>
+      <p class="uc-preview-body">
+        Hi {{ previewName() || 'there' }} — your account has been set up as a
+        {{ roleLabels[previewRole()] }}. Tap below to set a password and check that
+        your details are right.
+      </p>
+      <span class="uc-preview-cta">Activate my account</span>
+      <span class="uc-preview-expiry">Link expires in 72 hours.</span>
+    </div>
     </aside>
   </div>
 }

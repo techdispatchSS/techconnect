@@ -1,4 +1,4 @@
-# TechDispatch project management setup
+# TechConnect project management setup
 
 Files in this bundle, and what to do with each.
 

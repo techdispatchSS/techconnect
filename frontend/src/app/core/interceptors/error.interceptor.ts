@@ -18,7 +18,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error instanceof HttpErrorResponse && (error.status === 0 || error.status >= 500)) {
         const message =
           error.status === 0
-            ? 'Cannot reach the TechDispatch server. Check your connection.'
+            ? 'Cannot reach the TechConnect server. Check your connection.'
             : 'Something went wrong on the server. Please try again.';
         snackBar.open(message, 'Dismiss', { duration: 6000 });
       }

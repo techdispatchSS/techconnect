@@ -18,33 +18,40 @@
 // through immediately.
 
 .admin-shell {
-  --admin-font-heading: 'Barlow Condensed', system-ui, sans-serif;
+  --admin-font-heading: 'Barlow', system-ui, sans-serif;
   --admin-font-body: 'Barlow', system-ui, sans-serif;
 
-  --admin-color-bg: #f2f2f3;
-  --admin-color-surface: #e9e9ea;
-  --admin-color-text: #1d1f20;
-  --admin-color-accent: #5980a6;
-  --admin-color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+  --admin-color-bg: #16191d;
+  --admin-color-surface: #1b1f24;
+  --admin-color-text: #edeff1;
+  --admin-color-accent: #f08221;
+  --admin-color-divider: color-mix(in srgb, #ffffff 14%, transparent);
 
-  --admin-neutral-100: #f5f5f8;
-  --admin-neutral-800: #424244;
-  --admin-neutral-900: #2b2b2d;
+  --admin-neutral-100: #23262b;
+  --admin-neutral-800: #9aa1a8;
+  --admin-neutral-900: #0e1013;
 
-  --admin-accent-100: #eef6ff;
-  --admin-accent-200: #d6ebff;
-  --admin-accent-400: #94bce3;
-  --admin-accent-600: #597ea3;
-  --admin-accent-700: #416180;
-  --admin-accent-800: #2c455d;
-  --admin-accent-900: #1d2d3d;
+  --admin-accent-100: color-mix(in srgb, #f08221 14%, transparent);
+  --admin-accent-200: color-mix(in srgb, #f08221 24%, transparent);
+  --admin-accent-400: #f0a265;
+  --admin-accent-600: #ff9540;
+  --admin-accent-700: #ffa254;
+  --admin-accent-800: #f0a265;
+  --admin-accent-900: #0e1013;
 
-  --admin-status-active-bg: #d3efdd;
-  --admin-status-active-fg: #0d4a29;
-  --admin-status-pending-bg: #fbe9c8;
-  --admin-status-pending-fg: #6b4400;
-  --admin-status-disabled-bg: #ffdad6;
-  --admin-status-disabled-fg: #93000a;
+  --admin-status-active-bg: color-mix(in srgb, #f08221 14%, transparent);
+  --admin-status-active-fg: #f0a265;
+  --admin-status-pending-bg: color-mix(in srgb, #f08221 14%, transparent);
+  --admin-status-pending-fg: #f0a265;
+  --admin-status-disabled-bg: color-mix(in srgb, #ffffff 5%, transparent);
+  --admin-status-disabled-fg: #9aa1a8;
+
+  // Distinct from --admin-status-disabled-fg above: that one is the neutral-gray "deactivated
+  // user" pill, deliberately desaturated to match the mockup. This is the actual warning/danger
+  // red — destructive buttons, field validation errors, locked-account notices — which must
+  // stay red regardless of that pill's color, or those signals silently vanish into gray.
+  --admin-color-danger: #ff6b6b;
+  --admin-color-danger-bg: color-mix(in srgb, #ff6b6b 14%, transparent);
 
   display: block;
   min-height: 100vh;
@@ -113,7 +120,7 @@
 }
 .admin-btn-primary {
   background: var(--admin-color-accent);
-  color: #fff;
+  color: #12140f;
   border-color: var(--admin-color-accent);
 }
 .admin-btn-primary:hover:not(:disabled) {
@@ -134,7 +141,7 @@
   background: color-mix(in srgb, var(--admin-color-accent) 10%, transparent);
 }
 .admin-btn-danger {
-  color: var(--admin-status-disabled-fg);
+  color: var(--admin-color-danger);
 }
 .admin-btn-icon {
   width: 36px;
@@ -224,7 +231,7 @@ textarea.admin-input {
 }
 .admin-seg-opt--active {
   background: var(--admin-color-accent);
-  color: #fff;
+  color: #12140f;
 }
 .admin-seg-opt:not(.admin-seg-opt--active):hover {
   background: color-mix(in srgb, var(--admin-color-text) 7%, transparent);
@@ -322,14 +329,18 @@ textarea.admin-input {
 .admin-tag-active {
   background: var(--admin-status-active-bg);
   color: var(--admin-status-active-fg);
+  border-color: color-mix(in srgb, var(--admin-color-accent) 50%, transparent);
 }
 .admin-tag-pending {
   background: var(--admin-status-pending-bg);
   color: var(--admin-status-pending-fg);
+  border-color: color-mix(in srgb, var(--admin-color-accent) 50%, transparent);
+  border-style: dashed;
 }
 .admin-tag-disabled {
   background: var(--admin-status-disabled-bg);
   color: var(--admin-status-disabled-fg);
+  border-color: color-mix(in srgb, #ffffff 16%, transparent);
 }
 .admin-tag-neutral {
   background: var(--admin-neutral-100);
@@ -366,7 +377,7 @@ textarea.admin-input {
 .admin-field-error {
   margin: 4px 0 0;
   font-size: 12px;
-  color: var(--admin-status-disabled-fg);
+  color: var(--admin-color-danger);
 }
 
 // ── Activation link box (shown after creating a user, or re-issuing an invite) ──
@@ -394,6 +405,7 @@ textarea.admin-input {
 // ── Stat tiles ──
 .admin-stat {
   background: var(--admin-color-surface);
+  border-left: 2px solid var(--admin-color-accent);
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
@@ -467,7 +479,7 @@ textarea.admin-input {
 
 .admin-shell-sidebar {
   grid-column: 1;
-  background: var(--admin-accent-900);
+  background: var(--admin-neutral-900);
   color: #f2f2f3;
   display: flex;
   flex-direction: column;
@@ -533,10 +545,10 @@ textarea.admin-input {
   text-decoration: none;
 }
 .admin-shell-nav-item:hover {
-  background: rgba(148, 188, 227, 0.14);
+  background: rgba(240, 130, 33, 0.09);
 }
 .admin-shell-nav-item--active {
-  background: rgba(148, 188, 227, 0.18);
+  background: rgba(240, 130, 33, 0.13);
   color: #f2f2f3;
   border-left-color: var(--admin-accent-400);
 }
@@ -618,7 +630,7 @@ textarea.admin-input {
   gap: 16px;
   padding: 16px 32px;
   border-bottom: 1px solid var(--admin-color-divider);
-  background: var(--admin-color-bg);
+  background: var(--admin-neutral-900);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -649,5 +661,65 @@ textarea.admin-input {
   }
   .admin-shell-title {
     font-size: 19px;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Deactivate/reactivate confirmation (shared/confirm-dialog). Its own
+// template already uses the real `.admin-btn` classes (see confirm-dialog.html)
+// rather than Material's button theming, so buttons pick up their normal
+// structural rules (padding, font, layout) from the plain `.admin-btn`
+// selectors above for free — those aren't custom-property-dependent. Only
+// color needs restating here: MatDialog portals this content to a
+// `cdk-overlay-container` at the end of <body>, outside `.admin-shell`'s DOM
+// subtree, so the `--admin-*` custom properties (and their colors) don't
+// cascade there — these are literal values, not var(). Opened with
+// `panelClass: 'admin-confirm-dialog'` (see user-list.ts) so this styling
+// only applies where it's explicitly opted into, leaving the shared
+// component's plain look untouched for any future non-admin use.
+// ════════════════════════════════════════════════════════════════════════
+.admin-confirm-dialog {
+  // Angular Material still reads these two roles for the dialog's own chrome
+  // (surface color, focus/hover state layers) even though the buttons no
+  // longer use Material's button theming.
+  --mat-sys-surface: #1b1f24;
+  --mat-sys-on-surface: #edeff1;
+
+  .mat-mdc-dialog-surface {
+    background: #1b1f24;
+    border: 1px solid color-mix(in srgb, #ffffff 14%, transparent);
+    border-radius: 0;
+  }
+  .mdc-dialog__title,
+  .mat-mdc-dialog-title {
+    color: #edeff1;
+    font-family: 'Barlow', system-ui, sans-serif;
+    font-weight: 600;
+  }
+  .mdc-dialog__content,
+  .mat-mdc-dialog-content {
+    color: color-mix(in srgb, #edeff1 78%, transparent);
+  }
+  .mat-mdc-dialog-actions {
+    border-top: 1px solid color-mix(in srgb, #ffffff 14%, transparent);
+  }
+
+  .admin-btn {
+    color: #edeff1;
+    border-color: color-mix(in srgb, #ffffff 14%, transparent);
+  }
+  .admin-btn-secondary:hover:not(:disabled) {
+    background: color-mix(in srgb, #edeff1 7%, transparent);
+  }
+  .admin-btn-primary {
+    background: #f08221;
+    color: #12140f;
+    border-color: #f08221;
+  }
+  .admin-btn-primary:hover:not(:disabled) {
+    background: #ff9540;
+  }
+  .admin-btn-danger {
+    color: #ff6b6b;
   }
 }

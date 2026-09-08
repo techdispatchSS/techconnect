@@ -8,16 +8,16 @@
 // needed.
 :host {
   --auth-font-heading: 'Barlow', system-ui, sans-serif;
-  --auth-color-bg: #f2f2f3;
-  --auth-color-surface: #e9e9ea;
-  --auth-color-text: #1d1f20;
-  --auth-color-accent: #5980a6;
-  --auth-color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
-  --auth-accent-100: #eef6ff;
-  --auth-accent-600: #597ea3;
-  --auth-accent-700: #416180;
-  --auth-accent-900: #1d2d3d;
-  --auth-status-disabled-fg: #93000a;
+  --auth-color-bg: #16191d;
+  --auth-color-surface: #1b1f24;
+  --auth-color-text: #edeff1;
+  --auth-color-accent: #f08221;
+  --auth-color-divider: color-mix(in srgb, #ffffff 14%, transparent);
+  --auth-accent-100: color-mix(in srgb, #f08221 14%, transparent);
+  --auth-accent-600: #ff9540;
+  --auth-accent-700: #ffa254;
+  --auth-accent-900: #f0a265;
+  --auth-status-disabled-fg: #ff6b6b;
 
   display: flex;
   align-items: center;
@@ -200,7 +200,7 @@ form {
   font-family: var(--auth-font-heading);
   font-weight: 600;
   font-size: 14.5px;
-  color: #fff;
+  color: #12140f;
   background: var(--auth-color-accent);
   border: 1px solid var(--auth-color-accent);
   border-radius: 0;

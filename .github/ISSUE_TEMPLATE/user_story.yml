@@ -9,7 +9,7 @@ body:
     id: role
     attributes:
       label: User role
-      description: Which of the four TechDispatch roles is this for?
+      description: Which of the four TechConnect roles is this for?
       options:
         - Client
         - Controller

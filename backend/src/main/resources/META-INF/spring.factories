@@ -1,1 +1,1 @@
-org.springframework.boot.EnvironmentPostProcessor=silver.solutions.techdispatch.config.DotenvEnvironmentPostProcessor
+org.springframework.boot.EnvironmentPostProcessor=silver.solutions.techconnect.config.DotenvEnvironmentPostProcessor

@@ -3,12 +3,14 @@
   <p>{{ data.message }}</p>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button matButton type="button" mat-dialog-close>Cancel</button>
+  <button type="button" class="admin-btn admin-btn-secondary" mat-dialog-close>Cancel</button>
   <button
-    matButton="filled"
     type="button"
+    class="admin-btn"
+    [class.admin-btn-primary]="!data.destructive"
+    [class.admin-btn-secondary]="data.destructive"
+    [class.admin-btn-danger]="data.destructive"
     [mat-dialog-close]="true"
-    [class.confirm-destructive]="data.destructive"
   >
     {{ data.confirmLabel }}
   </button>

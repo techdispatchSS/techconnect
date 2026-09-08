@@ -5,7 +5,7 @@ import { Observable, tap } from 'rxjs';
 
 import { AuthSession, LoginResponse, UserRole } from './auth.models';
 
-const STORAGE_KEY = 'techdispatch.session';
+const STORAGE_KEY = 'techconnect.session';
 
 /**
  * Holds the signed-in session.

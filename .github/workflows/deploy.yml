@@ -12,7 +12,9 @@ on:
 
 permissions:
   # id-token:write is what lets this workflow federate with AWS via OIDC — no
-  # AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY secret ever exists for it to leak.
+  # AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY secret ever exists for it to leak. The assumed role
+  # (AWS_DEPLOY_ROLE_ARN) is scoped to exactly: ECR push, S3 sync, CloudFront invalidation, and
+  # ecs:UpdateExpressGatewayService on this one service.
   id-token: write
   contents: read
 
@@ -62,10 +64,18 @@ jobs:
           docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
 
-      - name: Redeploy App Runner service
+      # App Runner stopped accepting new customers on 2026-04-30; AWS's replacement is ECS
+      # Express Mode. update-express-gateway-service with a new primary-container image is its
+      # documented redeploy mechanism (mirrors App Runner's old start-deployment call).
+      - name: Redeploy Express service
         run: |
-          aws apprunner start-deployment \
-            --service-arn "${{ vars.APP_RUNNER_SERVICE_ARN }}"
+          aws ecs update-express-gateway-service \
+            --service-arn "${{ vars.EXPRESS_SERVICE_ARN }}" \
+            --primary-container "{\"image\":\"$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG\"}"
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY_NAME }}
+          IMAGE_TAG: ${{ github.sha }}
 
   deploy-frontend:
     runs-on: ubuntu-latest

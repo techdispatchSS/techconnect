@@ -13,19 +13,19 @@
   --login-font-heading: 'Barlow', system-ui, sans-serif;
   --login-font-body: 'Barlow', system-ui, sans-serif;
 
-  --login-color-bg: #f2f2f3;
-  --login-color-surface: #e9e9ea;
-  --login-color-text: #1d1f20;
-  --login-color-accent: #5980a6;
-  --login-color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+  --login-color-bg: #16191d;
+  --login-color-surface: #1b1f24;
+  --login-color-text: #edeff1;
+  --login-color-accent: #f08221;
+  --login-color-divider: color-mix(in srgb, #ffffff 14%, transparent);
 
-  --login-accent-100: #eef6ff;
-  --login-accent-200: #d6ebff;
-  --login-accent-400: #94bce3;
-  --login-accent-600: #597ea3;
-  --login-accent-700: #416180;
-  --login-accent-800: #2c455d;
-  --login-accent-900: #1d2d3d;
+  --login-accent-100: color-mix(in srgb, #f08221 14%, transparent);
+  --login-accent-200: color-mix(in srgb, #f08221 24%, transparent);
+  --login-accent-400: #f0a265;
+  --login-accent-600: #ff9540;
+  --login-accent-700: #ffa254;
+  --login-accent-800: #f0a265;
+  --login-accent-900: #0e1013;
 
   display: grid;
   grid-template-columns: 1.05fr 1fr;
@@ -292,7 +292,7 @@
   font-family: var(--login-font-heading);
   font-weight: 600;
   font-size: 14.5px;
-  color: #fff;
+  color: #12140f;
   background: var(--login-color-accent);
   border: 1px solid var(--login-color-accent);
   border-radius: 0;

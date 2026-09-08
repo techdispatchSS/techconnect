@@ -283,7 +283,7 @@ export class UserList implements OnInit {
     };
 
     this.dialog
-      .open(ConfirmDialog, { data, width: '28rem' })
+      .open(ConfirmDialog, { data, width: '28rem', panelClass: 'admin-confirm-dialog' })
       .afterClosed()
       .subscribe((confirmed) => {
         if (!confirmed) {

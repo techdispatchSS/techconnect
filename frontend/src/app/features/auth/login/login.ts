@@ -10,10 +10,10 @@ interface HeroStat {
   readonly label: string;
 }
 
-// No support inbox is configured anywhere in the backend (techdispatch.mail.from is a
+// No support inbox is configured anywhere in the backend (techconnect.mail.from is a
 // no-reply *sending* address only) — this is a placeholder. Swap it for wherever sign-in
 // trouble should actually land before this ships.
-const SUPPORT_EMAIL = 'support@techdispatch.co.za';
+const SUPPORT_EMAIL = 'support@techconnect.app';
 
 @Component({
   selector: 'app-login',
@@ -54,9 +54,9 @@ export class Login {
    * have to compose a support request from a blank subject line. */
   contactHref(): string {
     const typedEmail = this.form.controls.email.value.trim();
-    const subject = encodeURIComponent('Trouble signing in to TechDispatch');
+    const subject = encodeURIComponent('Trouble signing in to TechConnect');
     const body = encodeURIComponent(
-      `Hi,\n\nI'm having trouble signing in to TechDispatch.\n\n` +
+      `Hi,\n\nI'm having trouble signing in to TechConnect.\n\n` +
         `My email: ${typedEmail || '(enter the email you sign in with)'}\n` +
         `What's happening: \n`,
     );

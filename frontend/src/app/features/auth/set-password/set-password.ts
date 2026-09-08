@@ -46,8 +46,8 @@ export class SetPassword {
   readonly heading = this.mode === 'ACTIVATE' ? 'Activate your account' : 'Choose a new password';
   readonly subtitle =
     this.mode === 'ACTIVATE'
-      ? 'Set a password to finish setting up your TechDispatch account.'
-      : 'Set a new password for your TechDispatch account.';
+      ? 'Set a password to finish setting up your TechConnect account.'
+      : 'Set a new password for your TechConnect account.';
   readonly submitLabel = this.mode === 'ACTIVATE' ? 'Activate account' : 'Reset password';
 
   readonly form = this.fb.nonNullable.group(

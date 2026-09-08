@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router, RouterLink } from '@angular/router';
@@ -43,6 +44,7 @@ export class UserCreate {
   private readonly counts = inject(AdminNavCountsService);
 
   readonly roleCards = ROLE_CARDS;
+  readonly roleLabels = ROLE_LABELS;
   readonly provinces = PROVINCES;
   readonly provinceLabels = PROVINCE_LABELS;
 
@@ -62,6 +64,15 @@ export class UserCreate {
       postalCode: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]],
     }),
     role: ['TECHNICIAN' as UserRole, [Validators.required]],
+  });
+
+  // Zoneless change detection: a template read of `form.controls.name.value` never
+  // re-renders on keystrokes, since it isn't a signal — the invite preview needs these.
+  readonly previewName = toSignal(this.form.controls.name.valueChanges, {
+    initialValue: this.form.controls.name.value,
+  });
+  readonly previewRole = toSignal(this.form.controls.role.valueChanges, {
+    initialValue: this.form.controls.role.value,
   });
 
   pickRole(role: UserRole): void {

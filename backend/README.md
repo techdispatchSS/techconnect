@@ -1,4 +1,4 @@
-# TechDispatch — backend
+# TechConnect — backend
 
 Spring Boot 4 / Java 21 API. Base URL `/api/v1` (PRD §8).
 
@@ -17,11 +17,11 @@ Copy `.env.example` to `.env` and set at least:
 
 | Variable | Purpose |
 |---|---|
-| `TECHDISPATCH_JWT_SECRET` | HMAC signing key, **32+ bytes**, **required — no default**. `openssl rand -base64 48` |
-| `TECHDISPATCH_BOOTSTRAP_ADMIN_EMAIL` | First-run Manager (see below) |
+| `TECHCONNECT_JWT_SECRET` | HMAC signing key, **32+ bytes**, **required — no default**. `openssl rand -base64 48` |
+| `TECHCONNECT_BOOTSTRAP_ADMIN_EMAIL` | First-run Manager (see below) |
 | `POSTGRES_PORT` | Host port of the containerised Postgres |
 
-`TECHDISPATCH_JWT_SECRET` has no fallback value — the app refuses to start without it, in
+`TECHCONNECT_JWT_SECRET` has no fallback value — the app refuses to start without it, in
 any environment including local dev. This is deliberate: a default that actually works is a
 secret published in source control, and anyone who reads the repo could forge a valid token
 for any user. Generate a fresh one per environment; never reuse a secret across dev, staging,
@@ -36,12 +36,12 @@ POSTGRES_PORT=5434 ./mvnw spring-boot:run
 ## First run — getting in
 
 Only a Manager can create users, so a fresh database has no way in. On startup, if no
-`MANAGER` exists and `techdispatch.bootstrap-admin.email` is set, the app creates one in
+`MANAGER` exists and `techconnect.bootstrap-admin.email` is set, the app creates one in
 `PENDING_ACTIVATION` and logs a single-use activation link:
 
 ```
 ============================================================
- Bootstrap administrator created: admin@techdispatch.local
+ Bootstrap administrator created: admin@techconnect.app
  Set the password using this single-use link (expires in 72h):
 
  http://localhost:4200/activate?token=...
@@ -55,7 +55,7 @@ This is idempotent — restarting never creates a second Manager or reissues a l
 
 ## Authentication model
 
-TechDispatch issues its **own** JWTs (PRD FR-01, §8.1, §9.2). There is no external identity
+TechConnect issues its **own** JWTs (PRD FR-01, §8.1, §9.2). There is no external identity
 provider — no Cognito, no AWS IAM. The `users` table is the only user directory.
 
 - Passwords: bcrypt, cost factor 12. Never set by an administrator — users choose their own

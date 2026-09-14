@@ -41,6 +41,19 @@ export const routes: Routes = [
     loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes),
   },
 
+  // --- Controller dashboard: its own dedicated shell (Controller-only), matching the
+  // design mockup's dark "Industry" theme rather than the generic AppShell. ---
+  {
+    path: 'incidents',
+    loadComponent: () =>
+      import('./features/controller/controller-shell/controller-shell').then(
+        (m) => m.ControllerShell,
+      ),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['CONTROLLER'] },
+    loadChildren: () => import('./features/controller/controller.routes').then((m) => m.controllerRoutes),
+  },
+
   // --- Authenticated: everything else inside the application shell ---
   {
     path: '',

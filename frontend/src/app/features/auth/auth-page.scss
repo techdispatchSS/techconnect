@@ -244,3 +244,13 @@ form {
     transform: translateX(250%);
   }
 }
+
+// Light theme. Every rule above reads color exclusively through `--auth-*`, so overriding
+// the definitions here is enough — nothing else in this file needs to change.
+:host-context([data-theme='light']) {
+  --auth-color-bg: #f1f1f2;
+  --auth-color-surface: #ffffff;
+  --auth-color-text: #1a1b1e;
+  --auth-color-divider: color-mix(in srgb, #1a1b1e 14%, transparent);
+  --auth-accent-900: #c65e0a;
+}

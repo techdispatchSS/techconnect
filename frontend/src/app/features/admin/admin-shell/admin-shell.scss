@@ -340,7 +340,7 @@ textarea.admin-input {
 .admin-tag-disabled {
   background: var(--admin-status-disabled-bg);
   color: var(--admin-status-disabled-fg);
-  border-color: color-mix(in srgb, #ffffff 16%, transparent);
+  border-color: var(--admin-color-divider);
 }
 .admin-tag-neutral {
   background: var(--admin-neutral-100);
@@ -722,4 +722,56 @@ textarea.admin-input {
   .admin-btn-danger {
     color: #ff6b6b;
   }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Light theme — canvas, cards and text only. The sidebar and header keep the
+// dark near-black chrome (`--admin-neutral-900`) in both themes as the
+// product's constant branded rail, so those tokens are deliberately left
+// unoverridden here — only what's built from the tokens below actually
+// switches. See controller-shell.scss for the same split, applied there too.
+// ════════════════════════════════════════════════════════════════════════
+:root[data-theme='light'] .admin-shell {
+  --admin-color-bg: #f1f1f2;
+  --admin-color-surface: #ffffff;
+  --admin-color-text: #1a1b1e;
+  --admin-color-divider: color-mix(in srgb, #1a1b1e 14%, transparent);
+
+  --admin-neutral-100: #ececed;
+  --admin-neutral-800: #5b5e66;
+
+  --admin-status-disabled-bg: color-mix(in srgb, #1a1b1e 6%, transparent);
+  --admin-status-disabled-fg: #5b5e66;
+}
+
+// The confirm dialog above is portaled outside `.admin-shell` by Angular Material's CDK
+// overlay, so it can't inherit `--admin-*` custom properties and uses literal colors
+// instead (see the big comment at the top of that block). `:root[data-theme='light']` is
+// still a valid ancestor of the portal though, so this override reaches it correctly.
+:root[data-theme='light'] .admin-confirm-dialog {
+  --mat-sys-surface: #ffffff;
+  --mat-sys-on-surface: #1a1b1e;
+
+  .mat-mdc-dialog-surface {
+    background: #ffffff;
+    border-color: color-mix(in srgb, #1a1b1e 14%, transparent);
+  }
+  .mdc-dialog__title,
+  .mat-mdc-dialog-title {
+    color: #1a1b1e;
+  }
+  .mat-mdc-dialog-content {
+    color: color-mix(in srgb, #1a1b1e 78%, transparent);
+  }
+  .mat-mdc-dialog-actions {
+    border-top-color: color-mix(in srgb, #1a1b1e 14%, transparent);
+  }
+  .admin-btn {
+    color: #1a1b1e;
+    border-color: color-mix(in srgb, #1a1b1e 14%, transparent);
+  }
+  .admin-btn-secondary:hover:not(:disabled) {
+    background: color-mix(in srgb, #1a1b1e 6%, transparent);
+  }
+  // Primary/danger buttons keep their literal colors — same in both themes.
 }

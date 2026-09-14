@@ -20,6 +20,25 @@
       rel="stylesheet"
     />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <script>
+      // Sets data-theme on <html> before Angular bootstraps and before first paint, so the
+      // page never flashes the wrong theme. ThemeService (core/theme/theme.service.ts) reads
+      // whatever this leaves behind and takes over from there.
+      (function () {
+        try {
+          var stored = localStorage.getItem('techconnect.theme');
+          var theme =
+            stored === 'light' || stored === 'dark'
+              ? stored
+              : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
   </head>
   <body>
     <app-root></app-root>

@@ -34,7 +34,26 @@
   <main class="login-main">
     <div class="login-form-wrap">
       <div class="login-title-block">
-        <h4 class="login-title">Sign in</h4>
+        <div class="login-title-row">
+          <h4 class="login-title">Sign in</h4>
+          <button
+            type="button"
+            class="login-theme-toggle"
+            (click)="toggleTheme()"
+            [attr.aria-label]="theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+          >
+            @if (theme() === 'dark') {
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="4.2" />
+                <path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
+              </svg>
+            } @else {
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" />
+              </svg>
+            }
+          </button>
+        </div>
         <p class="login-subtitle">Use the email address your administrator added you with.</p>
       </div>
 

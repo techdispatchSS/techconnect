@@ -16,7 +16,9 @@ export type AdminIconName =
   | 'badge'
   | 'key'
   | 'menu'
-  | 'x';
+  | 'x'
+  | 'sun'
+  | 'moon';
 
 /**
  * Thin-stroke icon set for the admin portal's "Industry" design system (Lucide-style,
@@ -103,6 +105,13 @@ export type AdminIconName =
         }
         @case ('x') {
           <path d="M6 6l12 12M18 6 6 18" />
+        }
+        @case ('sun') {
+          <circle cx="12" cy="12" r="4.2" />
+          <path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
+        }
+        @case ('moon') {
+          <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" />
         }
       }
     </svg>

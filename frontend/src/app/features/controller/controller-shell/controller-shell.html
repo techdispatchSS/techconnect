@@ -1,0 +1,123 @@
+<div class="controller-shell" [class.controller-shell--handset]="isHandset()">
+  @if (isHandset() && sidebarOpen()) {
+    <button
+      type="button"
+      class="controller-shell-backdrop"
+      aria-label="Close navigation"
+      (click)="toggleSidebar()"
+    ></button>
+  }
+
+  <aside class="controller-shell-sidebar" [class.controller-shell-sidebar--open]="sidebarOpen()">
+    <div class="controller-shell-brand">
+      <span class="controller-shell-brand-mark">S</span>
+      <span class="controller-shell-brand-text">
+        <span class="controller-shell-brand-name">Tech<em>Connect</em></span>
+        <span class="controller-shell-brand-sub">Powered by Silver Solutions</span>
+      </span>
+    </div>
+
+    <div class="controller-shell-section-label">Dispatch</div>
+    <nav class="controller-shell-nav">
+      <a
+        routerLink="/incidents/queue"
+        routerLinkActive="controller-shell-nav-item--active"
+        class="controller-shell-nav-item"
+        (click)="closeSidebarOnHandset()"
+      >
+        <span class="controller-shell-nav-item-main">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="4" width="18" height="16" /><path d="M3 9h18M8 13h9M8 16.5h6" />
+          </svg>
+          <span>Incident queue</span>
+        </span>
+        @if (newCount(); as count) {
+          <span class="controller-shell-nav-item-count">{{ count }}</span>
+        }
+      </a>
+
+      <span class="controller-shell-nav-item controller-shell-nav-item--disabled" title="Part of the technician job flow — not built yet">
+        <span class="controller-shell-nav-item-main">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="8.5" /><path d="M12 8v4.5l3 1.8" />
+          </svg>
+          <span>Active jobs</span>
+        </span>
+      </span>
+
+      <span class="controller-shell-nav-item controller-shell-nav-item--disabled" title="Part of the technician job flow — not built yet">
+        <span class="controller-shell-nav-item-main">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M5 4h11l3 3v13H5z" /><path d="m9 13 2.2 2.2L15.5 11" />
+          </svg>
+          <span>Review &amp; close</span>
+        </span>
+      </span>
+    </nav>
+
+    <div class="controller-shell-section-label">Elsewhere</div>
+    <div class="controller-shell-elsewhere">
+      <span>User management</span>
+      <span>Reports</span>
+      <span>Integrations</span>
+    </div>
+
+    <div class="controller-shell-user" [matMenuTriggerFor]="userMenu">
+      <span class="controller-shell-user-avatar">{{ initials() }}</span>
+      <span class="controller-shell-user-meta">
+        <span class="controller-shell-user-name">{{ displayName() }}</span>
+        <span class="controller-shell-user-role">Controller · On shift</span>
+      </span>
+    </div>
+
+    <mat-menu #userMenu="matMenu">
+      <button mat-menu-item type="button" (click)="editProfile()">My profile</button>
+      <button mat-menu-item type="button" (click)="changePassword()">Change password</button>
+      <button mat-menu-item type="button" (click)="logout()">Sign out</button>
+    </mat-menu>
+  </aside>
+
+  <div class="controller-shell-main">
+    <header class="controller-shell-header">
+      @if (isHandset()) {
+        <button
+          type="button"
+          class="controller-btn controller-btn-secondary controller-btn-icon"
+          (click)="toggleSidebar()"
+          aria-label="Toggle navigation"
+        >
+          ☰
+        </button>
+      }
+      <div class="controller-shell-header-titles">
+        <div class="controller-shell-breadcrumb">Dispatch / {{ heading() }}</div>
+        <h1 class="controller-shell-title">{{ heading() }}</h1>
+      </div>
+      <span class="controller-shell-sync-badge">
+        <span class="controller-shell-sync-dot"></span>
+        Freshdesk sync live
+      </span>
+      <button
+        type="button"
+        class="controller-btn controller-btn-secondary controller-btn-icon"
+        (click)="toggleTheme()"
+        [attr.aria-label]="theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+      >
+        @if (theme() === 'dark') {
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="4.2" />
+            <path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
+          </svg>
+        } @else {
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" />
+          </svg>
+        }
+      </button>
+    </header>
+
+    <div class="controller-shell-content">
+      <router-outlet />
+    </div>
+  </div>
+</div>

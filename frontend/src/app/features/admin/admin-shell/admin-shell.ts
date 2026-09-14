@@ -16,6 +16,7 @@ import { filter, map } from 'rxjs';
 
 import { AccountService } from '../../../core/auth/account.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ThemeService } from '../../../core/theme/theme.service';
 import { ChangePasswordDialog } from '../../../layout/change-password-dialog/change-password-dialog';
 import { ProfileDialog } from '../../../layout/profile-dialog/profile-dialog';
 import { AdminNavCountsService } from '../admin-nav-counts.service';
@@ -48,7 +49,14 @@ export class AdminShell implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly themeService = inject(ThemeService);
   readonly counts = inject(AdminNavCountsService);
+
+  readonly theme = this.themeService.theme;
+
+  toggleTheme(): void {
+    this.themeService.toggle();
+  }
 
   private static readonly HANDSET_QUERY = '(max-width: 899px)';
 

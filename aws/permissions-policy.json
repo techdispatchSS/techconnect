@@ -1,0 +1,12 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {"Effect": "Allow", "Action": ["ecr:GetAuthorizationToken"], "Resource": "*"},
+    {"Effect": "Allow", "Action": ["ecr:BatchCheckLayerAvailability","ecr:PutImage","ecr:InitiateLayerUpload","ecr:UploadLayerPart","ecr:CompleteLayerUpload"],
+     "Resource": "arn:aws:ecr:eu-west-1:440427555121:repository/techdispatch-backend"},
+    {"Effect": "Allow", "Action": ["s3:PutObject","s3:DeleteObject","s3:ListBucket"],
+     "Resource": ["arn:aws:s3:::techdispatch-frontend-first-start", "arn:aws:s3:::techdispatch-frontend-first-start/*"]},
+    {"Effect": "Allow", "Action": ["cloudfront:CreateInvalidation"], "Resource": "arn:aws:cloudfront::440427555121:distribution/E13ZDO8FDSC304"},
+    {"Effect": "Allow", "Action": ["ecs:UpdateExpressGatewayService"], "Resource": "arn:aws:ecs:eu-west-1:440427555121:service/default/techdispatch-backend-0898"}
+  ]
+}

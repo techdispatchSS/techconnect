@@ -155,9 +155,31 @@
   flex-direction: column;
   gap: 6px;
 }
+.login-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .login-title {
   font-size: 25px;
   letter-spacing: -0.015em;
+  margin-right: auto;
+}
+.login-theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--login-color-divider);
+  color: var(--login-color-text);
+}
+.login-theme-toggle:hover {
+  border-color: var(--login-color-accent);
+  color: var(--login-color-accent);
 }
 .login-subtitle {
   margin: 0;
@@ -356,4 +378,21 @@
   .login-main {
     padding: 32px 20px;
   }
+}
+
+// Light theme — the sign-in form (right panel) only. `.login-hero` (left panel) keeps its
+// own literal dark colors in both themes as the product's constant branded marketing panel,
+// the same reasoning as the admin/controller sidebars — see admin-shell.scss.
+//
+// `:host-context()` rather than `:root[data-theme=...] .login-page`: this component uses
+// normal (emulated) view encapsulation, and Angular's compiler stamps ITS OWN scoping
+// attribute onto every compound selector segment it sees — including a bare `:root`, which
+// then can never match anything since `<html>` never receives that attribute.
+// `:host-context()` is the encapsulation-aware way to test an ancestor condition instead.
+:host-context([data-theme='light']) .login-page {
+  --login-color-bg: #f1f1f2;
+  --login-color-surface: #ffffff;
+  --login-color-text: #1a1b1e;
+  --login-color-divider: color-mix(in srgb, #1a1b1e 14%, transparent);
+  --login-accent-800: #c65e0a;
 }

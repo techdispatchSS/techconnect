@@ -1,0 +1,522 @@
+// ════════════════════════════════════════════════════════════════════════
+// Controller dashboard design (dark, orange-accented "Industry" theme — same
+// palette as the admin portal, per the design mockup "TechConnect Controller
+// Dashboard"). This component renders with ViewEncapsulation.None and hosts
+// the only `<app-controller-shell>` on the page, so these rules become the
+// shared stylesheet for the whole controller feature for as long as its
+// lazy-loaded route is active. Every class is `controller-` prefixed so it
+// cannot collide with anything outside this feature.
+// ════════════════════════════════════════════════════════════════════════
+
+// Barlow is loaded from index.html alongside the app's other Google Fonts, not
+// `@import`ed here — see admin-shell.scss for why.
+
+.controller-shell {
+  --controller-font-heading: 'Barlow', system-ui, sans-serif;
+  --controller-font-body: 'Barlow', system-ui, sans-serif;
+
+  // Content tier — switches between light and dark; see the `[data-theme='light']`
+  // override block at the bottom of this file.
+  --controller-color-bg: #16191d;
+  --controller-color-surface: #1b1f24;
+  --controller-color-text: #edeff1;
+  --controller-color-muted: #9aa1a8;
+  --controller-color-emphasis: #ffffff;
+  --controller-color-divider: rgba(255, 255, 255, 0.12);
+  --controller-color-divider-soft: rgba(255, 255, 255, 0.08);
+  --controller-color-divider-strong: rgba(255, 255, 255, 0.25);
+
+  // Chrome tier — the sidebar and header. Deliberately theme-invariant: they stay this
+  // dark "Industry" look in both themes as the product's constant branded rail, the same
+  // way the map's own tile styling (technician-map.ts) doesn't follow the app theme either.
+  --controller-color-sidebar: #0e1013;
+  --controller-chrome-text: #edeff1;
+  --controller-chrome-muted: #9aa1a8;
+  --controller-chrome-divider: rgba(255, 255, 255, 0.08);
+
+  --controller-color-accent: #f08221;
+  --controller-color-accent-soft: #f0a265;
+
+  --controller-priority-high-bg: #f08221;
+  --controller-priority-high-fg: #12140f;
+  --controller-priority-medium-bg: rgba(240, 130, 33, 0.14);
+  --controller-priority-medium-fg: #f0a265;
+  --controller-priority-low-bg: rgba(255, 255, 255, 0.05);
+  --controller-priority-low-border: rgba(255, 255, 255, 0.16);
+  --controller-priority-low-fg: #9aa1a8;
+
+  display: block;
+  min-height: 100vh;
+  background: var(--controller-color-bg);
+  color: var(--controller-color-text);
+  font-family: var(--controller-font-body);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.controller-shell,
+.controller-shell * {
+  box-sizing: border-box;
+}
+
+.controller-shell h1,
+.controller-shell h2,
+.controller-shell h3,
+.controller-shell h4,
+.controller-shell h5,
+.controller-shell h6 {
+  margin: 0;
+  font-family: var(--controller-font-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.controller-shell a:not(.controller-btn) {
+  color: var(--controller-color-accent);
+  text-decoration: none;
+}
+.controller-shell a:not(.controller-btn):hover {
+  color: var(--controller-color-accent-soft);
+  text-decoration: underline;
+}
+
+// ── Buttons ──
+.controller-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--controller-font-heading);
+  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 1.2;
+  color: var(--controller-color-text);
+  background: transparent;
+  border: 1px solid var(--controller-color-divider);
+  border-radius: 0;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+.controller-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.controller-btn-primary {
+  background: var(--controller-color-accent);
+  color: #12140f;
+  border-color: var(--controller-color-accent);
+}
+.controller-btn-primary:hover:not(:disabled) {
+  background: #ff9540;
+  border-color: #ff9540;
+}
+.controller-btn-secondary:hover:not(:disabled) {
+  border-color: var(--controller-color-accent);
+  color: var(--controller-color-accent);
+  background: rgba(240, 130, 33, 0.08);
+}
+.controller-btn-ghost {
+  color: var(--controller-color-accent);
+  border-color: transparent;
+  padding-inline: 4px;
+}
+.controller-btn-ghost:hover:not(:disabled) {
+  background: rgba(240, 130, 33, 0.1);
+}
+.controller-btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  flex: none;
+}
+.controller-btn-block {
+  width: 100%;
+}
+.controller-btn:focus-visible {
+  outline: 2px solid var(--controller-color-accent);
+  outline-offset: 2px;
+}
+
+// ── Forms ──
+.controller-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.controller-field > label {
+  font-size: 12px;
+  color: var(--controller-color-muted);
+}
+.controller-input {
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--controller-color-text);
+  background: var(--controller-color-bg);
+  border: 1px solid var(--controller-color-divider);
+  border-radius: 0;
+}
+.controller-input:hover {
+  border-color: var(--controller-color-divider-strong);
+}
+.controller-input:focus-visible {
+  outline: 2px solid var(--controller-color-accent);
+  outline-offset: 0;
+  border-color: var(--controller-color-accent);
+}
+.controller-input::placeholder {
+  color: var(--controller-color-muted);
+}
+textarea.controller-input {
+  min-height: 64px;
+  resize: vertical;
+}
+
+// ── Table ──
+.controller-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.controller-table th {
+  text-align: left;
+  font-family: var(--controller-font-heading);
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--controller-color-muted);
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--controller-color-divider);
+}
+.controller-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--controller-color-divider-soft);
+  font-size: 13.5px;
+}
+.controller-table tbody tr:hover td {
+  background: rgba(240, 130, 33, 0.06);
+}
+
+// ── Priority / status pills ──
+.controller-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  padding: 3px 9px;
+  font-weight: 500;
+}
+.controller-pill--high {
+  background: var(--controller-priority-high-bg);
+  color: var(--controller-priority-high-fg);
+  font-weight: 600;
+}
+.controller-pill--medium {
+  background: var(--controller-priority-medium-bg);
+  color: var(--controller-priority-medium-fg);
+  border: 1px solid rgba(240, 130, 33, 0.5);
+}
+.controller-pill--low {
+  background: var(--controller-priority-low-bg);
+  color: var(--controller-priority-low-fg);
+  border: 1px solid var(--controller-priority-low-border);
+}
+
+.controller-card {
+  background: var(--controller-color-surface);
+  border: 1px solid var(--controller-color-divider-soft);
+  padding: 18px;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Shell layout — sidebar, header, content grid.
+// ════════════════════════════════════════════════════════════════════════
+
+.controller-shell {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  min-height: 100vh;
+}
+.controller-shell--handset {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.controller-shell-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  border: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.controller-shell-sidebar {
+  grid-column: 1;
+  background: var(--controller-color-sidebar);
+  border-right: 1px solid var(--controller-chrome-divider);
+  color: var(--controller-chrome-text);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 0 18px;
+}
+.controller-shell--handset .controller-shell-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 21;
+  width: 240px;
+  transform: translateX(-100%);
+  transition: transform 0.18s ease;
+}
+.controller-shell--handset .controller-shell-sidebar--open {
+  transform: translateX(0);
+}
+
+.controller-shell-brand {
+  padding: 0 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.controller-shell-brand-mark {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: 2px solid var(--controller-color-accent);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--controller-font-heading);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--controller-color-accent);
+}
+.controller-shell-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.controller-shell-brand-name {
+  font-family: var(--controller-font-heading);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.015em;
+}
+.controller-shell-brand-name em {
+  font-style: normal;
+  color: var(--controller-color-accent);
+}
+.controller-shell-brand-sub {
+  font-size: 9.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--controller-chrome-muted);
+}
+
+.controller-shell-section-label {
+  padding: 0 20px 8px;
+  font-size: 10.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--controller-chrome-muted);
+}
+.controller-shell-section-label:not(:first-of-type) {
+  padding-top: 18px;
+}
+
+.controller-shell-nav {
+  display: flex;
+  flex-direction: column;
+}
+.controller-shell-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--controller-font-body);
+  font-size: 13.5px;
+  padding: 9px 20px;
+  background: transparent;
+  color: var(--controller-chrome-muted);
+  border: 0;
+  border-left: 2px solid transparent;
+}
+.controller-shell-nav-item:hover {
+  background: rgba(240, 130, 33, 0.09);
+  color: #ffffff;
+}
+.controller-shell-nav-item--active {
+  background: rgba(240, 130, 33, 0.13);
+  color: #ffffff;
+  border-left-color: var(--controller-color-accent);
+}
+.controller-shell-nav-item--disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.controller-shell-nav-item--disabled:hover {
+  background: transparent;
+  color: var(--controller-chrome-muted);
+}
+.controller-shell-nav-item-main {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.controller-shell-nav-item-count {
+  font-size: 11px;
+  color: var(--controller-color-accent);
+}
+
+.controller-shell-elsewhere {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 20px;
+}
+.controller-shell-elsewhere span {
+  font-size: 13px;
+  color: var(--controller-chrome-muted);
+  padding: 5px 0;
+}
+
+.controller-shell-user {
+  margin-top: auto;
+  margin-left: 20px;
+  margin-right: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--controller-chrome-divider);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.controller-shell-user-avatar {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: grid;
+  place-items: center;
+  font-family: var(--controller-font-heading);
+  font-weight: 500;
+  font-size: 12px;
+}
+.controller-shell-user-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  min-width: 0;
+}
+.controller-shell-user-name {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.controller-shell-user-role {
+  font-size: 11px;
+  color: var(--controller-color-accent);
+}
+
+.controller-shell-main {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+}
+.controller-shell--handset .controller-shell-main {
+  grid-column: 1;
+}
+
+.controller-shell-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--controller-chrome-divider);
+  background: var(--controller-color-sidebar);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.controller-shell-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-right: auto;
+  min-width: 0;
+}
+.controller-shell-breadcrumb {
+  font-size: 12px;
+  color: var(--controller-chrome-muted);
+}
+.controller-shell-title {
+  font-size: 22px;
+  color: #ffffff;
+}
+.controller-shell-sync-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 5px 11px;
+  border: 1px solid rgba(240, 130, 33, 0.4);
+  background: rgba(240, 130, 33, 0.08);
+  font-size: 12px;
+  color: var(--controller-color-accent-soft);
+}
+.controller-shell-sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--controller-color-accent);
+  display: block;
+}
+
+.controller-shell-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 24px 32px 40px;
+}
+
+@media (max-width: 599px) {
+  .controller-shell-header {
+    padding: 14px 16px;
+  }
+  .controller-shell-title {
+    font-size: 19px;
+  }
+  .controller-shell-content {
+    padding: 18px 16px 32px;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Light theme — content tier only. The sidebar/header (`--controller-color-
+// sidebar`, `--controller-chrome-*`) are deliberately left untouched here:
+// they stay the dark "Industry" rail in both themes (see the comment on the
+// chrome tokens above). Only the canvas, cards, tables and detail panels —
+// everything built from the content-tier tokens — actually switches.
+// ════════════════════════════════════════════════════════════════════════
+:root[data-theme='light'] .controller-shell {
+  --controller-color-bg: #f1f1f2;
+  --controller-color-surface: #ffffff;
+  --controller-color-text: #26282c;
+  --controller-color-muted: #6a6e76;
+  --controller-color-emphasis: #101114;
+  --controller-color-divider: rgba(16, 17, 20, 0.13);
+  --controller-color-divider-soft: rgba(16, 17, 20, 0.08);
+  --controller-color-divider-strong: rgba(16, 17, 20, 0.24);
+  --controller-priority-low-bg: rgba(16, 17, 20, 0.05);
+  --controller-priority-low-border: rgba(16, 17, 20, 0.16);
+  --controller-priority-low-fg: #6a6e76;
+}

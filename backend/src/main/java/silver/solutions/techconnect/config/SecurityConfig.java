@@ -84,6 +84,9 @@ public class SecurityConfig {
                         // FR-01: administration of controllers and technicians is the
                         // Manager's alone (M-06).
                         .requestMatchers("/v1/admin/**").hasRole("MANAGER")
+                        // FR-02/FR-03/FR-04: the incident queue and dispatch creation are the
+                        // Controller's alone.
+                        .requestMatchers("/v1/controller/**").hasRole("CONTROLLER")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter)))

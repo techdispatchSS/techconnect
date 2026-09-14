@@ -20,6 +20,7 @@ import { filter, map } from 'rxjs';
 import { AccountService } from '../../core/auth/account.service';
 import { UserRole } from '../../core/auth/auth.models';
 import { AuthService } from '../../core/auth/auth.service';
+import { ThemeService } from '../../core/theme/theme.service';
 import { ChangePasswordDialog } from '../change-password-dialog/change-password-dialog';
 import { ProfileDialog } from '../profile-dialog/profile-dialog';
 
@@ -31,13 +32,12 @@ interface NavItem {
 }
 
 /**
- * Navigation for the non-admin product surface. The Manager admin portal has its own
- * dedicated shell (`AdminShell`) and never reaches this one; these entries are declared here
- * so the controller dashboard and technician PWA drop into an existing frame rather than
- * needing the shell rebuilt around them once they exist.
+ * Navigation for the non-admin product surface. The Manager admin portal (`AdminShell`) and
+ * the Controller dashboard (`ControllerShell`) both have their own dedicated shells and never
+ * reach this one — this array is left for roles whose product surface hasn't earned a
+ * bespoke shell of its own, such as the technician PWA below.
  */
 const NAV_ITEMS: readonly NavItem[] = [
-  { label: 'Incidents', icon: 'inbox', route: '/incidents', roles: ['CONTROLLER'] },
   { label: 'My jobs', icon: 'construction', route: '/jobs', roles: ['TECHNICIAN'] },
 ];
 
@@ -64,6 +64,13 @@ export class AppShell implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly themeService = inject(ThemeService);
+
+  readonly theme = this.themeService.theme;
+
+  toggleTheme(): void {
+    this.themeService.toggle();
+  }
 
   /** Below this the sidenav can no longer share the viewport with content — same threshold
    * as the tablet breakpoint used throughout app-shell.scss. */

@@ -1,0 +1,158 @@
+<div class="iq">
+  <div class="iq-toolbar">
+    <label class="iq-search">
+      <input
+        class="controller-input"
+        [formControl]="searchControl"
+        placeholder="Search ticket, client, site…"
+      />
+    </label>
+    <button
+      type="button"
+      class="controller-btn controller-btn-primary"
+      [disabled]="!selected()"
+      (click)="createDispatch()"
+    >
+      Create dispatch
+    </button>
+  </div>
+
+  @if (kpis(); as k) {
+    <div class="iq-kpis">
+      <div class="controller-card iq-kpi">
+        <span class="iq-kpi-label">New incidents</span>
+        <span class="iq-kpi-value">{{ k.newCount }}</span>
+      </div>
+      <div class="controller-card iq-kpi">
+        <span class="iq-kpi-label">Unassigned</span>
+        <span class="iq-kpi-value">{{ k.unassignedCount }}</span>
+      </div>
+      <div class="controller-card iq-kpi">
+        <span class="iq-kpi-label">In progress</span>
+        <span class="iq-kpi-value">{{ k.inProgressCount }}</span>
+      </div>
+      <div class="controller-card iq-kpi iq-kpi--accent">
+        <span class="iq-kpi-label">Overdue</span>
+        <span class="iq-kpi-value">{{ k.overdueCount }}</span>
+      </div>
+    </div>
+  }
+
+  <div class="iq-body">
+    <section class="iq-queue">
+      <div class="iq-tabs">
+        @for (tab of tabs; track tab) {
+          <button
+            type="button"
+            class="iq-tab"
+            [class.iq-tab--active]="activeTab() === tab"
+            (click)="selectTab(tab)"
+          >
+            <span>{{ tab }}</span>
+            @if (tabCount()[tab] !== null && tabCount()[tab] !== undefined) {
+              <span class="iq-tab-count">{{ tabCount()[tab] }}</span>
+            }
+          </button>
+        }
+      </div>
+
+      <div class="controller-card iq-table-card">
+        @if (loading()) {
+          <p class="iq-empty">Loading…</p>
+        } @else if (loadFailed()) {
+          <p class="iq-empty">Couldn't load the incident queue. Try again shortly.</p>
+        } @else if (incidents().length === 0) {
+          <p class="iq-empty">No incidents in this view.</p>
+        } @else {
+          <table class="controller-table">
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Client</th>
+                <th>Site</th>
+                <th>Issue</th>
+                <th>Priority</th>
+                <th>SLA</th>
+                <th style="text-align: right">Age</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of incidents(); track row.id) {
+                <tr
+                  (click)="select(row)"
+                  [class.iq-row--selected]="selected()?.id === row.id"
+                >
+                  <td class="iq-ticket">{{ row.ticketRef }}</td>
+                  <td class="iq-client">{{ row.clientName }}</td>
+                  <td>{{ row.siteAddress ?? '—' }}</td>
+                  <td>{{ row.issueType ?? '—' }}</td>
+                  <td>
+                    @if (row.priority) {
+                      <span [class]="priorityClass(row)">{{ priorityLabels[row.priority] }}</span>
+                    }
+                  </td>
+                  <td>{{ row.sla ?? '—' }}</td>
+                  <td style="text-align: right" [class.iq-age--overdue]="row.overdue">
+                    {{ ageLabel(row) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    </section>
+
+    @if (selected(); as sel) {
+      <aside class="controller-card iq-detail">
+        <div class="iq-detail-head">
+          <span class="iq-detail-ticket">{{ sel.ticketRef }}</span>
+          <span class="iq-detail-meta">{{ sel.clientName }} · {{ sel.siteAddress ?? 'No site on file' }}</span>
+          @if (sel.priority) {
+            <span [class]="priorityClass(sel)">{{ priorityLabels[sel.priority] }}</span>
+          }
+        </div>
+
+        <div class="iq-detail-facts">
+          <div class="iq-fact"><span>Issue</span><span>{{ sel.issueType ?? '—' }}</span></div>
+          <div class="iq-fact"><span>Logged</span><span>{{ sel.createdAt | date: 'HH:mm' }}</span></div>
+          <div class="iq-fact"><span>Contact</span><span>{{ sel.contactName ?? '—' }}</span></div>
+          <div class="iq-fact"><span>Phone</span><span>{{ sel.contactPhone ?? '—' }}</span></div>
+          <div class="iq-fact"><span>Status</span><span>{{ sel.status }}</span></div>
+        </div>
+
+        @if (slaCountdown(sel); as countdown) {
+          <div class="iq-sla">
+            <span class="iq-sla-label">SLA clock</span>
+            <span class="iq-sla-value" [class.iq-sla-value--overdue]="sel.overdue">{{ countdown }}</span>
+            <span class="iq-sla-bar">
+              <span class="iq-sla-bar-fill" [style.width.%]="slaProgressPct(sel)"></span>
+            </span>
+          </div>
+        }
+
+        @if (sel.requiredSkills.length > 0) {
+          <div class="iq-skills">
+            <span class="iq-skills-label">Required skills</span>
+            <span class="iq-skills-tags">
+              @for (skill of sel.requiredSkills; track skill) {
+                <span class="iq-skill-tag">{{ skill }}</span>
+              }
+            </span>
+          </div>
+        }
+
+        @if (sel.description || sel.additionalNotes) {
+          <div class="iq-notes">
+            <span class="iq-notes-label">Notes</span>
+            <span class="iq-notes-text">{{ sel.description ?? sel.additionalNotes }}</span>
+          </div>
+        }
+
+        <button type="button" class="controller-btn controller-btn-primary controller-btn-block" (click)="createDispatch()">
+          Create dispatch
+        </button>
+      </aside>
+    }
+  </div>
+</div>

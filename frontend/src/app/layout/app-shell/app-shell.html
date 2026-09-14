@@ -16,6 +16,15 @@
   <button
     matIconButton
     type="button"
+    (click)="toggleTheme()"
+    [attr.aria-label]="theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+  >
+    <mat-icon>{{ theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+  </button>
+
+  <button
+    matIconButton
+    type="button"
     [matMenuTriggerFor]="userMenu"
     class="shell-user"
     [attr.aria-label]="'Account menu for ' + displayName()"

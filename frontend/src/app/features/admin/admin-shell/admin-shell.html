@@ -74,6 +74,14 @@
         <div class="admin-shell-breadcrumb">Admin / User management</div>
         <h1 class="admin-shell-title">{{ heading() }}</h1>
       </div>
+      <button
+        type="button"
+        class="admin-btn admin-btn-secondary admin-btn-icon"
+        (click)="toggleTheme()"
+        [attr.aria-label]="theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+      >
+        <app-admin-icon [name]="theme() === 'dark' ? 'sun' : 'moon'" />
+      </button>
       @if (showAddUser()) {
         <a routerLink="/admin/users/new" class="admin-btn admin-btn-primary admin-blueprint">
           <app-admin-icon name="add" />

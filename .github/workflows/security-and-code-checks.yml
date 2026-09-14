@@ -120,6 +120,10 @@ jobs:
     permissions:
       security-events: write
       contents: read
+      # The action calls the workflow-runs API for its own status telemetry — without this,
+      # that call itself is harmless to skip, but omitting the permission entirely makes the
+      # call fail loudly ("Resource not accessible by integration") instead of just skipping.
+      actions: read
     strategy:
       fail-fast: false
       matrix:

@@ -11,8 +11,8 @@
 
       @if (profile(); as current) {
         <p class="pd-hint">
-          Signed in as <strong>{{ current.email }}</strong> ({{ current.role }}). Your email
-          address and role can only be changed by an administrator.
+          Signed in as <strong>{{ current.email }}</strong> ({{ current.role }}). Your email address
+          and role can only be changed by an administrator.
         </p>
 
         <form [formGroup]="form" id="profile-form" (ngSubmit)="save()" class="pd-form">
@@ -26,13 +26,19 @@
 
           <div class="pd-field">
             <label for="pd-phone">Phone</label>
-            <input id="pd-phone" class="pd-input" type="tel" formControlName="phone" autocomplete="tel" />
-            <span class="pd-hint" style="margin: 0;">Used to reach you on site</span>
+            <input
+              id="pd-phone"
+              class="pd-input"
+              type="tel"
+              formControlName="phone"
+              autocomplete="tel"
+            />
+            <span class="pd-hint" style="margin: 0">Used to reach you on site</span>
           </div>
 
           @if (current.canEditAddress) {
             <div class="pd-address-block" formGroupName="address">
-              <p class="pd-hint" style="margin: 0;">
+              <p class="pd-hint" style="margin: 0">
                 Address — optional, but if you set one every field is required. Used for
                 distance-based job matching.
               </p>
@@ -65,7 +71,12 @@
                 </div>
                 <div class="pd-field">
                   <label for="pd-postal-code">Postal code</label>
-                  <input id="pd-postal-code" class="pd-input" formControlName="postalCode" inputmode="numeric" />
+                  <input
+                    id="pd-postal-code"
+                    class="pd-input"
+                    formControlName="postalCode"
+                    inputmode="numeric"
+                  />
                 </div>
               </div>
 
@@ -87,7 +98,12 @@
 
   <mat-dialog-actions class="pd-actions">
     <button type="button" class="pd-btn" mat-dialog-close [disabled]="saving()">Cancel</button>
-    <button type="submit" class="pd-btn pd-btn-primary" form="profile-form" [disabled]="saving() || loading()">
+    <button
+      type="submit"
+      class="pd-btn pd-btn-primary"
+      form="profile-form"
+      [disabled]="saving() || loading()"
+    >
       {{ saving() ? 'Saving…' : 'Save changes' }}
     </button>
   </mat-dialog-actions>

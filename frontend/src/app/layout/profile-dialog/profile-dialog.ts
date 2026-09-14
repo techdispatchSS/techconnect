@@ -112,7 +112,9 @@ export class ProfileDialog implements OnInit {
       .updateProfile({
         name,
         phone: phone.trim() || null,
-        address: addressProvided ? { ...address, province: address.province as Province } : undefined,
+        address: addressProvided
+          ? { ...address, province: address.province as Province }
+          : undefined,
       })
       .subscribe({
         next: (updated) => {

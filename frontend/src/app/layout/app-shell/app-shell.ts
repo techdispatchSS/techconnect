@@ -8,13 +8,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import {
-  NavigationEnd,
-  Router,
-  RouterLink,
-  RouterLinkActive,
-  RouterOutlet,
-} from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 
 import { AccountService } from '../../core/auth/account.service';
@@ -70,9 +64,7 @@ export class AppShell implements OnInit {
   private static readonly HANDSET_QUERY = '(max-width: 767px)';
 
   readonly isHandset = toSignal(
-    this.breakpointObserver
-      .observe(AppShell.HANDSET_QUERY)
-      .pipe(map((result) => result.matches)),
+    this.breakpointObserver.observe(AppShell.HANDSET_QUERY).pipe(map((result) => result.matches)),
     { initialValue: this.breakpointObserver.isMatched(AppShell.HANDSET_QUERY) },
   );
 

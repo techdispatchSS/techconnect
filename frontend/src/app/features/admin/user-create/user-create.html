@@ -12,7 +12,12 @@
       <div class="admin-blueprint admin-invite-box">
         <div class="admin-invite-row">
           <code class="admin-invite-url">{{ result.activationUrl }}</code>
-          <button type="button" class="admin-btn admin-btn-icon" (click)="copyActivationUrl()" aria-label="Copy activation link">
+          <button
+            type="button"
+            class="admin-btn admin-btn-icon"
+            (click)="copyActivationUrl()"
+            aria-label="Copy activation link"
+          >
             <app-admin-icon name="copy" />
           </button>
         </div>
@@ -24,8 +29,14 @@
       </p>
 
       <div class="uc-success-actions">
-        <button type="button" class="admin-btn admin-btn-secondary" (click)="addAnother()">Add another</button>
-        <button type="button" class="admin-btn admin-btn-primary admin-blueprint" (click)="goToPerson()">
+        <button type="button" class="admin-btn admin-btn-secondary" (click)="addAnother()">
+          Add another
+        </button>
+        <button
+          type="button"
+          class="admin-btn admin-btn-primary admin-blueprint"
+          (click)="goToPerson()"
+        >
           View their record
         </button>
       </div>
@@ -58,174 +69,247 @@
         </div>
       </div>
 
-    <div class="admin-blueprint uc-form-card">
-      @if (errorMessage()) {
-        <p class="uc-error" role="alert">{{ errorMessage() }}</p>
-      }
+      <div class="admin-blueprint uc-form-card">
+        @if (errorMessage()) {
+          <p class="uc-error" role="alert">{{ errorMessage() }}</p>
+        }
 
-      <h6 class="admin-section-title">Who are you adding?</h6>
+        <h6 class="admin-section-title">Who are you adding?</h6>
 
-      <form [formGroup]="form" (ngSubmit)="submit()" class="uc-form">
-        <div class="uc-form-grid">
-          <div class="admin-field">
-            <label for="uc-name">Full name</label>
-            <input id="uc-name" class="admin-input" formControlName="name" placeholder="e.g. Nomsa Khumalo" autocomplete="off" />
-            @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-              <p class="admin-field-error">Name is required</p>
-            }
-          </div>
-
-          <div class="admin-field">
-            <label for="uc-email">Email (this is their login)</label>
-            <input
-              id="uc-email"
-              class="admin-input"
-              type="email"
-              formControlName="email"
-              placeholder="name&#64;techconnect.app"
-              autocomplete="off"
-              autocapitalize="none"
-            />
-            @if (form.controls.email.hasError('duplicate')) {
-              <p class="admin-field-error">A user with that email address already exists</p>
-            } @else if (form.controls.email.hasError('required') && form.controls.email.touched) {
-              <p class="admin-field-error">Email is required</p>
-            } @else if (form.controls.email.hasError('email')) {
-              <p class="admin-field-error">Enter a valid email address</p>
-            }
-          </div>
-
-          <div class="admin-field">
-            <label for="uc-phone">Mobile</label>
-            <input id="uc-phone" class="admin-input" type="tel" formControlName="phone" placeholder="082 000 0000" autocomplete="off" />
-          </div>
-        </div>
-
-        <div class="uc-address-block" formGroupName="address">
-          <span class="admin-hint">Address — used for distance-based job matching, so every field is required.</span>
+        <form [formGroup]="form" (ngSubmit)="submit()" class="uc-form">
           <div class="uc-form-grid">
-            <div class="admin-field uc-field-span2">
-              <label for="uc-street">Street</label>
-              <input id="uc-street" class="admin-input" formControlName="street" placeholder="12 Long Street" autocomplete="off" />
-              @if (form.controls.address.controls.street.hasError('required') && form.controls.address.controls.street.touched) {
-                <p class="admin-field-error">Street is required</p>
+            <div class="admin-field">
+              <label for="uc-name">Full name</label>
+              <input
+                id="uc-name"
+                class="admin-input"
+                formControlName="name"
+                placeholder="e.g. Nomsa Khumalo"
+                autocomplete="off"
+              />
+              @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+                <p class="admin-field-error">Name is required</p>
               }
             </div>
 
             <div class="admin-field">
-              <label for="uc-suburb">Suburb</label>
-              <input id="uc-suburb" class="admin-input" formControlName="suburb" placeholder="Gardens" autocomplete="off" />
-              @if (form.controls.address.controls.suburb.hasError('required') && form.controls.address.controls.suburb.touched) {
-                <p class="admin-field-error">Suburb is required</p>
+              <label for="uc-email">Email (this is their login)</label>
+              <input
+                id="uc-email"
+                class="admin-input"
+                type="email"
+                formControlName="email"
+                placeholder="name&#64;techconnect.app"
+                autocomplete="off"
+                autocapitalize="none"
+              />
+              @if (form.controls.email.hasError('duplicate')) {
+                <p class="admin-field-error">A user with that email address already exists</p>
+              } @else if (form.controls.email.hasError('required') && form.controls.email.touched) {
+                <p class="admin-field-error">Email is required</p>
+              } @else if (form.controls.email.hasError('email')) {
+                <p class="admin-field-error">Enter a valid email address</p>
               }
             </div>
 
             <div class="admin-field">
-              <label for="uc-city">City / town</label>
-              <input id="uc-city" class="admin-input" formControlName="city" placeholder="Cape Town" autocomplete="off" />
-              @if (form.controls.address.controls.city.hasError('required') && form.controls.address.controls.city.touched) {
-                <p class="admin-field-error">City is required</p>
-              }
+              <label for="uc-phone">Mobile</label>
+              <input
+                id="uc-phone"
+                class="admin-input"
+                type="tel"
+                formControlName="phone"
+                placeholder="082 000 0000"
+                autocomplete="off"
+              />
             </div>
+          </div>
 
-            <div class="admin-field">
-              <label for="uc-province">Province</label>
-              <select id="uc-province" class="admin-input" formControlName="province">
-                <option value="" disabled>Select a province</option>
-                @for (province of provinces; track province) {
-                  <option [value]="province">{{ provinceLabels[province] }}</option>
+          <div class="uc-address-block" formGroupName="address">
+            <span class="admin-hint"
+              >Address — used for distance-based job matching, so every field is required.</span
+            >
+            <div class="uc-form-grid">
+              <div class="admin-field uc-field-span2">
+                <label for="uc-street">Street</label>
+                <input
+                  id="uc-street"
+                  class="admin-input"
+                  formControlName="street"
+                  placeholder="12 Long Street"
+                  autocomplete="off"
+                />
+                @if (
+                  form.controls.address.controls.street.hasError('required') &&
+                  form.controls.address.controls.street.touched
+                ) {
+                  <p class="admin-field-error">Street is required</p>
                 }
-              </select>
-              @if (form.controls.address.controls.province.hasError('required') && form.controls.address.controls.province.touched) {
-                <p class="admin-field-error">Province is required</p>
-              }
-            </div>
+              </div>
 
-            <div class="admin-field">
-              <label for="uc-postal-code">Postal code</label>
-              <input id="uc-postal-code" class="admin-input" formControlName="postalCode" placeholder="8001" inputmode="numeric" autocomplete="off" />
-              @if (form.controls.address.controls.postalCode.hasError('required') && form.controls.address.controls.postalCode.touched) {
-                <p class="admin-field-error">Postal code is required</p>
-              } @else if (form.controls.address.controls.postalCode.hasError('pattern')) {
-                <p class="admin-field-error">Enter a 4-digit postal code</p>
+              <div class="admin-field">
+                <label for="uc-suburb">Suburb</label>
+                <input
+                  id="uc-suburb"
+                  class="admin-input"
+                  formControlName="suburb"
+                  placeholder="Gardens"
+                  autocomplete="off"
+                />
+                @if (
+                  form.controls.address.controls.suburb.hasError('required') &&
+                  form.controls.address.controls.suburb.touched
+                ) {
+                  <p class="admin-field-error">Suburb is required</p>
+                }
+              </div>
+
+              <div class="admin-field">
+                <label for="uc-city">City / town</label>
+                <input
+                  id="uc-city"
+                  class="admin-input"
+                  formControlName="city"
+                  placeholder="Cape Town"
+                  autocomplete="off"
+                />
+                @if (
+                  form.controls.address.controls.city.hasError('required') &&
+                  form.controls.address.controls.city.touched
+                ) {
+                  <p class="admin-field-error">City is required</p>
+                }
+              </div>
+
+              <div class="admin-field">
+                <label for="uc-province">Province</label>
+                <select id="uc-province" class="admin-input" formControlName="province">
+                  <option value="" disabled>Select a province</option>
+                  @for (province of provinces; track province) {
+                    <option [value]="province">{{ provinceLabels[province] }}</option>
+                  }
+                </select>
+                @if (
+                  form.controls.address.controls.province.hasError('required') &&
+                  form.controls.address.controls.province.touched
+                ) {
+                  <p class="admin-field-error">Province is required</p>
+                }
+              </div>
+
+              <div class="admin-field">
+                <label for="uc-postal-code">Postal code</label>
+                <input
+                  id="uc-postal-code"
+                  class="admin-input"
+                  formControlName="postalCode"
+                  placeholder="8001"
+                  inputmode="numeric"
+                  autocomplete="off"
+                />
+                @if (
+                  form.controls.address.controls.postalCode.hasError('required') &&
+                  form.controls.address.controls.postalCode.touched
+                ) {
+                  <p class="admin-field-error">Postal code is required</p>
+                } @else if (form.controls.address.controls.postalCode.hasError('pattern')) {
+                  <p class="admin-field-error">Enter a 4-digit postal code</p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="uc-role-block">
+            <span class="admin-hint">Role</span>
+            <div class="uc-role-grid">
+              @for (card of roleCards; track card.role) {
+                <label
+                  class="admin-blueprint admin-radio-card"
+                  [class.admin-radio-card--active]="form.controls.role.value === card.role"
+                >
+                  <input
+                    type="radio"
+                    name="newrole"
+                    [checked]="form.controls.role.value === card.role"
+                    (change)="pickRole(card.role)"
+                  />
+                  <span class="admin-radio-card-label">
+                    <span class="admin-radio-dot"></span>
+                    {{ card.label }}
+                  </span>
+                  <span class="admin-radio-card-blurb">{{ card.blurb }}</span>
+                </label>
               }
             </div>
           </div>
-        </div>
 
-        <div class="uc-role-block">
-          <span class="admin-hint">Role</span>
-          <div class="uc-role-grid">
-            @for (card of roleCards; track card.role) {
-              <label
-                class="admin-blueprint admin-radio-card"
-                [class.admin-radio-card--active]="form.controls.role.value === card.role"
+          <div class="uc-form-footer">
+            <p class="admin-hint">
+              The user sets their own password from the invite link — no temporary password is
+              issued.
+            </p>
+            <div class="uc-form-footer-actions">
+              <a routerLink="/admin/users" class="admin-btn admin-btn-secondary">Cancel</a>
+              <button
+                type="submit"
+                class="admin-btn admin-btn-primary admin-blueprint"
+                [disabled]="submitting()"
               >
-                <input type="radio" name="newrole" [checked]="form.controls.role.value === card.role" (change)="pickRole(card.role)" />
-                <span class="admin-radio-card-label">
-                  <span class="admin-radio-dot"></span>
-                  {{ card.label }}
-                </span>
-                <span class="admin-radio-card-blurb">{{ card.blurb }}</span>
-              </label>
-            }
+                {{ submitting() ? 'Adding…' : 'Add user' }}
+              </button>
+            </div>
           </div>
-        </div>
+        </form>
 
-        <div class="uc-form-footer">
-          <p class="admin-hint">The user sets their own password from the invite link — no temporary password is issued.</p>
-          <div class="uc-form-footer-actions">
-            <a routerLink="/admin/users" class="admin-btn admin-btn-secondary">Cancel</a>
-            <button type="submit" class="admin-btn admin-btn-primary admin-blueprint" [disabled]="submitting()">
-              {{ submitting() ? 'Adding…' : 'Add user' }}
-            </button>
-          </div>
-        </div>
-      </form>
-
-      @if (submitting()) {
-        <div class="admin-progress"></div>
-      }
-    </div>
+        @if (submitting()) {
+          <div class="admin-progress"></div>
+        }
+      </div>
     </section>
 
     <aside class="uc-info-col">
-    <div class="admin-blueprint uc-info-card">
-      <h6 class="admin-section-title">What happens next</h6>
-      <div class="uc-flow-step">
-        <span class="uc-flow-n">1</span>
-        <span>
-          <strong>You add the user</strong>
-          <span class="admin-hint">Their record is created immediately and shows as "Pending activation" in the directory.</span>
-        </span>
+      <div class="admin-blueprint uc-info-card">
+        <h6 class="admin-section-title">What happens next</h6>
+        <div class="uc-flow-step">
+          <span class="uc-flow-n">1</span>
+          <span>
+            <strong>You add the user</strong>
+            <span class="admin-hint"
+              >Their record is created immediately and shows as "Pending activation" in the
+              directory.</span
+            >
+          </span>
+        </div>
+        <div class="uc-flow-step">
+          <span class="uc-flow-n">2</span>
+          <span>
+            <strong>They get a single-use invite link</strong>
+            <span class="admin-hint">Emailed to them. It expires after 72 hours.</span>
+          </span>
+        </div>
+        <div class="uc-flow-step">
+          <span class="uc-flow-n">3</span>
+          <span>
+            <strong>They set a password and sign in</strong>
+            <span class="admin-hint"
+              >The user chooses their own password — no temporary password ever passes through
+              you.</span
+            >
+          </span>
+        </div>
       </div>
-      <div class="uc-flow-step">
-        <span class="uc-flow-n">2</span>
-        <span>
-          <strong>They get a single-use invite link</strong>
-          <span class="admin-hint">Emailed to them. It expires after 72 hours.</span>
-        </span>
-      </div>
-      <div class="uc-flow-step">
-        <span class="uc-flow-n">3</span>
-        <span>
-          <strong>They set a password and sign in</strong>
-          <span class="admin-hint">The user chooses their own password — no temporary password ever passes through you.</span>
-        </span>
-      </div>
-    </div>
 
-    <div class="uc-preview-card">
-      <span class="uc-preview-kicker">Invite email preview</span>
-      <span class="uc-preview-title">You've been added to TechConnect</span>
-      <p class="uc-preview-body">
-        Hi {{ previewName() || 'there' }} — your account has been set up as a
-        {{ roleLabels[previewRole()] }}. Tap below to set a password and check that
-        your details are right.
-      </p>
-      <span class="uc-preview-cta">Activate my account</span>
-      <span class="uc-preview-expiry">Link expires in 72 hours.</span>
-    </div>
+      <div class="uc-preview-card">
+        <span class="uc-preview-kicker">Invite email preview</span>
+        <span class="uc-preview-title">You've been added to TechConnect</span>
+        <p class="uc-preview-body">
+          Hi {{ previewName() || 'there' }} — your account has been set up as a
+          {{ roleLabels[previewRole()] }}. Tap below to set a password and check that your details
+          are right.
+        </p>
+        <span class="uc-preview-cta">Activate my account</span>
+        <span class="uc-preview-expiry">Link expires in 72 hours.</span>
+      </div>
     </aside>
   </div>
 }

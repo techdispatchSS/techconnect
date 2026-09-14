@@ -17,7 +17,11 @@
 
       <label class="ul-search">
         <app-admin-icon name="search" />
-        <input class="admin-input" placeholder="Search people, email…" [formControl]="searchControl" />
+        <input
+          class="admin-input"
+          placeholder="Search people, email…"
+          [formControl]="searchControl"
+        />
       </label>
 
       <select
@@ -32,7 +36,17 @@
       </select>
 
       @if (hasFilters()) {
-        <button type="button" class="admin-btn admin-btn-ghost" (click)="roleFilter.set(null); statusFilter.set(null); searchControl.setValue(''); pageIndex.set(0); load()">
+        <button
+          type="button"
+          class="admin-btn admin-btn-ghost"
+          (click)="
+            roleFilter.set(null);
+            statusFilter.set(null);
+            searchControl.setValue('');
+            pageIndex.set(0);
+            load()
+          "
+        >
           Clear
         </button>
       }
@@ -90,7 +104,8 @@
       <p class="admin-empty">
         @if (loadFailed()) {
           Could not load users. Check your connection and
-          <button type="button" class="admin-btn admin-btn-ghost" (click)="load()">try again</button>.
+          <button type="button" class="admin-btn admin-btn-ghost" (click)="load()">try again</button
+          >.
         } @else if (hasFilters()) {
           No people match these filters.
         } @else {
@@ -103,10 +118,20 @@
       <div class="ul-pager">
         <span>Showing {{ pageFrom() }}–{{ pageTo() }} of {{ totalElements() }}</span>
         <span class="ul-pager-buttons">
-          <button type="button" class="admin-btn admin-btn-secondary" [disabled]="pageIndex() === 0" (click)="onPrevPage()">
+          <button
+            type="button"
+            class="admin-btn admin-btn-secondary"
+            [disabled]="pageIndex() === 0"
+            (click)="onPrevPage()"
+          >
             Previous
           </button>
-          <button type="button" class="admin-btn admin-btn-secondary" [disabled]="pageTo() >= totalElements()" (click)="onNextPage()">
+          <button
+            type="button"
+            class="admin-btn admin-btn-secondary"
+            [disabled]="pageTo() >= totalElements()"
+            (click)="onNextPage()"
+          >
             Next
           </button>
         </span>
@@ -120,7 +145,9 @@
       <p class="admin-hint">Loading…</p>
     } @else if (selected(); as sel) {
       <div class="ul-panel-head">
-        <span class="admin-avatar" style="width: 44px; height: 44px; font-size: 15px">{{ initials(sel.name) }}</span>
+        <span class="admin-avatar" style="width: 44px; height: 44px; font-size: 15px">{{
+          initials(sel.name)
+        }}</span>
         <span class="ul-panel-head-meta">
           <span class="ul-panel-head-name">{{ sel.name }}</span>
           <span class="admin-hint">{{ roleLabels[sel.role] }} · {{ sel.email }}</span>
@@ -137,7 +164,12 @@
           <span class="admin-hint">New activation link — single-use, expires in 72 hours.</span>
           <div class="admin-invite-row">
             <code class="admin-invite-url">{{ inviteUrl }}</code>
-            <button type="button" class="admin-btn admin-btn-icon" (click)="copyInviteUrl()" aria-label="Copy activation link">
+            <button
+              type="button"
+              class="admin-btn admin-btn-icon"
+              (click)="copyInviteUrl()"
+              aria-label="Copy activation link"
+            >
               <app-admin-icon name="copy" />
             </button>
           </div>
@@ -194,7 +226,12 @@
           </div>
           <div class="admin-field">
             <label for="ul-postal-code">Postal code</label>
-            <input id="ul-postal-code" class="admin-input" formControlName="postalCode" inputmode="numeric" />
+            <input
+              id="ul-postal-code"
+              class="admin-input"
+              formControlName="postalCode"
+              inputmode="numeric"
+            />
             @if (form.controls.address.controls.postalCode.hasError('pattern')) {
               <p class="admin-field-error">Enter a 4-digit postal code</p>
             }
@@ -217,31 +254,57 @@
           </div>
         }
         @if (sel.locked) {
-          <p class="ul-locked-note"><app-admin-icon name="lock" /> Locked after repeated failed sign-ins</p>
+          <p class="ul-locked-note">
+            <app-admin-icon name="lock" /> Locked after repeated failed sign-ins
+          </p>
         }
 
         <div class="ul-status-actions">
           @if (sel.status === 'PENDING_ACTIVATION') {
-            <button type="button" class="admin-btn admin-btn-secondary" [disabled]="panelSaving()" (click)="resendInvite()">
+            <button
+              type="button"
+              class="admin-btn admin-btn-secondary"
+              [disabled]="panelSaving()"
+              (click)="resendInvite()"
+            >
               <app-admin-icon name="mail" /> Resend invite
             </button>
           }
           @if (sel.status === 'DISABLED') {
-            <button type="button" class="admin-btn admin-btn-secondary" [disabled]="panelSaving()" (click)="reactivate()">
+            <button
+              type="button"
+              class="admin-btn admin-btn-secondary"
+              [disabled]="panelSaving()"
+              (click)="reactivate()"
+            >
               Reactivate
             </button>
           } @else {
-            <button type="button" class="admin-btn admin-btn-secondary admin-btn-danger" [disabled]="panelSaving()" (click)="deactivate()">
+            <button
+              type="button"
+              class="admin-btn admin-btn-secondary admin-btn-danger"
+              [disabled]="panelSaving()"
+              (click)="deactivate()"
+            >
               Deactivate
             </button>
           }
         </div>
 
         <div class="ul-form-actions">
-          <button type="submit" class="admin-btn admin-btn-primary admin-blueprint" [disabled]="panelSaving() || form.invalid">
+          <button
+            type="submit"
+            class="admin-btn admin-btn-primary admin-blueprint"
+            [disabled]="panelSaving() || form.invalid"
+          >
             Save changes
           </button>
-          <button type="button" class="admin-btn admin-btn-secondary" [disabled]="panelSaving()" (click)="cancelEdit()">
+          <button
+            type="button"
+            class="admin-btn admin-btn-secondary"
+            [disabled]="panelSaving()"
+            (click)="cancelEdit()"
+          >
             Cancel
           </button>
         </div>

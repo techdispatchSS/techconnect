@@ -88,7 +88,9 @@ export class UserList implements OnInit {
     return `${n} ${n === 1 ? 'person' : 'people'} · sorted by newest`;
   });
 
-  readonly pageFrom = computed(() => (this.totalElements() === 0 ? 0 : this.pageIndex() * this.pageSize() + 1));
+  readonly pageFrom = computed(() =>
+    this.totalElements() === 0 ? 0 : this.pageIndex() * this.pageSize() + 1,
+  );
   readonly pageTo = computed(() =>
     Math.min(this.totalElements(), (this.pageIndex() + 1) * this.pageSize()),
   );

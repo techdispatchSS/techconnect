@@ -34,7 +34,8 @@ export const routes: Routes = [
   // generic AppShell — see admin-shell.ts. ---
   {
     path: 'admin',
-    loadComponent: () => import('./features/admin/admin-shell/admin-shell').then((m) => m.AdminShell),
+    loadComponent: () =>
+      import('./features/admin/admin-shell/admin-shell').then((m) => m.AdminShell),
     // A usability guard only — the backend enforces the same rule on every request.
     canActivate: [authGuard, roleGuard],
     data: { roles: ['MANAGER'] },

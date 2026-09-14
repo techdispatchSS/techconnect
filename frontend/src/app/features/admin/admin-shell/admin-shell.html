@@ -66,7 +66,12 @@
   <div class="admin-shell-main">
     <header class="admin-shell-header">
       @if (isHandset()) {
-        <button type="button" class="admin-btn admin-btn-secondary admin-btn-icon" (click)="toggleSidebar()" aria-label="Toggle navigation">
+        <button
+          type="button"
+          class="admin-btn admin-btn-secondary admin-btn-icon"
+          (click)="toggleSidebar()"
+          aria-label="Toggle navigation"
+        >
           <app-admin-icon [name]="sidebarOpen() ? 'x' : 'menu'" />
         </button>
       }

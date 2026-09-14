@@ -59,7 +59,12 @@
                 <div class="admin-blueprint admin-invite-box">
                   <div class="admin-invite-row">
                     <code class="admin-invite-url">{{ url }}</code>
-                    <button type="button" class="admin-btn admin-btn-icon" (click)="copy(url)" aria-label="Copy activation link">
+                    <button
+                      type="button"
+                      class="admin-btn admin-btn-icon"
+                      (click)="copy(url)"
+                      aria-label="Copy activation link"
+                    >
                       <app-admin-icon name="copy" />
                     </button>
                   </div>
@@ -75,7 +80,8 @@
   @if (!loading() && pending().length === 0) {
     <p class="admin-empty">
       @if (loadFailed()) {
-        Could not load invites. <button type="button" class="admin-btn admin-btn-ghost" (click)="load()">Try again</button>.
+        Could not load invites.
+        <button type="button" class="admin-btn admin-btn-ghost" (click)="load()">Try again</button>.
       } @else {
         No outstanding invites — everyone has signed in.
       }
@@ -86,8 +92,22 @@
     <div class="iv-pager">
       <span>Showing {{ pageFrom() }}–{{ pageTo() }} of {{ totalElements() }}</span>
       <span class="iv-pager-buttons">
-        <button type="button" class="admin-btn admin-btn-secondary" [disabled]="pageIndex() === 0" (click)="onPrevPage()">Previous</button>
-        <button type="button" class="admin-btn admin-btn-secondary" [disabled]="pageTo() >= totalElements()" (click)="onNextPage()">Next</button>
+        <button
+          type="button"
+          class="admin-btn admin-btn-secondary"
+          [disabled]="pageIndex() === 0"
+          (click)="onPrevPage()"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          class="admin-btn admin-btn-secondary"
+          [disabled]="pageTo() >= totalElements()"
+          (click)="onNextPage()"
+        >
+          Next
+        </button>
       </span>
     </div>
   }

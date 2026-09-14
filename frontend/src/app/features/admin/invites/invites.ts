@@ -40,7 +40,9 @@ export class Invites implements OnInit {
   readonly pageIndex = signal(0);
   readonly pageSize = signal(20);
 
-  readonly pageFrom = computed(() => (this.totalElements() === 0 ? 0 : this.pageIndex() * this.pageSize() + 1));
+  readonly pageFrom = computed(() =>
+    this.totalElements() === 0 ? 0 : this.pageIndex() * this.pageSize() + 1,
+  );
   readonly pageTo = computed(() =>
     Math.min(this.totalElements(), (this.pageIndex() + 1) * this.pageSize()),
   );
@@ -79,7 +81,13 @@ export class Invites implements OnInit {
 
   private loadStats(): void {
     forkJoin({
-      pending: this.adminUsers.list({ role: null, status: 'PENDING_ACTIVATION', q: '', page: 0, size: 1 }),
+      pending: this.adminUsers.list({
+        role: null,
+        status: 'PENDING_ACTIVATION',
+        q: '',
+        page: 0,
+        size: 1,
+      }),
       active: this.adminUsers.list({ role: null, status: 'ACTIVE', q: '', page: 0, size: 1 }),
       total: this.adminUsers.list({ role: null, status: null, q: '', page: 0, size: 1 }),
     }).subscribe({
@@ -122,7 +130,9 @@ export class Invites implements OnInit {
         this.resendingId.set(null);
         const message =
           error instanceof HttpErrorResponse ? (error.error as { error?: string })?.error : null;
-        this.snackBar.open(message ?? 'Could not resend the invite.', 'Dismiss', { duration: 6000 });
+        this.snackBar.open(message ?? 'Could not resend the invite.', 'Dismiss', {
+          duration: 6000,
+        });
       },
     });
   }

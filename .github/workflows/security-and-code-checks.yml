@@ -112,50 +112,10 @@ jobs:
             | tar -xz gitleaks
           ./gitleaks detect --source . --redact --exit-code 1
 
-  # Static analysis (SAST) — traces actual data flow (SQL/command injection, XSS, hardcoded
-  # credentials, etc.), which neither the dependency audit nor the linters above catch, since
-  # both only look at metadata (lockfile versions, style rules), not what the code does.
-  codeql:
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-      # The action calls the workflow-runs API for its own status telemetry — without this,
-      # that call itself is harmless to skip, but omitting the permission entirely makes the
-      # call fail loudly ("Resource not accessible by integration") instead of just skipping.
-      actions: read
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [java-kotlin, javascript-typescript]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-
-      # CodeQL's Java analyzer traces through compiled bytecode, so it needs an actual build;
-      # the JS/TS analyzer reads straight from source and needs nothing extra.
-      - name: Set up JDK 21
-        if: matrix.language == 'java-kotlin'
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-          cache: maven
-          cache-dependency-path: backend/pom.xml
-
-      - name: Build backend for analysis
-        if: matrix.language == 'java-kotlin'
-        working-directory: backend
-        run: |
-          chmod +x mvnw
-          ./mvnw -B -DskipTests clean compile
-
-      - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{ matrix.language }}"
+# Static analysis (SAST) is deliberately not a job in this file: GitHub's own CodeQL
+# "default setup" is already enabled for this repo (Settings → Code security → Code
+# scanning) and scans both languages automatically. A custom `codeql-action/init` +
+# `analyze` job here would upload a competing "advanced configuration" analysis, which
+# GitHub rejects outright while default setup is on ("CodeQL analyses from advanced
+# configurations cannot be processed when the default setup is enabled") — so adding one
+# back requires switching that repo setting to Advanced first, not just editing this file.

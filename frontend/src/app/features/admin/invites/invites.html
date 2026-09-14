@@ -1,0 +1,114 @@
+<div class="iv-layout">
+  <div class="iv-stats">
+    <div class="admin-blueprint admin-stat">
+      <span class="admin-stat-label">Pending invites</span>
+      <span class="admin-stat-value">{{ pendingCount() }}</span>
+      <span class="admin-stat-note">Awaiting first sign-in</span>
+    </div>
+    <div class="admin-blueprint admin-stat">
+      <span class="admin-stat-label">Active people</span>
+      <span class="admin-stat-value">{{ activeCount() }}</span>
+      <span class="admin-stat-note">Have signed in at least once</span>
+    </div>
+    <div class="admin-blueprint admin-stat">
+      <span class="admin-stat-label">Total people</span>
+      <span class="admin-stat-value">{{ totalCount() }}</span>
+      <span class="admin-stat-note">Across every role</span>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="admin-progress"></div>
+  }
+
+  <div class="admin-blueprint iv-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th style="width: 30%">Invited person</th>
+          <th>Role</th>
+          <th>Added</th>
+          <th style="text-align: right">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of pending(); track user.id) {
+          <tr>
+            <td>
+              <span class="iv-name-meta">
+                <span class="iv-name">{{ user.name }}</span>
+                <span class="iv-email">{{ user.email }}</span>
+              </span>
+            </td>
+            <td>{{ roleLabels[user.role] }}</td>
+            <td>{{ user.createdAt | date: 'mediumDate' }}</td>
+            <td style="text-align: right">
+              <button
+                type="button"
+                class="admin-btn admin-btn-ghost"
+                [disabled]="resendingId() === user.id"
+                (click)="resend(user)"
+              >
+                {{ resendingId() === user.id ? 'Sending…' : 'Resend' }}
+              </button>
+            </td>
+          </tr>
+          @if (newInviteUrls()[user.id]; as url) {
+            <tr class="iv-link-row">
+              <td colspan="4">
+                <div class="admin-blueprint admin-invite-box">
+                  <div class="admin-invite-row">
+                    <code class="admin-invite-url">{{ url }}</code>
+                    <button
+                      type="button"
+                      class="admin-btn admin-btn-icon"
+                      (click)="copy(url)"
+                      aria-label="Copy activation link"
+                    >
+                      <app-admin-icon name="copy" />
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (!loading() && pending().length === 0) {
+    <p class="admin-empty">
+      @if (loadFailed()) {
+        Could not load invites.
+        <button type="button" class="admin-btn admin-btn-ghost" (click)="load()">Try again</button>.
+      } @else {
+        No outstanding invites — everyone has signed in.
+      }
+    </p>
+  }
+
+  @if (totalElements() > pageSize()) {
+    <div class="iv-pager">
+      <span>Showing {{ pageFrom() }}–{{ pageTo() }} of {{ totalElements() }}</span>
+      <span class="iv-pager-buttons">
+        <button
+          type="button"
+          class="admin-btn admin-btn-secondary"
+          [disabled]="pageIndex() === 0"
+          (click)="onPrevPage()"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          class="admin-btn admin-btn-secondary"
+          [disabled]="pageTo() >= totalElements()"
+          (click)="onNextPage()"
+        >
+          Next
+        </button>
+      </span>
+    </div>
+  }
+</div>

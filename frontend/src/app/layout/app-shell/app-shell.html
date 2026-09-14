@@ -1,0 +1,83 @@
+<mat-toolbar class="shell-toolbar">
+  <button matIconButton type="button" (click)="toggleSidenav()" aria-label="Toggle navigation">
+    <mat-icon>menu</mat-icon>
+  </button>
+
+  <nav class="shell-breadcrumb" aria-label="Breadcrumb">
+    <span class="shell-breadcrumb-root">Pages</span>
+    @if (pageTitle(); as title) {
+      <span class="shell-breadcrumb-sep">/</span>
+      <span class="shell-breadcrumb-current">{{ title }}</span>
+    }
+  </nav>
+
+  <span class="shell-spacer"></span>
+
+  <button
+    matIconButton
+    type="button"
+    [matMenuTriggerFor]="userMenu"
+    class="shell-user"
+    [attr.aria-label]="'Account menu for ' + displayName()"
+  >
+    <span class="shell-user-avatar">{{ initials() }}</span>
+  </button>
+
+  <mat-menu #userMenu="matMenu">
+    <div class="shell-menu-header" aria-hidden="true">
+      <strong>{{ displayName() }}</strong>
+      <span>{{ role() }}</span>
+    </div>
+    <button mat-menu-item type="button" (click)="editProfile()">
+      <mat-icon>badge</mat-icon>
+      <span>My profile</span>
+    </button>
+    <button mat-menu-item type="button" (click)="changePassword()">
+      <mat-icon>lock_reset</mat-icon>
+      <span>Change password</span>
+    </button>
+    <button mat-menu-item type="button" (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      <span>Sign out</span>
+    </button>
+  </mat-menu>
+</mat-toolbar>
+
+<mat-sidenav-container class="shell-container">
+  <mat-sidenav
+    class="shell-sidenav"
+    [opened]="sidenavOpen()"
+    (openedChange)="sidenavOpen.set($event)"
+    [mode]="sidenavMode()"
+    [disableClose]="sidenavMode() === 'side'"
+  >
+    <div class="shell-brand">
+      <span class="shell-brand-mark">TD</span>
+      <span class="shell-brand-name">TechConnect</span>
+    </div>
+
+    <mat-nav-list class="shell-nav-list">
+      @for (item of navItems(); track item.route) {
+        <a
+          mat-list-item
+          [routerLink]="item.route"
+          routerLinkActive
+          #rla="routerLinkActive"
+          [activated]="rla.isActive"
+          (click)="closeSidenavOnHandset()"
+        >
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="shell-content">
+    <div class="shell-main">
+      <router-outlet />
+    </div>
+
+    <footer class="shell-footer">TechConnect · Silver Solutions</footer>
+  </mat-sidenav-content>
+</mat-sidenav-container>

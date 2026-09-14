@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
 
+/**
+ * Root shell. Deliberately bare: the authenticated layout lives in {@code AppShell}, which
+ * is itself a route, so the unauthenticated screens render full-bleed without a toolbar.
+ */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, MatToolbarModule],
-  templateUrl: './app.html',
-  styleUrl: './app.scss',
+  imports: [RouterOutlet],
+  template: '<router-outlet />',
 })
-export class App {
-  protected readonly title = 'TechDispatch';
-}
+export class App {}

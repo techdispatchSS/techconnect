@@ -1,0 +1,246 @@
+// Shared layout for ForgotPassword and SetPassword (activate/reset) — the "Industry" design
+// system, same as Login. Sized so the whole form is reachable one-handed on a 5-inch phone
+// (PRD §9.4) — technicians activate their accounts on mobile.
+//
+// Unlike the dialogs (profile, change-password), this isn't portaled to <body> — it renders
+// as a normal routed page, a true DOM descendant of this component — so standard view
+// encapsulation and a `:host`-scoped token block both work normally; no ViewEncapsulation.None
+// needed.
+:host {
+  --auth-font-heading: 'Barlow', system-ui, sans-serif;
+  --auth-color-bg: #16191d;
+  --auth-color-surface: #1b1f24;
+  --auth-color-text: #edeff1;
+  --auth-color-accent: #f08221;
+  --auth-color-divider: color-mix(in srgb, #ffffff 14%, transparent);
+  --auth-accent-100: color-mix(in srgb, #f08221 14%, transparent);
+  --auth-accent-600: #ff9540;
+  --auth-accent-700: #ffa254;
+  --auth-accent-900: #f0a265;
+  --auth-status-disabled-fg: #ff6b6b;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: var(--auth-color-bg);
+  color: var(--auth-color-text);
+  font-family: var(--auth-font-heading);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 26rem;
+  padding: 2rem 1.75rem;
+  box-sizing: border-box;
+  background: var(--auth-color-bg);
+  border: 1px solid var(--auth-color-divider);
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-brand {
+  margin: 0;
+  font-family: var(--auth-font-heading);
+  font-weight: 600;
+  font-size: 25px;
+  letter-spacing: -0.015em;
+}
+
+.auth-subtitle {
+  margin: 0 0 0.75rem;
+  font-size: 13.5px;
+  color: color-mix(in srgb, var(--auth-color-text) 60%, transparent);
+}
+
+.auth-heading {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 0.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.field label {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--auth-color-text) 70%, transparent);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  font: inherit;
+  font-family: 'Barlow', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--auth-color-text);
+  background: var(--auth-color-surface);
+  border: 1px solid var(--auth-color-divider);
+  border-radius: 0;
+  box-sizing: border-box;
+}
+.input:hover {
+  border-color: color-mix(in srgb, var(--auth-color-text) 45%, transparent);
+}
+.input:focus-visible {
+  outline: 2px solid var(--auth-color-accent);
+  outline-offset: 0;
+  border-color: var(--auth-color-accent);
+}
+
+.password-wrap {
+  position: relative;
+  display: block;
+}
+.password-wrap .input {
+  padding-right: 40px;
+}
+.password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--auth-color-text) 55%, transparent);
+}
+.password-toggle:hover {
+  color: var(--auth-accent-700);
+}
+.password-toggle svg {
+  display: block;
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--auth-color-text) 58%, transparent);
+}
+.field-error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--auth-status-disabled-fg);
+}
+
+.auth-actions {
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-links {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 12.5px;
+}
+.auth-links a {
+  color: var(--auth-accent-700);
+  text-decoration: none;
+}
+.auth-links a:hover {
+  color: var(--auth-accent-900);
+  text-decoration: underline;
+}
+
+.auth-error {
+  display: flex;
+  gap: 10px;
+  margin: 0.5rem 0 0;
+  padding: 11px 13px;
+  border: 1px solid var(--auth-color-accent);
+  background: var(--auth-accent-100);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--auth-accent-900);
+}
+
+.auth-notice {
+  margin: 0.5rem 0 0;
+  padding: 11px 13px;
+  border: 1px solid var(--auth-color-divider);
+  background: var(--auth-color-surface);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--auth-color-text);
+}
+
+.auth-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  cursor: pointer;
+  font-family: var(--auth-font-heading);
+  font-weight: 600;
+  font-size: 14.5px;
+  color: #12140f;
+  background: var(--auth-color-accent);
+  border: 1px solid var(--auth-color-accent);
+  border-radius: 0;
+  padding: 11px;
+}
+.auth-submit:hover:not(:disabled) {
+  background: var(--auth-accent-600);
+}
+.auth-submit:active:not(:disabled) {
+  background: var(--auth-accent-700);
+}
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.auth-submit:focus-visible {
+  outline: 2px solid var(--auth-color-accent);
+  outline-offset: 2px;
+}
+
+.auth-progress {
+  display: block;
+  height: 2px;
+  background: var(--auth-accent-100);
+  overflow: hidden;
+  position: relative;
+}
+.auth-progress::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--auth-color-accent);
+  animation: auth-progress-sweep 1.1s ease-in-out infinite;
+}
+@keyframes auth-progress-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}

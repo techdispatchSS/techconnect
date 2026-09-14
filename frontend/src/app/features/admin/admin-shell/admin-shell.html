@@ -1,0 +1,94 @@
+<div class="admin-shell" [class.admin-shell--handset]="isHandset()">
+  @if (isHandset() && sidebarOpen()) {
+    <button
+      type="button"
+      class="admin-shell-backdrop"
+      aria-label="Close navigation"
+      (click)="toggleSidebar()"
+    ></button>
+  }
+
+  <aside class="admin-shell-sidebar" [class.admin-shell-sidebar--open]="sidebarOpen()">
+    <div class="admin-shell-brand">
+      <span class="admin-shell-brand-name">TechConnect</span>
+      <span class="admin-shell-brand-sub">Admin portal</span>
+    </div>
+
+    <div class="admin-shell-section-label">User management</div>
+    <nav class="admin-shell-nav">
+      @for (item of navItems; track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="admin-shell-nav-item--active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/admin/users' }"
+          class="admin-shell-nav-item"
+          (click)="closeSidebarOnHandset()"
+        >
+          <span class="admin-shell-nav-item-main">
+            <app-admin-icon [name]="item.icon" />
+            <span>{{ item.label }}</span>
+          </span>
+          @if (item.count(); as count) {
+            <span class="admin-shell-nav-item-count">{{ count }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    <div class="admin-shell-section-label">Elsewhere</div>
+    <div class="admin-shell-elsewhere">
+      <span>Jobs &amp; dispatch</span>
+      <span>Reports</span>
+      <span>Integrations</span>
+    </div>
+
+    <div class="admin-shell-user" [matMenuTriggerFor]="userMenu">
+      <span class="admin-shell-user-avatar">{{ initials() }}</span>
+      <span class="admin-shell-user-meta">
+        <span class="admin-shell-user-name">{{ displayName() }}</span>
+        <span class="admin-shell-user-role">{{ role() }}</span>
+      </span>
+    </div>
+
+    <mat-menu #userMenu="matMenu">
+      <button mat-menu-item type="button" (click)="editProfile()">
+        <app-admin-icon name="badge" /> My profile
+      </button>
+      <button mat-menu-item type="button" (click)="changePassword()">
+        <app-admin-icon name="key" /> Change password
+      </button>
+      <button mat-menu-item type="button" (click)="logout()">
+        <app-admin-icon name="log-out" /> Sign out
+      </button>
+    </mat-menu>
+  </aside>
+
+  <div class="admin-shell-main">
+    <header class="admin-shell-header">
+      @if (isHandset()) {
+        <button
+          type="button"
+          class="admin-btn admin-btn-secondary admin-btn-icon"
+          (click)="toggleSidebar()"
+          aria-label="Toggle navigation"
+        >
+          <app-admin-icon [name]="sidebarOpen() ? 'x' : 'menu'" />
+        </button>
+      }
+      <div class="admin-shell-header-titles">
+        <div class="admin-shell-breadcrumb">Admin / User management</div>
+        <h1 class="admin-shell-title">{{ heading() }}</h1>
+      </div>
+      @if (showAddUser()) {
+        <a routerLink="/admin/users/new" class="admin-btn admin-btn-primary admin-blueprint">
+          <app-admin-icon name="add" />
+          Add user
+        </a>
+      }
+    </header>
+
+    <div class="admin-shell-content">
+      <router-outlet />
+    </div>
+  </div>
+</div>

@@ -1,0 +1,11 @@
+<mat-card class="auth-card">
+  <h1 class="auth-brand">Not available to you</h1>
+  <p class="auth-subtitle">
+    Your account is signed in as
+    <strong>{{ role() ?? 'an unknown role' }}</strong
+    >, which does not have access to that area.
+  </p>
+  <div class="auth-actions">
+    <button matButton="filled" type="button" (click)="goHome()">Go to my dashboard</button>
+  </div>
+</mat-card>

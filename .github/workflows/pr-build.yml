@@ -1,0 +1,64 @@
+name: PR Build Check
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Build and test
+        # `clean package` runs the full lifecycle, including the test phase — no
+        # -DskipTests, so this now fails the check on a broken test too, not just a
+        # compile error. The integration tests use Testcontainers, which needs a Docker
+        # daemon; GitHub-hosted Ubuntu runners already have one running, so no extra setup
+        # is required. `chmod` guards against the repo being developed on Windows, where
+        # mvnw's executable bit doesn't survive a commit.
+        run: |
+          chmod +x mvnw
+          ./mvnw -B clean package
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        # Non-TTY CI environments already default the unit-test builder to a single run
+        # instead of watch mode; --watch=false is set anyway so that's never implicit.
+        run: npm run test -- --watch=false
+
+      - name: Build
+        run: npm run build -- --configuration production

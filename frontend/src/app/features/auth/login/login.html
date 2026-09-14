@@ -1,0 +1,162 @@
+<div class="login-page">
+  <aside class="login-hero">
+    <div class="login-hero-brand">
+      <span class="login-hero-brand-name">TechConnect</span>
+      <span class="login-hero-brand-sub">Field operations platform</span>
+    </div>
+
+    <div class="login-hero-body">
+      <h2 class="login-hero-headline">One board for every job in the field.</h2>
+      <p class="login-hero-lede">
+        Controllers broadcast, technicians respond, managers see the whole picture. Sign in to pick
+        up where your team left off.
+      </p>
+
+      <div class="login-hero-stats">
+        @for (stat of heroStats; track stat.label) {
+          <span class="login-hero-stat">
+            <span class="login-hero-stat-value">{{ stat.value }}</span>
+            <span class="login-hero-stat-label">{{ stat.label }}</span>
+          </span>
+        }
+      </div>
+    </div>
+
+    <div class="login-hero-footer">
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+      >
+        <rect x="4" y="10.5" width="16" height="10.5"></rect>
+        <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"></path>
+      </svg>
+      <span>Protected sign-in · sessions expire after 8 hours</span>
+    </div>
+  </aside>
+
+  <main class="login-main">
+    <div class="login-form-wrap">
+      <div class="login-title-block">
+        <h4 class="login-title">Sign in</h4>
+        <p class="login-subtitle">Use the email address your administrator added you with.</p>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="login-error" role="alert">
+          <svg
+            class="login-error-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 7.5v5M12 16h.01"></path>
+          </svg>
+          <span class="login-error-text">{{ errorMessage() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+        <div class="login-field">
+          <label for="li-email">Email</label>
+          <input
+            id="li-email"
+            class="login-input"
+            type="email"
+            formControlName="email"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder="you&#64;techconnect.app"
+          />
+          @if (form.controls.email.hasError('required') && form.controls.email.touched) {
+            <span class="login-field-error">Email is required</span>
+          } @else if (form.controls.email.hasError('email')) {
+            <span class="login-field-error">Enter a valid email address</span>
+          }
+        </div>
+
+        <div class="login-field">
+          <span class="login-field-row">
+            <label for="li-pw">Password</label>
+            <a routerLink="/forgot-password" class="login-forgot-link">Forgot your password?</a>
+          </span>
+          <span class="login-password-wrap">
+            <input
+              id="li-pw"
+              class="login-input"
+              [type]="hidePassword() ? 'password' : 'text'"
+              formControlName="password"
+              autocomplete="current-password"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              class="login-password-toggle"
+              (click)="togglePassword()"
+              [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
+              [attr.aria-pressed]="!hidePassword()"
+            >
+              @if (hidePassword()) {
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M2.5 12s3.6-6 9.5-6 9.5 6 9.5 6-3.6 6-9.5 6-9.5-6-9.5-6Z" />
+                  <circle cx="12" cy="12" r="2.6" />
+                </svg>
+              } @else {
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M4 4.5 20 19.5" />
+                  <path
+                    d="M9.6 6.6A9.9 9.9 0 0 1 12 6c5.9 0 9.5 6 9.5 6a17 17 0 0 1-2.7 3.2M6.5 8.1A16.6 16.6 0 0 0 2.5 12s3.6 6 9.5 6c1 0 1.9-.2 2.7-.4"
+                  />
+                </svg>
+              }
+            </button>
+          </span>
+          @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+            <span class="login-field-error">Password is required</span>
+          }
+        </div>
+
+        <label class="login-remember">
+          <input type="checkbox" formControlName="remember" />
+          <span>Keep me signed in on this device</span>
+        </label>
+
+        <button type="submit" class="login-submit" [disabled]="submitting()">
+          {{ submitting() ? 'Signing in…' : 'Sign in' }}
+        </button>
+
+        @if (submitting()) {
+          <span class="login-progress"></span>
+        }
+      </form>
+
+      <p class="login-footnote">
+        Been invited but never signed in? Use the activation link in your invite email to set a
+        password first. Trouble getting in —
+        <a [href]="contactHref()">contact your controller</a>.
+      </p>
+    </div>
+  </main>
+</div>

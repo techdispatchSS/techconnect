@@ -1,0 +1,182 @@
+// ════════════════════════════════════════════════════════════════════════
+// Same "Industry" design system as the admin portal and login page. This
+// dialog is opened from AdminShell (Manager) today; ViewEncapsulation.None
+// on the component (see profile-dialog.ts) makes these rules apply for as
+// long as this dialog has ever been opened in the session, scoped to the
+// `pd-` prefix so nothing else picks them up.
+// ════════════════════════════════════════════════════════════════════════
+
+.pd-dialog {
+  --pd-font-heading: 'Barlow', system-ui, sans-serif;
+  --pd-color-text: #1d1f20;
+  --pd-color-surface: #e9e9ea;
+  --pd-color-accent: #5980a6;
+  --pd-color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+  --pd-accent-100: #eef6ff;
+  --pd-accent-600: #597ea3;
+  --pd-accent-700: #416180;
+  --pd-accent-800: #2c455d;
+  --pd-status-disabled-fg: #93000a;
+
+  color: var(--pd-color-text);
+  font-family: var(--pd-font-heading);
+}
+
+// The MDC dialog surface is otherwise a rounded white card — the blueprint system draws
+// every card, figure and primary button square and hairline-bordered.
+.pd-dialog-panel .mat-mdc-dialog-surface {
+  --mdc-dialog-container-shape: 0;
+  border-radius: 0 !important;
+  border: 1px solid var(--pd-color-divider, color-mix(in srgb, #1d1f20 16%, transparent));
+}
+
+.pd-title {
+  margin: 0 0 4px;
+  font-family: var(--pd-font-heading);
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+
+.pd-hint {
+  margin: 0 0 1rem;
+  font-size: 13px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--pd-color-text) 60%, transparent);
+}
+
+.pd-error {
+  margin: 0 0 1rem;
+  padding: 10px 13px;
+  border: 1px solid var(--pd-status-disabled-fg);
+  background: color-mix(in srgb, var(--pd-status-disabled-fg) 8%, transparent);
+  font-size: 13px;
+  color: var(--pd-status-disabled-fg);
+}
+
+.pd-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.pd-field label {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--pd-color-text) 70%, transparent);
+}
+.pd-field-error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pd-status-disabled-fg);
+}
+
+.pd-input {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  font: inherit;
+  font-family: 'Barlow', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--pd-color-text);
+  background: var(--pd-color-surface);
+  border: 1px solid var(--pd-color-divider);
+  border-radius: 0;
+  box-sizing: border-box;
+}
+.pd-input:hover {
+  border-color: color-mix(in srgb, var(--pd-color-text) 45%, transparent);
+}
+.pd-input:focus-visible {
+  outline: 2px solid var(--pd-color-accent);
+  outline-offset: 0;
+  border-color: var(--pd-color-accent);
+}
+
+.pd-static {
+  font-size: 14px;
+}
+
+.pd-address-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid var(--pd-color-divider);
+}
+
+.pd-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pd-progress {
+  display: block;
+  height: 2px;
+  margin: 4px 0;
+  background: var(--pd-accent-100);
+  overflow: hidden;
+  position: relative;
+}
+.pd-progress::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--pd-color-accent);
+  animation: pd-progress-sweep 1.1s ease-in-out infinite;
+}
+@keyframes pd-progress-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+.pd-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 16px;
+}
+
+.pd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  font-family: var(--pd-font-heading);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 0;
+  border: 1px solid var(--pd-color-divider);
+  background: transparent;
+  color: var(--pd-color-text);
+}
+.pd-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pd-color-text) 7%, transparent);
+}
+.pd-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.pd-btn-primary {
+  background: var(--pd-color-accent);
+  border-color: var(--pd-color-accent);
+  color: #fff;
+}
+.pd-btn-primary:hover:not(:disabled) {
+  background: var(--pd-accent-600);
+}
+.pd-btn-primary:active:not(:disabled) {
+  background: var(--pd-accent-700);
+}

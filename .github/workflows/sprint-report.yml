@@ -16,7 +16,7 @@ permissions:
 env:
   # Set this to the Monday your first sprint started (YYYY-MM-DD).
   # Update once; every 14 days after this date the report runs.
-  SPRINT_START_DATE: "2026-08-24"
+  SPRINT_START_DATE: "2026-09-01"
 
 jobs:
   sprint-report:

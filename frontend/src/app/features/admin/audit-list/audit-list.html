@@ -1,0 +1,142 @@
+<div class="al-layout">
+  <p class="admin-hint al-subtitle">
+    Every change to system access, recorded permanently. These records cannot be edited or deleted
+    by anyone.
+  </p>
+
+  @if (targetUserId(); as id) {
+    <div class="al-active-filter">
+      <app-admin-icon name="people" />
+      <span>Filtering: {{ targetUserName() ?? id }}</span>
+      <button type="button" class="admin-btn admin-btn-ghost" (click)="clearTargetUser()">
+        <app-admin-icon name="x" /> Clear
+      </button>
+    </div>
+  }
+
+  <div class="al-toolbar">
+    <label class="al-search">
+      <app-admin-icon name="search" />
+      <input class="admin-input" placeholder="Search by person" [formControl]="searchControl" />
+    </label>
+
+    <select
+      class="admin-input al-select"
+      [value]="actionFilter() ?? ''"
+      (change)="onActionFilter($any($event.target).value)"
+    >
+      <option value="">All actions</option>
+      @for (action of actions; track action) {
+        <option [value]="action">{{ actionLabel(action) }}</option>
+      }
+    </select>
+
+    <label class="al-date-field">
+      <span class="admin-hint">From</span>
+      <input
+        type="date"
+        class="admin-input"
+        [value]="fromDate() ?? ''"
+        (change)="onFromDate($any($event.target).value)"
+      />
+    </label>
+
+    <label class="al-date-field">
+      <span class="admin-hint">To</span>
+      <input
+        type="date"
+        class="admin-input"
+        [value]="toDate() ?? ''"
+        (change)="onToDate($any($event.target).value)"
+      />
+    </label>
+
+    @if (hasFilters()) {
+      <button type="button" class="admin-btn admin-btn-ghost" (click)="clearFilters()">
+        Clear
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="admin-progress"></div>
+  }
+
+  <div class="admin-blueprint al-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th style="width: 26%">Action</th>
+          <th>User</th>
+          <th>Performed by</th>
+          <th>When</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (entry of entries(); track entry.id) {
+          <tr>
+            <td>
+              <span class="al-action">{{ actionLabel(entry.action) }}</span>
+              @if (entry.details) {
+                <code class="al-details">{{ entry.details }}</code>
+              }
+            </td>
+            <td>
+              @if (entry.targetUserId) {
+                <a [routerLink]="['/admin/users']" [queryParams]="{ selected: entry.targetUserId }">
+                  {{ entry.targetName ?? 'View person' }}
+                </a>
+              } @else {
+                <span class="admin-hint">No user</span>
+              }
+            </td>
+            <td>{{ entry.actorName ?? 'Unknown' }}</td>
+            <td>{{ entry.createdAt | date: 'medium' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (!loading() && entries().length === 0) {
+    <p class="admin-empty">
+      @if (loadFailed()) {
+        Could not load the audit trail.
+        <button type="button" class="admin-btn admin-btn-ghost" (click)="load()">Try again</button>
+      } @else if (hasFilters()) {
+        No audit entries match these filters.
+      } @else {
+        Nothing recorded yet.
+      }
+    </p>
+  }
+
+  @if (totalElements() > pageSize()) {
+    <div class="al-pager">
+      <span
+        >Showing {{ pageIndex() * pageSize() + 1 }}–{{
+          pageIndex() * pageSize() + entries().length
+        }}
+        of {{ totalElements() }}</span
+      >
+      <span class="al-pager-buttons">
+        <button
+          type="button"
+          class="admin-btn admin-btn-secondary"
+          [disabled]="pageIndex() === 0"
+          (click)="onPrevPage()"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          class="admin-btn admin-btn-secondary"
+          [disabled]="(pageIndex() + 1) * pageSize() >= totalElements()"
+          (click)="onNextPage()"
+        >
+          Next
+        </button>
+      </span>
+    </div>
+  }
+</div>

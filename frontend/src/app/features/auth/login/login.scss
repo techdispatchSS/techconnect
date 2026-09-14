@@ -1,0 +1,359 @@
+// ════════════════════════════════════════════════════════════════════════
+// "Industry" design system (steel-blue on a light technical ground, Barlow
+// headings/body, square hairline-bordered objects) — same system as the
+// admin portal, but Login is a top-level route Managers, Controllers and
+// Technicians all reach before any feature module loads, so its tokens are
+// defined here rather than shared from admin-shell.scss.
+// ════════════════════════════════════════════════════════════════════════
+
+// Barlow is loaded from index.html alongside the app's other Google Font, not `@import`ed
+// here — see admin-shell.scss for why.
+
+.login-page {
+  --login-font-heading: 'Barlow', system-ui, sans-serif;
+  --login-font-body: 'Barlow', system-ui, sans-serif;
+
+  --login-color-bg: #16191d;
+  --login-color-surface: #1b1f24;
+  --login-color-text: #edeff1;
+  --login-color-accent: #f08221;
+  --login-color-divider: color-mix(in srgb, #ffffff 14%, transparent);
+
+  --login-accent-100: color-mix(in srgb, #f08221 14%, transparent);
+  --login-accent-200: color-mix(in srgb, #f08221 24%, transparent);
+  --login-accent-400: #f0a265;
+  --login-accent-600: #ff9540;
+  --login-accent-700: #ffa254;
+  --login-accent-800: #f0a265;
+  --login-accent-900: #0e1013;
+
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  min-height: 100dvh;
+  background: var(--login-color-bg);
+  color: var(--login-color-text);
+  font-family: var(--login-font-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.login-page,
+.login-page * {
+  box-sizing: border-box;
+}
+
+.login-page h1,
+.login-page h2,
+.login-page h4 {
+  margin: 0;
+  font-family: var(--login-font-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.login-page a {
+  color: var(--login-accent-700);
+  text-decoration: none;
+}
+.login-page a:hover {
+  color: var(--login-accent-900);
+  text-decoration: underline;
+}
+
+// ── Left hero panel — hidden below the tablet breakpoint (PRD §9.4): a
+// technician activating their account one-handed on a 5-inch phone needs the
+// sign-in form immediately, not a scrolled-past marketing panel. ──
+.login-hero {
+  background: var(--login-accent-900);
+  color: #f2f2f3;
+  padding: 44px 52px;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-hero-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.login-hero-brand-name {
+  font-size: 22px;
+}
+.login-hero-brand-sub {
+  font-size: 11.5px;
+  color: var(--login-accent-400);
+}
+
+.login-hero-body {
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  max-width: 420px;
+}
+.login-hero-headline {
+  font-size: 40px;
+  text-wrap: pretty;
+}
+.login-hero-lede {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(242, 242, 243, 0.72);
+}
+
+.login-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 30px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(242, 242, 243, 0.16);
+}
+.login-hero-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.login-hero-stat-value {
+  font-family: var(--login-font-heading);
+  font-weight: 600;
+  font-size: 27px;
+  line-height: 1.1;
+}
+.login-hero-stat-label {
+  font-size: 11.5px;
+  color: rgba(242, 242, 243, 0.6);
+}
+
+.login-hero-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: rgba(242, 242, 243, 0.5);
+}
+
+// ── Right panel — the actual sign-in form. ──
+.login-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 44px 40px;
+}
+
+.login-form-wrap {
+  width: 100%;
+  max-width: 372px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.login-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.login-title {
+  font-size: 25px;
+  letter-spacing: -0.015em;
+}
+.login-subtitle {
+  margin: 0;
+  font-size: 13.5px;
+  color: color-mix(in srgb, var(--login-color-text) 60%, transparent);
+}
+
+.login-error {
+  display: flex;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid var(--login-color-accent);
+  background: var(--login-accent-100);
+}
+.login-error-icon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--login-accent-800);
+}
+.login-error-text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--login-accent-900);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.login-field label {
+  font-size: 12.5px;
+}
+.login-field-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.login-field-row label {
+  margin: 0;
+}
+.login-forgot-link {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.login-input {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--login-color-text);
+  background: var(--login-color-surface);
+  border: 1px solid var(--login-color-divider);
+  border-radius: 0;
+}
+.login-input:hover {
+  border-color: color-mix(in srgb, var(--login-color-text) 45%, transparent);
+}
+.login-input:focus-visible {
+  outline: 2px solid var(--login-color-accent);
+  outline-offset: 0;
+  border-color: var(--login-color-accent);
+}
+.login-input::placeholder {
+  color: color-mix(in srgb, var(--login-color-text) 45%, transparent);
+}
+
+.login-field-error {
+  font-size: 12px;
+  color: var(--login-accent-800);
+}
+
+.login-password-wrap {
+  position: relative;
+  display: block;
+}
+.login-password-wrap .login-input {
+  padding-right: 40px;
+}
+.login-password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--login-color-text) 55%, transparent);
+}
+.login-password-toggle:hover {
+  color: var(--login-accent-800);
+}
+.login-password-toggle svg {
+  display: block;
+}
+
+.login-remember {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--login-color-text) 75%, transparent);
+}
+.login-remember input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--login-color-accent);
+  margin: 0;
+}
+
+.login-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  cursor: pointer;
+  font-family: var(--login-font-heading);
+  font-weight: 600;
+  font-size: 14.5px;
+  color: #12140f;
+  background: var(--login-color-accent);
+  border: 1px solid var(--login-color-accent);
+  border-radius: 0;
+  padding: 11px;
+}
+.login-submit:hover:not(:disabled) {
+  background: var(--login-accent-600);
+}
+.login-submit:active:not(:disabled) {
+  background: var(--login-accent-700);
+}
+.login-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.login-submit:focus-visible {
+  outline: 2px solid var(--login-color-accent);
+  outline-offset: 2px;
+}
+
+.login-progress {
+  display: block;
+  height: 2px;
+  background: var(--login-accent-200);
+  overflow: hidden;
+  position: relative;
+}
+.login-progress::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--login-color-accent);
+  animation: login-progress-sweep 1.1s ease-in-out infinite;
+}
+@keyframes login-progress-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+.login-footnote {
+  margin: 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--login-color-divider);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--login-color-text) 58%, transparent);
+}
+
+@media (max-width: 899px) {
+  .login-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .login-hero {
+    display: none;
+  }
+  .login-main {
+    padding: 32px 20px;
+  }
+}

@@ -1,4 +1,4 @@
-# Label set for TechDispatch. Apply with .github/scripts/setup-labels.sh
+# Label set for TechConnect. Apply with .github/scripts/setup-labels.sh
 # (run locally where `gh` is authenticated against your own GitHub account —
 # this sandbox's proxy can't create these for you.)
 

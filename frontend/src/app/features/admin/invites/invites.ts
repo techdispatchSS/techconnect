@@ -6,6 +6,7 @@ import { forkJoin } from 'rxjs';
 
 import { AdminUserService } from '../admin-user.service';
 import { AdminUser, ROLE_LABELS } from '../admin.models';
+import { Skeleton } from '../../../shared/skeleton/skeleton';
 import { AdminIcon } from '../ui/admin-icon/admin-icon';
 
 /**
@@ -15,7 +16,7 @@ import { AdminIcon } from '../ui/admin-icon/admin-icon';
  */
 @Component({
   selector: 'app-invites',
-  imports: [DatePipe, MatSnackBarModule, AdminIcon],
+  imports: [DatePipe, MatSnackBarModule, AdminIcon, Skeleton],
   templateUrl: './invites.html',
   styleUrl: './invites.scss',
 })
@@ -30,9 +31,13 @@ export class Invites implements OnInit {
   readonly loading = signal(false);
   readonly loadFailed = signal(false);
 
-  readonly pendingCount = signal(0);
-  readonly activeCount = signal(0);
-  readonly totalCount = signal(0);
+  // Null until the stats request lands, so the cards show a loader instead of a misleading 0.
+  readonly statsLoading = signal(true);
+  readonly pendingCount = signal<number | null>(null);
+  readonly activeCount = signal<number | null>(null);
+  readonly totalCount = signal<number | null>(null);
+
+  readonly skeletonRows = [1, 2, 3, 4, 5];
 
   readonly resendingId = signal<string | null>(null);
   readonly newInviteUrls = signal<Record<string, string>>({});
@@ -95,8 +100,9 @@ export class Invites implements OnInit {
         this.pendingCount.set(pending.totalElements);
         this.activeCount.set(active.totalElements);
         this.totalCount.set(total.totalElements);
+        this.statsLoading.set(false);
       },
-      error: () => undefined,
+      error: () => this.statsLoading.set(false),
     });
   }
 

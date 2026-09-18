@@ -10,6 +10,10 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Address, PROVINCES, PROVINCE_LABELS, Province } from '../../../core/address.models';
 import { UserRole, UserStatus } from '../../../core/auth/auth.models';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/confirm-dialog/confirm-dialog';
+import { requiredTrimmed, trimStrings } from '../../../shared/form-text';
+import { Skeleton } from '../../../shared/skeleton/skeleton';
+import { PickedAddress, StreetInput } from '../../../shared/street-input/street-input';
+import { TrimOnBlur } from '../../../shared/trim-on-blur';
 import { AdminNavCountsService } from '../admin-nav-counts.service';
 import { AdminUserService } from '../admin-user.service';
 import { AdminUser, ROLE_LABELS, STATUS_LABELS, UserListFilters } from '../admin.models';
@@ -35,7 +39,16 @@ const ROLE_TABS: readonly RoleTab[] = [
  */
 @Component({
   selector: 'app-user-list',
-  imports: [DatePipe, ReactiveFormsModule, MatDialogModule, MatSnackBarModule, AdminIcon],
+  imports: [
+    DatePipe,
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatSnackBarModule,
+    AdminIcon,
+    Skeleton,
+    StreetInput,
+    TrimOnBlur,
+  ],
   templateUrl: './user-list.html',
   styleUrl: './user-list.scss',
 })
@@ -58,6 +71,10 @@ export class UserList implements OnInit {
   readonly totalElements = signal(0);
   readonly loading = signal(false);
   readonly loadFailed = signal(false);
+  /** False until the first response (or failure) — before that the count and rows are unknown,
+   * not zero, so the screen shows loaders instead of "0 people". */
+  readonly loaded = signal(false);
+  readonly skeletonRows = [1, 2, 3, 4, 5, 6];
 
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly roleFilter = signal<UserRole | null>(null);
@@ -71,12 +88,12 @@ export class UserList implements OnInit {
   readonly newInviteUrl = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(255)]],
+    name: ['', [requiredTrimmed, Validators.maxLength(255)]],
     phone: ['', [Validators.maxLength(32)]],
     address: this.fb.nonNullable.group({
-      street: ['', [Validators.required, Validators.maxLength(255)]],
-      suburb: ['', [Validators.required, Validators.maxLength(120)]],
-      city: ['', [Validators.required, Validators.maxLength(120)]],
+      street: ['', [requiredTrimmed, Validators.maxLength(255)]],
+      suburb: ['', [requiredTrimmed, Validators.maxLength(120)]],
+      city: ['', [requiredTrimmed, Validators.maxLength(120)]],
       province: ['' as Province | '', [Validators.required]],
       postalCode: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]],
     }),
@@ -124,12 +141,14 @@ export class UserList implements OnInit {
         this.users.set(page.content);
         this.totalElements.set(page.totalElements);
         this.loading.set(false);
+        this.loaded.set(true);
         this.afterLoad(page.content, preselectId);
       },
       error: () => {
         this.users.set([]);
         this.totalElements.set(0);
         this.loading.set(false);
+        this.loaded.set(true);
         this.loadFailed.set(true);
       },
     });
@@ -211,6 +230,18 @@ export class UserList implements OnInit {
     });
   }
 
+  /** Fills the rest of the address from a Google suggestion; see UserCreate.applyPlace. */
+  applyPlace(place: PickedAddress): void {
+    const group = this.form.controls.address;
+    for (const [key, value] of Object.entries(place)) {
+      if (value) {
+        group.get(key)?.setValue(value);
+        group.get(key)?.markAsTouched();
+      }
+    }
+    this.form.markAsDirty();
+  }
+
   cancelEdit(): void {
     const user = this.selected();
     if (!user) {
@@ -248,12 +279,15 @@ export class UserList implements OnInit {
     const { name, phone, address, role } = this.form.getRawValue();
 
     this.adminUsers
-      .update(user.id, {
-        name,
-        phone: phone.trim() || null,
-        address: { ...address, province: address.province as Province },
-        role,
-      })
+      .update(
+        user.id,
+        trimStrings({
+          name,
+          phone: phone.trim() || null,
+          address: { ...address, province: address.province as Province },
+          role,
+        }),
+      )
       .subscribe({
         next: (updated) => {
           this.panelSaving.set(false);

@@ -73,6 +73,16 @@
         </tr>
       </thead>
       <tbody>
+        @if (loading() && entries().length === 0) {
+          @for (row of skeletonRows; track row) {
+            <tr aria-hidden="true">
+              <td><app-skeleton width="8rem" height="14px" /></td>
+              <td><app-skeleton width="7rem" height="14px" /></td>
+              <td><app-skeleton width="7rem" height="14px" /></td>
+              <td><app-skeleton width="9rem" height="14px" /></td>
+            </tr>
+          }
+        }
         @for (entry of entries(); track entry.id) {
           <tr>
             <td>

@@ -67,6 +67,7 @@
         <div class="login-field">
           <label for="li-email">Email</label>
           <input
+            appTrimOnBlur
             id="li-email"
             class="login-input"
             type="email"
@@ -74,7 +75,7 @@
             autocomplete="username"
             autocapitalize="none"
             spellcheck="false"
-            placeholder="you&#64;techconnect.app"
+            placeholder="you&#64;tech-connect.app"
           />
           @if (form.controls.email.hasError('required') && form.controls.email.touched) {
             <span class="login-field-error">Email is required</span>

@@ -54,6 +54,28 @@ export const routes: Routes = [
           import('./features/errors/forbidden/forbidden').then((m) => m.Forbidden),
         title: 'Not available · TechConnect',
       },
+      // Placeholders until the real screens exist. Without them these role homes matched
+      // nothing, fell through to `**`, and bounced straight back into the role redirect.
+      {
+        path: 'incidents',
+        loadComponent: () =>
+          import('./features/under-construction/under-construction').then(
+            (m) => m.UnderConstruction,
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['CONTROLLER'] },
+        title: 'Dispatch board · TechConnect',
+      },
+      {
+        path: 'jobs',
+        loadComponent: () =>
+          import('./features/under-construction/under-construction').then(
+            (m) => m.UnderConstruction,
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['TECHNICIAN'] },
+        title: 'My jobs · TechConnect',
+      },
       // Root redirects by role, which is resolved at navigation time rather than baked in.
       {
         path: '',

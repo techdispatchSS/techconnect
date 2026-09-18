@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
+import { Skeleton } from '../../../shared/skeleton/skeleton';
 import { AdminUserService } from '../admin-user.service';
 import { AUDIT_ACTION_LABELS, AdminAuditAction, AuditEntry } from '../admin.models';
 import { AdminIcon } from '../ui/admin-icon/admin-icon';
@@ -20,7 +21,7 @@ import { AdminIcon } from '../ui/admin-icon/admin-icon';
  */
 @Component({
   selector: 'app-audit-list',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink, AdminIcon],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, AdminIcon, Skeleton],
   templateUrl: './audit-list.html',
   styleUrl: './audit-list.scss',
 })
@@ -36,6 +37,7 @@ export class AuditList implements OnInit {
   readonly totalElements = signal(0);
   readonly loading = signal(false);
   readonly loadFailed = signal(false);
+  readonly skeletonRows = [1, 2, 3, 4, 5, 6];
   readonly pageIndex = signal(0);
   readonly pageSize = signal(20);
 

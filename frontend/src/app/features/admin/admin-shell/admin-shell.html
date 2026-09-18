@@ -30,6 +30,8 @@
           </span>
           @if (item.count(); as count) {
             <span class="admin-shell-nav-item-count">{{ count }}</span>
+          } @else if (item.hasBadge && counts.loading()) {
+            <app-skeleton width="1.25rem" height="11px" />
           }
         </a>
       }

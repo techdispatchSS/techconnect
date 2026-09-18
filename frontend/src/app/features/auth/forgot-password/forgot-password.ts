@@ -3,10 +3,11 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { AccountService } from '../../../core/auth/account.service';
+import { TrimOnBlur } from '../../../shared/trim-on-blur';
 
 @Component({
   selector: 'app-forgot-password',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, TrimOnBlur],
   templateUrl: './forgot-password.html',
   styleUrl: '../auth-page.scss',
 })

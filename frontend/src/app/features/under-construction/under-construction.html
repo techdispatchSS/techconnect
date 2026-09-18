@@ -1,0 +1,90 @@
+<section class="uc-page" aria-labelledby="uc-title">
+  <svg
+    class="uc-art"
+    viewBox="0 0 480 300"
+    role="img"
+    aria-label="A dispatch board taking shape, with a wrench and a safety cone beside it"
+  >
+    <ellipse class="uc-ground" cx="240" cy="272" rx="190" ry="14" />
+
+    <rect class="uc-window" x="70" y="28" width="340" height="216" rx="14" />
+    <path class="uc-window-bar" d="M70 42a14 14 0 0 1 14-14h312a14 14 0 0 1 14 14v22H70z" />
+    <circle class="uc-dot" cx="90" cy="46" r="4" />
+    <circle class="uc-dot" cx="104" cy="46" r="4" />
+    <circle class="uc-dot" cx="118" cy="46" r="4" />
+
+    <g>
+      <rect x="90" y="82" width="88" height="14" rx="4" class="uc-line-strong" />
+      <rect x="90" y="106" width="88" height="42" rx="7" class="uc-card" />
+      <rect x="100" y="118" width="50" height="6" rx="3" class="uc-line" />
+      <rect x="100" y="130" width="34" height="6" rx="3" class="uc-line" />
+      <rect x="90" y="158" width="88" height="42" rx="7" class="uc-card" />
+      <rect x="100" y="170" width="56" height="6" rx="3" class="uc-line" />
+      <rect x="100" y="182" width="40" height="6" rx="3" class="uc-line" />
+    </g>
+    <g>
+      <rect x="196" y="82" width="88" height="14" rx="4" class="uc-line-strong" />
+      <rect x="196" y="106" width="88" height="42" rx="7" class="uc-card" />
+      <rect x="196" y="106" width="4" height="42" rx="2" class="uc-accent-fill" />
+      <rect x="208" y="118" width="54" height="6" rx="3" class="uc-line" />
+      <rect x="208" y="130" width="36" height="6" rx="3" class="uc-line" />
+      <rect x="196" y="158" width="88" height="42" rx="7" class="uc-card uc-card--ghost" />
+    </g>
+    <g>
+      <rect x="302" y="82" width="88" height="14" rx="4" class="uc-line-strong" />
+      <rect x="302" y="106" width="88" height="42" rx="7" class="uc-card uc-card--ghost" />
+      <rect x="302" y="158" width="88" height="42" rx="7" class="uc-card uc-card--ghost" />
+    </g>
+
+    <rect x="90" y="220" width="300" height="6" rx="3" class="uc-track" />
+    <rect x="90" y="220" width="182" height="6" rx="3" class="uc-accent-fill" />
+
+    <g class="uc-pin">
+      <path
+        class="uc-accent-fill"
+        d="M22 0C10 0 2 8.6 2 19.2 2 33 22 52 22 52s20-19 20-32.8C42 8.6 34 0 22 0z"
+      />
+      <circle cx="22" cy="19" r="8" class="uc-pin-hole" />
+    </g>
+
+    <g transform="translate(372 176) rotate(28)">
+      <rect x="-7" y="10" width="14" height="82" rx="7" class="uc-tool" />
+      <path
+        class="uc-tool"
+        d="M-20 -18a20 20 0 0 1 14-19v18a6 6 0 0 0 12 0v-18a20 20 0 0 1 14 19c0 10-6 18-14 22h-12c-8-4-14-12-14-22z"
+      />
+    </g>
+
+    <g transform="translate(40 200)">
+      <path class="uc-cone" d="M28 0h16l20 62H8z" />
+      <path class="uc-cone-stripe" d="M22 22h28l-4 14H26z" />
+      <rect x="0" y="62" width="72" height="9" rx="4" class="uc-cone-base" />
+    </g>
+  </svg>
+
+  <p class="uc-kicker">{{ copy().kicker }}</p>
+  <h1 id="uc-title" class="uc-title">{{ copy().title }}</h1>
+  @if (name(); as who) {
+    <p class="uc-greeting">Hi {{ who }},</p>
+  }
+  <p class="uc-lead">{{ copy().lead }}</p>
+
+  @if (copy().upcoming.length > 0) {
+    <ul class="uc-list">
+      @for (item of copy().upcoming; track item.heading) {
+        <li class="uc-item">
+          <span class="uc-item-mark" aria-hidden="true"></span>
+          <span>
+            <strong>{{ item.heading }}</strong>
+            <span class="uc-item-detail">{{ item.detail }}</span>
+          </span>
+        </li>
+      }
+    </ul>
+  }
+
+  <p class="uc-foot">
+    Questions about the launch? <a [href]="supportHref">Get in touch</a>. You can sign out any time
+    from the account menu.
+  </p>
+</section>

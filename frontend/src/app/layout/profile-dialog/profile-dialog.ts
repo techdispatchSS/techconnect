@@ -12,6 +12,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { PROVINCES, PROVINCE_LABELS, Province } from '../../core/address.models';
 import { AccountService, Profile } from '../../core/auth/account.service';
+import { trimStrings } from '../../shared/form-text';
+import { Skeleton } from '../../shared/skeleton/skeleton';
+import { TrimOnBlur } from '../../shared/trim-on-blur';
 
 /**
  * Unlike the admin portal's onboarding and edit forms, a Manager's own address is optional
@@ -33,7 +36,7 @@ function completeOrEmptyAddress(group: AbstractControl): ValidationErrors | null
 
 @Component({
   selector: 'app-profile-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule],
+  imports: [ReactiveFormsModule, MatDialogModule, Skeleton, TrimOnBlur],
   templateUrl: './profile-dialog.html',
   styleUrl: './profile-dialog.scss',
   // Matches admin-shell.ts / login's approach: the "Industry" design system's tokens are
@@ -109,13 +112,15 @@ export class ProfileDialog implements OnInit {
     const addressProvided = Object.values(address).some((v) => v.trim() !== '');
 
     this.account
-      .updateProfile({
-        name,
-        phone: phone.trim() || null,
-        address: addressProvided
-          ? { ...address, province: address.province as Province }
-          : undefined,
-      })
+      .updateProfile(
+        trimStrings({
+          name,
+          phone: phone.trim() || null,
+          address: addressProvided
+            ? { ...address, province: address.province as Province }
+            : undefined,
+        }),
+      )
       .subscribe({
         next: (updated) => {
           this.saving.set(false);

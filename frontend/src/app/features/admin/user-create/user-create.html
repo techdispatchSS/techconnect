@@ -81,6 +81,7 @@
             <div class="admin-field">
               <label for="uc-first-name">First name</label>
               <input
+                appTrimOnBlur
                 id="uc-first-name"
                 class="admin-input"
                 formControlName="firstName"
@@ -97,6 +98,7 @@
             <div class="admin-field">
               <label for="uc-last-name">Last name</label>
               <input
+                appTrimOnBlur
                 id="uc-last-name"
                 class="admin-input"
                 formControlName="lastName"
@@ -111,11 +113,12 @@
             <div class="admin-field">
               <label for="uc-email">Email (this is their login)</label>
               <input
+                appTrimOnBlur
                 id="uc-email"
                 class="admin-input"
                 type="email"
                 formControlName="email"
-                placeholder="name&#64;techconnect.app"
+                placeholder="name&#64;tech-connect.app"
                 autocomplete="off"
                 autocapitalize="none"
               />
@@ -131,6 +134,7 @@
             <div class="admin-field">
               <label for="uc-phone">Mobile</label>
               <input
+                appTrimOnBlur
                 id="uc-phone"
                 class="admin-input"
                 type="tel"
@@ -148,12 +152,11 @@
             <div class="uc-form-grid">
               <div class="admin-field uc-field-span2">
                 <label for="uc-street">Street</label>
-                <input
-                  id="uc-street"
-                  class="admin-input"
-                  formControlName="street"
+                <app-street-input
+                  inputId="uc-street"
+                  [control]="form.controls.address.controls.street"
                   placeholder="12 Long Street"
-                  autocomplete="off"
+                  (picked)="applyPlace($event)"
                 />
                 @if (
                   form.controls.address.controls.street.hasError('required') &&
@@ -166,6 +169,7 @@
               <div class="admin-field">
                 <label for="uc-suburb">Suburb</label>
                 <input
+                  appTrimOnBlur
                   id="uc-suburb"
                   class="admin-input"
                   formControlName="suburb"
@@ -183,6 +187,7 @@
               <div class="admin-field">
                 <label for="uc-city">City / town</label>
                 <input
+                  appTrimOnBlur
                   id="uc-city"
                   class="admin-input"
                   formControlName="city"
@@ -216,6 +221,7 @@
               <div class="admin-field">
                 <label for="uc-postal-code">Postal code</label>
                 <input
+                  appTrimOnBlur
                   id="uc-postal-code"
                   class="admin-input"
                   formControlName="postalCode"

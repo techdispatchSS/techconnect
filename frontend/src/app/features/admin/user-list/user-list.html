@@ -52,7 +52,13 @@
       }
     </div>
 
-    <div class="ul-result-line">{{ resultLine() }}</div>
+    <div class="ul-result-line" [attr.aria-busy]="!loaded()">
+      @if (loaded()) {
+        {{ resultLine() }}
+      } @else {
+        <app-skeleton width="11rem" height="12px" />
+      }
+    </div>
 
     @if (loading()) {
       <div class="admin-progress"></div>
@@ -69,6 +75,24 @@
           </tr>
         </thead>
         <tbody>
+          @if (loading() && users().length === 0) {
+            @for (row of skeletonRows; track row) {
+              <tr aria-hidden="true">
+                <td>
+                  <span class="ul-name-cell">
+                    <app-skeleton width="28px" height="28px" radius="50%" />
+                    <span class="ul-name-meta">
+                      <app-skeleton width="8rem" height="13px" />
+                      <app-skeleton width="11rem" height="11px" />
+                    </span>
+                  </span>
+                </td>
+                <td><app-skeleton width="4.5rem" height="13px" /></td>
+                <td><app-skeleton width="4rem" height="20px" /></td>
+                <td style="text-align: right"><app-skeleton width="6rem" height="13px" /></td>
+              </tr>
+            }
+          }
           @for (user of users(); track user.id) {
             <tr
               data-clickable
@@ -140,9 +164,22 @@
   </section>
 
   <aside class="admin-blueprint ul-panel">
-    @if (selectedLoading()) {
-      <div class="admin-progress"></div>
-      <p class="admin-hint">Loading…</p>
+    @if (selectedLoading() || !loaded()) {
+      <div class="ul-panel-skeleton" aria-busy="true" aria-label="Loading person">
+        <div class="ul-panel-head">
+          <app-skeleton width="44px" height="44px" radius="50%" />
+          <span class="ul-panel-head-meta">
+            <app-skeleton width="9rem" height="15px" />
+            <app-skeleton width="13rem" height="11px" />
+          </span>
+        </div>
+        @for (row of [1, 2, 3, 4]; track row) {
+          <div class="admin-field">
+            <app-skeleton width="5rem" height="11px" />
+            <app-skeleton width="100%" height="34px" radius="2px" />
+          </div>
+        }
+      </div>
     } @else if (selected(); as sel) {
       <div class="ul-panel-head">
         <span class="admin-avatar" style="width: 44px; height: 44px; font-size: 15px">{{
@@ -180,7 +217,7 @@
         <h6 class="admin-section-title">Identity</h6>
         <div class="admin-field">
           <label for="ul-name">Full name</label>
-          <input id="ul-name" class="admin-input" formControlName="name" />
+          <input appTrimOnBlur id="ul-name" class="admin-input" formControlName="name" />
         </div>
         <div class="admin-field">
           <span class="admin-field-label">Email (login)</span>
@@ -188,7 +225,13 @@
         </div>
         <div class="admin-field">
           <label for="ul-phone">Mobile</label>
-          <input id="ul-phone" class="admin-input" type="tel" formControlName="phone" />
+          <input
+            appTrimOnBlur
+            id="ul-phone"
+            class="admin-input"
+            type="tel"
+            formControlName="phone"
+          />
         </div>
 
         <h6 class="admin-section-title">Role &amp; location</h6>
@@ -205,15 +248,19 @@
           <p class="admin-hint">Used for distance-based job matching — every field is required.</p>
           <div class="admin-field">
             <label for="ul-street">Street</label>
-            <input id="ul-street" class="admin-input" formControlName="street" />
+            <app-street-input
+              inputId="ul-street"
+              [control]="form.controls.address.controls.street"
+              (picked)="applyPlace($event)"
+            />
           </div>
           <div class="admin-field">
             <label for="ul-suburb">Suburb</label>
-            <input id="ul-suburb" class="admin-input" formControlName="suburb" />
+            <input appTrimOnBlur id="ul-suburb" class="admin-input" formControlName="suburb" />
           </div>
           <div class="admin-field">
             <label for="ul-city">City / town</label>
-            <input id="ul-city" class="admin-input" formControlName="city" />
+            <input appTrimOnBlur id="ul-city" class="admin-input" formControlName="city" />
           </div>
           <div class="admin-field">
             <label for="ul-province">Province</label>
@@ -227,6 +274,7 @@
           <div class="admin-field">
             <label for="ul-postal-code">Postal code</label>
             <input
+              appTrimOnBlur
               id="ul-postal-code"
               class="admin-input"
               formControlName="postalCode"

@@ -100,6 +100,26 @@ jobs:
       - name: Test
         run: npm run test -- --watch=false
 
+      # The Google Maps browser key (address search) is written into the production
+      # environment file at build time so it never has to be committed. It still ends up in the
+      # shipped JS bundle, as any browser key does — what protects it is the HTTP-referrer and
+      # API restrictions on the key itself in Google Cloud. An unset variable is not an error:
+      # the address form simply stays manual entry.
+      - name: Inject Google Maps API key
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ vars.GOOGLE_MAPS_API_KEY }}
+        run: |
+          if [ -z "$GOOGLE_MAPS_API_KEY" ]; then
+            echo "::warning::GOOGLE_MAPS_API_KEY is not set; address search will be disabled in this build."
+            exit 0
+          fi
+          if ! printf '%s' "$GOOGLE_MAPS_API_KEY" | grep -Eq '^[A-Za-z0-9_-]+$'; then
+            echo "::error::GOOGLE_MAPS_API_KEY contains unexpected characters."
+            exit 1
+          fi
+          sed -i "s|googleMapsApiKey: ''|googleMapsApiKey: '${GOOGLE_MAPS_API_KEY}'|" src/environments/environment.ts
+          grep -q "googleMapsApiKey: '${GOOGLE_MAPS_API_KEY}'" src/environments/environment.ts
+
       - name: Build
         run: npm run build -- --configuration production
 

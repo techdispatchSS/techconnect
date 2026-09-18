@@ -105,6 +105,12 @@
   top: 96px;
 }
 
+.ul-panel-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .ul-panel-head {
   display: flex;
   align-items: flex-start;

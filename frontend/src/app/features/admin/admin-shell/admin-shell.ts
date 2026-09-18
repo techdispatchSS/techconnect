@@ -26,6 +26,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { ChangePasswordDialog } from '../../../layout/change-password-dialog/change-password-dialog';
 import { ProfileDialog } from '../../../layout/profile-dialog/profile-dialog';
 import { AdminNavCountsService } from '../admin-nav-counts.service';
+import { Skeleton } from '../../../shared/skeleton/skeleton';
 import { AdminIcon } from '../ui/admin-icon/admin-icon';
 
 interface NavItem {
@@ -33,6 +34,8 @@ interface NavItem {
   readonly route: string;
   readonly icon: 'people' | 'add' | 'invite' | 'audit';
   readonly count: () => number | null;
+  /** Whether this entry carries a badge at all, so only those show a loader while it loads. */
+  readonly hasBadge: boolean;
 }
 
 /**
@@ -44,7 +47,15 @@ interface NavItem {
 @Component({
   selector: 'app-admin-shell',
   encapsulation: ViewEncapsulation.None,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatDialogModule, MatMenuModule, AdminIcon],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MatDialogModule,
+    MatMenuModule,
+    AdminIcon,
+    Skeleton,
+  ],
   templateUrl: './admin-shell.html',
   styleUrl: './admin-shell.scss',
 })
@@ -94,15 +105,29 @@ export class AdminShell implements OnInit {
       route: '/admin/users',
       icon: 'people',
       count: () => this.counts.peopleCount(),
+      hasBadge: true,
     },
-    { label: 'Add user', route: '/admin/users/new', icon: 'add', count: () => null },
+    {
+      label: 'Add user',
+      route: '/admin/users/new',
+      icon: 'add',
+      count: () => null,
+      hasBadge: false,
+    },
     {
       label: 'Invites',
       route: '/admin/invites',
       icon: 'invite',
       count: () => this.counts.pendingInviteCount(),
+      hasBadge: true,
     },
-    { label: 'Audit trail', route: '/admin/audit', icon: 'audit', count: () => null },
+    {
+      label: 'Audit trail',
+      route: '/admin/audit',
+      icon: 'audit',
+      count: () => null,
+      hasBadge: false,
+    },
   ];
 
   private readonly currentUrl = toSignal(

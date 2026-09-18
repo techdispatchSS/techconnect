@@ -115,6 +115,19 @@
   gap: 12px;
 }
 
+.pd-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 0;
+}
+
+.pd-skeleton-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .pd-progress {
   display: block;
   height: 2px;

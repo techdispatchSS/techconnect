@@ -18,6 +18,9 @@ export class AdminNavCountsService {
 
   readonly peopleCount = signal<number | null>(null);
   readonly pendingInviteCount = signal<number | null>(null);
+  /** True only until the first result arrives, so the badges show a loader once and then
+   * quietly swap values on later refreshes instead of flickering back to a placeholder. */
+  readonly loading = signal(true);
 
   refresh(): void {
     forkJoin({
@@ -33,8 +36,9 @@ export class AdminNavCountsService {
       next: ({ people, pending }) => {
         this.peopleCount.set(people.totalElements);
         this.pendingInviteCount.set(pending.totalElements);
+        this.loading.set(false);
       },
-      error: () => undefined,
+      error: () => this.loading.set(false),
     });
   }
 }

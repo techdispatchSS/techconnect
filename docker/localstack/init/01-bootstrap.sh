@@ -12,7 +12,7 @@ awslocal --region "$REGION" sqs create-queue --queue-name techconnect-local-queu
 
 awslocal --region "$REGION" sns create-topic --name techconnect-local-topic || true
 
-awslocal --region "$REGION" ses verify-email-identity --email-address no-reply@techconnect.app || true
+awslocal --region "$REGION" ses verify-email-identity --email-address no-reply@tech-connect.app || true
 
 # cognito-idp is LocalStack Pro-only; this silently no-ops on Community edition
 # (set LOCALSTACK_AUTH_TOKEN + switch to localstack/localstack-pro to enable it).

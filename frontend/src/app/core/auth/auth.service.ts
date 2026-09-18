@@ -33,7 +33,7 @@ export class AuthService {
 
   login(email: string, password: string, remember = true): Observable<LoginResponse> {
     return this.http
-      .post<LoginResponse>('v1/auth/login', { email, password })
+      .post<LoginResponse>('v1/auth/login', { email: email.trim(), password })
       .pipe(tap((response) => this.store(response, remember)));
   }
 

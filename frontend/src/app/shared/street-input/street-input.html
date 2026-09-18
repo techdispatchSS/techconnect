@@ -1,0 +1,36 @@
+<div class="si-wrap">
+  <input
+    appTrimOnBlur
+    [id]="inputId()"
+    class="admin-input"
+    [formControl]="control()"
+    [placeholder]="placeholder()"
+    autocomplete="off"
+    role="combobox"
+    aria-autocomplete="list"
+    [attr.aria-expanded]="suggestions().length > 0"
+    [attr.aria-controls]="inputId() + '-list'"
+    (input)="onInput()"
+    (keydown)="onKeydown($event)"
+    (blur)="close()"
+  />
+
+  @if (suggestions().length > 0) {
+    <ul class="si-list" role="listbox" [id]="inputId() + '-list'">
+      @for (suggestion of suggestions(); track $index) {
+        <!-- mousedown, not click: the input's blur closes the list before a click would land. -->
+        <li
+          role="option"
+          class="si-option"
+          [class.si-option--active]="$index === activeIndex()"
+          [attr.aria-selected]="$index === activeIndex()"
+          (mousedown)="$event.preventDefault(); choose(suggestion)"
+        >
+          <span class="si-main">{{ suggestion.mainText }}</span>
+          <span class="si-secondary">{{ suggestion.secondaryText }}</span>
+        </li>
+      }
+      <li class="si-attribution" aria-hidden="true">Powered by Google</li>
+    </ul>
+  }
+</div>

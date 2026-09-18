@@ -17,7 +17,11 @@
 
       <label class="ul-search">
         <app-admin-icon name="search" />
-        <input class="admin-input" placeholder="Search people, email…" [formControl]="searchControl" />
+        <input
+          class="admin-input"
+          placeholder="Search people, email…"
+          [formControl]="searchControl"
+        />
       </label>
 
       <select
@@ -32,13 +36,29 @@
       </select>
 
       @if (hasFilters()) {
-        <button type="button" class="admin-btn admin-btn-ghost" (click)="roleFilter.set(null); statusFilter.set(null); searchControl.setValue(''); pageIndex.set(0); load()">
+        <button
+          type="button"
+          class="admin-btn admin-btn-ghost"
+          (click)="
+            roleFilter.set(null);
+            statusFilter.set(null);
+            searchControl.setValue('');
+            pageIndex.set(0);
+            load()
+          "
+        >
           Clear
         </button>
       }
     </div>
 
-    <div class="ul-result-line">{{ resultLine() }}</div>
+    <div class="ul-result-line" [attr.aria-busy]="!loaded()">
+      @if (loaded()) {
+        {{ resultLine() }}
+      } @else {
+        <app-skeleton width="11rem" height="12px" />
+      }
+    </div>
 
     @if (loading()) {
       <div class="admin-progress"></div>
@@ -55,6 +75,24 @@
           </tr>
         </thead>
         <tbody>
+          @if (loading() && users().length === 0) {
+            @for (row of skeletonRows; track row) {
+              <tr aria-hidden="true">
+                <td>
+                  <span class="ul-name-cell">
+                    <app-skeleton width="28px" height="28px" radius="50%" />
+                    <span class="ul-name-meta">
+                      <app-skeleton width="8rem" height="13px" />
+                      <app-skeleton width="11rem" height="11px" />
+                    </span>
+                  </span>
+                </td>
+                <td><app-skeleton width="4.5rem" height="13px" /></td>
+                <td><app-skeleton width="4rem" height="20px" /></td>
+                <td style="text-align: right"><app-skeleton width="6rem" height="13px" /></td>
+              </tr>
+            }
+          }
           @for (user of users(); track user.id) {
             <tr
               data-clickable
@@ -90,7 +128,8 @@
       <p class="admin-empty">
         @if (loadFailed()) {
           Could not load users. Check your connection and
-          <button type="button" class="admin-btn admin-btn-ghost" (click)="load()">try again</button>.
+          <button type="button" class="admin-btn admin-btn-ghost" (click)="load()">try again</button
+          >.
         } @else if (hasFilters()) {
           No people match these filters.
         } @else {
@@ -103,10 +142,20 @@
       <div class="ul-pager">
         <span>Showing {{ pageFrom() }}–{{ pageTo() }} of {{ totalElements() }}</span>
         <span class="ul-pager-buttons">
-          <button type="button" class="admin-btn admin-btn-secondary" [disabled]="pageIndex() === 0" (click)="onPrevPage()">
+          <button
+            type="button"
+            class="admin-btn admin-btn-secondary"
+            [disabled]="pageIndex() === 0"
+            (click)="onPrevPage()"
+          >
             Previous
           </button>
-          <button type="button" class="admin-btn admin-btn-secondary" [disabled]="pageTo() >= totalElements()" (click)="onNextPage()">
+          <button
+            type="button"
+            class="admin-btn admin-btn-secondary"
+            [disabled]="pageTo() >= totalElements()"
+            (click)="onNextPage()"
+          >
             Next
           </button>
         </span>
@@ -115,12 +164,27 @@
   </section>
 
   <aside class="admin-blueprint ul-panel">
-    @if (selectedLoading()) {
-      <div class="admin-progress"></div>
-      <p class="admin-hint">Loading…</p>
+    @if (selectedLoading() || !loaded()) {
+      <div class="ul-panel-skeleton" aria-busy="true" aria-label="Loading person">
+        <div class="ul-panel-head">
+          <app-skeleton width="44px" height="44px" radius="50%" />
+          <span class="ul-panel-head-meta">
+            <app-skeleton width="9rem" height="15px" />
+            <app-skeleton width="13rem" height="11px" />
+          </span>
+        </div>
+        @for (row of [1, 2, 3, 4]; track row) {
+          <div class="admin-field">
+            <app-skeleton width="5rem" height="11px" />
+            <app-skeleton width="100%" height="34px" radius="2px" />
+          </div>
+        }
+      </div>
     } @else if (selected(); as sel) {
       <div class="ul-panel-head">
-        <span class="admin-avatar" style="width: 44px; height: 44px; font-size: 15px">{{ initials(sel.name) }}</span>
+        <span class="admin-avatar" style="width: 44px; height: 44px; font-size: 15px">{{
+          initials(sel.name)
+        }}</span>
         <span class="ul-panel-head-meta">
           <span class="ul-panel-head-name">{{ sel.name }}</span>
           <span class="admin-hint">{{ roleLabels[sel.role] }} · {{ sel.email }}</span>
@@ -137,7 +201,12 @@
           <span class="admin-hint">New activation link — single-use, expires in 72 hours.</span>
           <div class="admin-invite-row">
             <code class="admin-invite-url">{{ inviteUrl }}</code>
-            <button type="button" class="admin-btn admin-btn-icon" (click)="copyInviteUrl()" aria-label="Copy activation link">
+            <button
+              type="button"
+              class="admin-btn admin-btn-icon"
+              (click)="copyInviteUrl()"
+              aria-label="Copy activation link"
+            >
               <app-admin-icon name="copy" />
             </button>
           </div>
@@ -148,7 +217,7 @@
         <h6 class="admin-section-title">Identity</h6>
         <div class="admin-field">
           <label for="ul-name">Full name</label>
-          <input id="ul-name" class="admin-input" formControlName="name" />
+          <input appTrimOnBlur id="ul-name" class="admin-input" formControlName="name" />
         </div>
         <div class="admin-field">
           <span class="admin-field-label">Email (login)</span>
@@ -156,7 +225,13 @@
         </div>
         <div class="admin-field">
           <label for="ul-phone">Mobile</label>
-          <input id="ul-phone" class="admin-input" type="tel" formControlName="phone" />
+          <input
+            appTrimOnBlur
+            id="ul-phone"
+            class="admin-input"
+            type="tel"
+            formControlName="phone"
+          />
         </div>
 
         <h6 class="admin-section-title">Role &amp; location</h6>
@@ -173,15 +248,19 @@
           <p class="admin-hint">Used for distance-based job matching — every field is required.</p>
           <div class="admin-field">
             <label for="ul-street">Street</label>
-            <input id="ul-street" class="admin-input" formControlName="street" />
+            <app-street-input
+              inputId="ul-street"
+              [control]="form.controls.address.controls.street"
+              (picked)="applyPlace($event)"
+            />
           </div>
           <div class="admin-field">
             <label for="ul-suburb">Suburb</label>
-            <input id="ul-suburb" class="admin-input" formControlName="suburb" />
+            <input appTrimOnBlur id="ul-suburb" class="admin-input" formControlName="suburb" />
           </div>
           <div class="admin-field">
             <label for="ul-city">City / town</label>
-            <input id="ul-city" class="admin-input" formControlName="city" />
+            <input appTrimOnBlur id="ul-city" class="admin-input" formControlName="city" />
           </div>
           <div class="admin-field">
             <label for="ul-province">Province</label>
@@ -194,7 +273,13 @@
           </div>
           <div class="admin-field">
             <label for="ul-postal-code">Postal code</label>
-            <input id="ul-postal-code" class="admin-input" formControlName="postalCode" inputmode="numeric" />
+            <input
+              appTrimOnBlur
+              id="ul-postal-code"
+              class="admin-input"
+              formControlName="postalCode"
+              inputmode="numeric"
+            />
             @if (form.controls.address.controls.postalCode.hasError('pattern')) {
               <p class="admin-field-error">Enter a 4-digit postal code</p>
             }
@@ -217,31 +302,57 @@
           </div>
         }
         @if (sel.locked) {
-          <p class="ul-locked-note"><app-admin-icon name="lock" /> Locked after repeated failed sign-ins</p>
+          <p class="ul-locked-note">
+            <app-admin-icon name="lock" /> Locked after repeated failed sign-ins
+          </p>
         }
 
         <div class="ul-status-actions">
           @if (sel.status === 'PENDING_ACTIVATION') {
-            <button type="button" class="admin-btn admin-btn-secondary" [disabled]="panelSaving()" (click)="resendInvite()">
+            <button
+              type="button"
+              class="admin-btn admin-btn-secondary"
+              [disabled]="panelSaving()"
+              (click)="resendInvite()"
+            >
               <app-admin-icon name="mail" /> Resend invite
             </button>
           }
           @if (sel.status === 'DISABLED') {
-            <button type="button" class="admin-btn admin-btn-secondary" [disabled]="panelSaving()" (click)="reactivate()">
+            <button
+              type="button"
+              class="admin-btn admin-btn-secondary"
+              [disabled]="panelSaving()"
+              (click)="reactivate()"
+            >
               Reactivate
             </button>
           } @else {
-            <button type="button" class="admin-btn admin-btn-secondary admin-btn-danger" [disabled]="panelSaving()" (click)="deactivate()">
+            <button
+              type="button"
+              class="admin-btn admin-btn-secondary admin-btn-danger"
+              [disabled]="panelSaving()"
+              (click)="deactivate()"
+            >
               Deactivate
             </button>
           }
         </div>
 
         <div class="ul-form-actions">
-          <button type="submit" class="admin-btn admin-btn-primary admin-blueprint" [disabled]="panelSaving() || form.invalid">
+          <button
+            type="submit"
+            class="admin-btn admin-btn-primary admin-blueprint"
+            [disabled]="panelSaving() || form.invalid"
+          >
             Save changes
           </button>
-          <button type="button" class="admin-btn admin-btn-secondary" [disabled]="panelSaving()" (click)="cancelEdit()">
+          <button
+            type="button"
+            class="admin-btn admin-btn-secondary"
+            [disabled]="panelSaving()"
+            (click)="cancelEdit()"
+          >
             Cancel
           </button>
         </div>

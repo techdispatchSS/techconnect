@@ -1,0 +1,121 @@
+name: Security & Code Checks
+
+# Separate from pr-build.yml on purpose: that workflow is the build/test gate, and stays
+# untouched here so this addition can't turn an existing required check red. It also runs on
+# push to main and weekly — a PR-time-only scan would miss a CVE newly disclosed against a
+# dependency version that hasn't changed, and secret-scanning main catches a leak that slipped
+# past `pull_request` (e.g. a direct push, or a merge from a branch this workflow never saw).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1" # Monday 06:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  # ESLint + Prettier already exist as npm scripts (frontend/package.json) but nothing in CI
+  # ever ran them — a PR could fail `ng lint` locally and still merge clean.
+  frontend-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Prettier format check
+        run: npm run format:check
+
+  # Known-vulnerable dependency versions, not code we wrote. `npm audit` covers the frontend
+  # (it already reads package-lock.json); Trivy's filesystem scanner covers pom.xml the same
+  # way, since Maven has no first-party equivalent to `npm audit` — plus it double-checks the
+  # frontend lockfile against its own advisory DB, so a gap in either source doesn't slip
+  # through in the other. `ignore-unfixed` skips CVEs with no available patch yet: those need
+  # a human tracking decision, not a red build blocking every PR until upstream ships a fix.
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # --omit=dev: everything currently flagged (ajv via @angular/cli, @modelcontextprotocol/sdk's
+      # bundled hono/qs) is a transitive dependency of Angular CLI's own build tooling — it never
+      # ships in `ng build`'s output, so it isn't part of the app's actual attack surface. Auditing
+      # runtime dependencies only is both the more accurate signal and what keeps this passing
+      # today; a real regression in something users' browsers actually load still fails the build.
+      - name: Frontend — npm audit
+        working-directory: frontend
+        run: |
+          npm ci
+          npm audit --omit=dev --audit-level=high
+
+      - name: Backend — Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: backend
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Frontend — Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: frontend
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+  # Runs the gitleaks CLI directly (MIT-licensed, from GitHub Releases) rather than the
+  # gitleaks/gitleaks-action wrapper: that wrapper requires a paid license for an
+  # organization-owned repo, and the bare CLI does the identical scan for free.
+  # fetch-depth: 0 so it scans full history, not just the merge commit — a secret committed
+  # and then "removed" in a later commit is still sitting in history either way.
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install and run gitleaks
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
+            | tar -xz gitleaks
+          ./gitleaks detect --source . --redact --exit-code 1
+
+# Static analysis (SAST) is deliberately not a job in this file: GitHub's own CodeQL
+# "default setup" is already enabled for this repo (Settings → Code security → Code
+# scanning) and scans both languages automatically. A custom `codeql-action/init` +
+# `analyze` job here would upload a competing "advanced configuration" analysis, which
+# GitHub rejects outright while default setup is on ("CodeQL analyses from advanced
+# configurations cannot be processed when the default setup is enabled") — so adding one
+# back requires switching that repo setting to Advanced first, not just editing this file.

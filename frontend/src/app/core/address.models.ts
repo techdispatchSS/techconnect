@@ -23,9 +23,9 @@ export const PROVINCE_LABELS: Record<Province, string> = {
 };
 
 /** Ordered for a `<select>` — alphabetical by label, not enum declaration order. */
-export const PROVINCES: readonly Province[] = (
-  Object.keys(PROVINCE_LABELS) as Province[]
-).sort((a, b) => PROVINCE_LABELS[a].localeCompare(PROVINCE_LABELS[b]));
+export const PROVINCES: readonly Province[] = (Object.keys(PROVINCE_LABELS) as Province[]).sort(
+  (a, b) => PROVINCE_LABELS[a].localeCompare(PROVINCE_LABELS[b]),
+);
 
 /**
  * A structured postal address. Every field is required wherever this appears in a request —

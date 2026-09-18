@@ -4,7 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { ThemeService } from '../../../core/theme/theme.service';
+import { TrimOnBlur } from '../../../shared/trim-on-blur';
 
 interface HeroStat {
   readonly value: string;
@@ -14,11 +14,11 @@ interface HeroStat {
 // No support inbox is configured anywhere in the backend (techconnect.mail.from is a
 // no-reply *sending* address only) — this is a placeholder. Swap it for wherever sign-in
 // trouble should actually land before this ships.
-const SUPPORT_EMAIL = 'support@techconnect.app';
+const SUPPORT_EMAIL = 'support@tech-connect.app';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, TrimOnBlur],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

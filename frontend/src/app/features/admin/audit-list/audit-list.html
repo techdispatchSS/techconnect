@@ -20,7 +20,11 @@
       <input class="admin-input" placeholder="Search by person" [formControl]="searchControl" />
     </label>
 
-    <select class="admin-input al-select" [value]="actionFilter() ?? ''" (change)="onActionFilter($any($event.target).value)">
+    <select
+      class="admin-input al-select"
+      [value]="actionFilter() ?? ''"
+      (change)="onActionFilter($any($event.target).value)"
+    >
       <option value="">All actions</option>
       @for (action of actions; track action) {
         <option [value]="action">{{ actionLabel(action) }}</option>
@@ -29,16 +33,28 @@
 
     <label class="al-date-field">
       <span class="admin-hint">From</span>
-      <input type="date" class="admin-input" [value]="fromDate() ?? ''" (change)="onFromDate($any($event.target).value)" />
+      <input
+        type="date"
+        class="admin-input"
+        [value]="fromDate() ?? ''"
+        (change)="onFromDate($any($event.target).value)"
+      />
     </label>
 
     <label class="al-date-field">
       <span class="admin-hint">To</span>
-      <input type="date" class="admin-input" [value]="toDate() ?? ''" (change)="onToDate($any($event.target).value)" />
+      <input
+        type="date"
+        class="admin-input"
+        [value]="toDate() ?? ''"
+        (change)="onToDate($any($event.target).value)"
+      />
     </label>
 
     @if (hasFilters()) {
-      <button type="button" class="admin-btn admin-btn-ghost" (click)="clearFilters()">Clear</button>
+      <button type="button" class="admin-btn admin-btn-ghost" (click)="clearFilters()">
+        Clear
+      </button>
     }
   </div>
 
@@ -57,6 +73,16 @@
         </tr>
       </thead>
       <tbody>
+        @if (loading() && entries().length === 0) {
+          @for (row of skeletonRows; track row) {
+            <tr aria-hidden="true">
+              <td><app-skeleton width="8rem" height="14px" /></td>
+              <td><app-skeleton width="7rem" height="14px" /></td>
+              <td><app-skeleton width="7rem" height="14px" /></td>
+              <td><app-skeleton width="9rem" height="14px" /></td>
+            </tr>
+          }
+        }
         @for (entry of entries(); track entry.id) {
           <tr>
             <td>
@@ -97,10 +123,29 @@
 
   @if (totalElements() > pageSize()) {
     <div class="al-pager">
-      <span>Showing {{ pageIndex() * pageSize() + 1 }}–{{ (pageIndex() * pageSize()) + entries().length }} of {{ totalElements() }}</span>
+      <span
+        >Showing {{ pageIndex() * pageSize() + 1 }}–{{
+          pageIndex() * pageSize() + entries().length
+        }}
+        of {{ totalElements() }}</span
+      >
       <span class="al-pager-buttons">
-        <button type="button" class="admin-btn admin-btn-secondary" [disabled]="pageIndex() === 0" (click)="onPrevPage()">Previous</button>
-        <button type="button" class="admin-btn admin-btn-secondary" [disabled]="(pageIndex() + 1) * pageSize() >= totalElements()" (click)="onNextPage()">Next</button>
+        <button
+          type="button"
+          class="admin-btn admin-btn-secondary"
+          [disabled]="pageIndex() === 0"
+          (click)="onPrevPage()"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          class="admin-btn admin-btn-secondary"
+          [disabled]="(pageIndex() + 1) * pageSize() >= totalElements()"
+          (click)="onNextPage()"
+        >
+          Next
+        </button>
       </span>
     </div>
   }

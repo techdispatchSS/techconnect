@@ -7,6 +7,9 @@ import { Router, RouterLink } from '@angular/router';
 
 import { PROVINCES, PROVINCE_LABELS, Province } from '../../../core/address.models';
 import { UserRole } from '../../../core/auth/auth.models';
+import { requiredTrimmed, trimStrings } from '../../../shared/form-text';
+import { PickedAddress, StreetInput } from '../../../shared/street-input/street-input';
+import { TrimOnBlur } from '../../../shared/trim-on-blur';
 import { AdminNavCountsService } from '../admin-nav-counts.service';
 import { AdminUserService } from '../admin-user.service';
 import { CreateUserResponse, ROLE_BLURBS, ROLE_LABELS } from '../admin.models';
@@ -32,7 +35,7 @@ const ROLE_CARDS: readonly RoleCard[] = (['TECHNICIAN', 'CONTROLLER', 'MANAGER']
  */
 @Component({
   selector: 'app-user-create',
-  imports: [ReactiveFormsModule, RouterLink, MatSnackBarModule, AdminIcon],
+  imports: [ReactiveFormsModule, RouterLink, MatSnackBarModule, AdminIcon, StreetInput, TrimOnBlur],
   templateUrl: './user-create.html',
   styleUrl: './user-create.scss',
 })
@@ -53,27 +56,40 @@ export class UserCreate {
   readonly created = signal<CreateUserResponse | null>(null);
 
   readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(255)]],
+    firstName: ['', [requiredTrimmed, Validators.maxLength(255)]],
+    lastName: ['', [requiredTrimmed, Validators.maxLength(255)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
     phone: ['', [Validators.maxLength(32)]],
     address: this.fb.nonNullable.group({
-      street: ['', [Validators.required, Validators.maxLength(255)]],
-      suburb: ['', [Validators.required, Validators.maxLength(120)]],
-      city: ['', [Validators.required, Validators.maxLength(120)]],
+      street: ['', [requiredTrimmed, Validators.maxLength(255)]],
+      suburb: ['', [requiredTrimmed, Validators.maxLength(120)]],
+      city: ['', [requiredTrimmed, Validators.maxLength(120)]],
       province: ['' as Province | '', [Validators.required]],
       postalCode: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]],
     }),
     role: ['TECHNICIAN' as UserRole, [Validators.required]],
   });
 
-  // Zoneless change detection: a template read of `form.controls.name.value` never
+  // Zoneless change detection: a template read of `form.controls.firstName.value` never
   // re-renders on keystrokes, since it isn't a signal — the invite preview needs these.
-  readonly previewName = toSignal(this.form.controls.name.valueChanges, {
-    initialValue: this.form.controls.name.value,
+  readonly previewFirstName = toSignal(this.form.controls.firstName.valueChanges, {
+    initialValue: this.form.controls.firstName.value,
   });
   readonly previewRole = toSignal(this.form.controls.role.valueChanges, {
     initialValue: this.form.controls.role.value,
   });
+
+  /** Fills the rest of the address from a Google suggestion. Anything Google didn't return is
+   * left as it was, so a person can complete it by hand. */
+  applyPlace(place: PickedAddress): void {
+    const group = this.form.controls.address;
+    for (const [key, value] of Object.entries(place)) {
+      if (value) {
+        group.get(key)?.setValue(value);
+        group.get(key)?.markAsTouched();
+      }
+    }
+  }
 
   pickRole(role: UserRole): void {
     this.form.controls.role.setValue(role);
@@ -88,16 +104,19 @@ export class UserCreate {
     this.submitting.set(true);
     this.errorMessage.set(null);
 
-    const { name, email, phone, address, role } = this.form.getRawValue();
+    const { firstName, lastName, email, phone, address, role } = this.form.getRawValue();
 
     this.adminUsers
-      .create({
-        name,
-        email,
-        phone: phone.trim() || null,
-        address: { ...address, province: address.province as Province },
-        role,
-      })
+      .create(
+        trimStrings({
+          firstName,
+          lastName,
+          email,
+          phone: phone.trim() || null,
+          address: { ...address, province: address.province as Province },
+          role,
+        }),
+      )
       .subscribe({
         next: (response) => {
           this.submitting.set(false);
@@ -143,7 +162,8 @@ export class UserCreate {
   addAnother(): void {
     this.created.set(null);
     this.form.reset({
-      name: '',
+      firstName: '',
+      lastName: '',
       email: '',
       phone: '',
       address: { street: '', suburb: '', city: '', province: '', postalCode: '' },

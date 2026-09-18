@@ -1,0 +1,53 @@
+:host {
+  display: block;
+}
+
+.si-wrap {
+  position: relative;
+}
+
+.si-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  max-height: 16rem;
+  overflow-y: auto;
+  background: var(--admin-color-surface, #ffffff);
+  color: var(--admin-color-text, inherit);
+  border: 1px solid var(--admin-color-divider, rgba(128, 128, 128, 0.35));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.si-option {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.si-option:hover,
+.si-option--active {
+  background: color-mix(in srgb, var(--admin-color-accent, #f08221) 16%, transparent);
+}
+
+.si-main {
+  font-size: 14px;
+}
+
+.si-secondary {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.si-attribution {
+  padding: 6px 12px 4px;
+  text-align: right;
+  font-size: 11px;
+  opacity: 0.6;
+}

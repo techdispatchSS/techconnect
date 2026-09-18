@@ -109,7 +109,11 @@ public class AdminUserService {
         }
 
         User user = new User();
-        user.setName(request.name().trim());
+        // Onboarding collects first/last name as two fields, but the rest of the app (JWT
+        // claims, audit log, initials, invite/notification copy) only ever wants a single
+        // display name — so they're joined once here rather than threading first/last through
+        // every consumer.
+        user.setName((request.firstName().trim() + " " + request.lastName().trim()).trim());
         user.setEmail(request.email().trim());
         user.setPhone(Strings.blankToNull(request.phone()));
         user.setAddress(addressMapper.toEntity(request.address()));

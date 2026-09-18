@@ -1,7 +1,16 @@
 <div class="pd-dialog">
   <mat-dialog-content>
     @if (loading()) {
-      <span class="pd-progress"></span>
+      <div class="pd-skeleton" aria-busy="true" aria-label="Loading your profile">
+        <app-skeleton width="9rem" height="22px" />
+        <app-skeleton width="90%" height="12px" />
+        @for (row of [1, 2, 3]; track row) {
+          <div class="pd-skeleton-field">
+            <app-skeleton width="5rem" height="11px" />
+            <app-skeleton width="100%" height="36px" radius="2px" />
+          </div>
+        }
+      </div>
     } @else {
       <h2 class="pd-title">My profile</h2>
 
@@ -11,14 +20,20 @@
 
       @if (profile(); as current) {
         <p class="pd-hint">
-          Signed in as <strong>{{ current.email }}</strong> ({{ current.role }}). Your email
-          address and role can only be changed by an administrator.
+          Signed in as <strong>{{ current.email }}</strong> ({{ current.role }}). Your email address
+          and role can only be changed by an administrator.
         </p>
 
         <form [formGroup]="form" id="profile-form" (ngSubmit)="save()" class="pd-form">
           <div class="pd-field">
             <label for="pd-name">Full name</label>
-            <input id="pd-name" class="pd-input" formControlName="name" autocomplete="name" />
+            <input
+              appTrimOnBlur
+              id="pd-name"
+              class="pd-input"
+              formControlName="name"
+              autocomplete="name"
+            />
             @if (form.controls.name.hasError('required') && form.controls.name.touched) {
               <p class="pd-field-error">Name is required</p>
             }
@@ -26,30 +41,37 @@
 
           <div class="pd-field">
             <label for="pd-phone">Phone</label>
-            <input id="pd-phone" class="pd-input" type="tel" formControlName="phone" autocomplete="tel" />
-            <span class="pd-hint" style="margin: 0;">Used to reach you on site</span>
+            <input
+              appTrimOnBlur
+              id="pd-phone"
+              class="pd-input"
+              type="tel"
+              formControlName="phone"
+              autocomplete="tel"
+            />
+            <span class="pd-hint" style="margin: 0">Used to reach you on site</span>
           </div>
 
           @if (current.canEditAddress) {
             <div class="pd-address-block" formGroupName="address">
-              <p class="pd-hint" style="margin: 0;">
+              <p class="pd-hint" style="margin: 0">
                 Address — optional, but if you set one every field is required. Used for
                 distance-based job matching.
               </p>
 
               <div class="pd-field">
                 <label for="pd-street">Street</label>
-                <input id="pd-street" class="pd-input" formControlName="street" />
+                <input appTrimOnBlur id="pd-street" class="pd-input" formControlName="street" />
               </div>
 
               <div class="pd-row">
                 <div class="pd-field">
                   <label for="pd-suburb">Suburb</label>
-                  <input id="pd-suburb" class="pd-input" formControlName="suburb" />
+                  <input appTrimOnBlur id="pd-suburb" class="pd-input" formControlName="suburb" />
                 </div>
                 <div class="pd-field">
                   <label for="pd-city">City / town</label>
-                  <input id="pd-city" class="pd-input" formControlName="city" />
+                  <input appTrimOnBlur id="pd-city" class="pd-input" formControlName="city" />
                 </div>
               </div>
 
@@ -65,7 +87,13 @@
                 </div>
                 <div class="pd-field">
                   <label for="pd-postal-code">Postal code</label>
-                  <input id="pd-postal-code" class="pd-input" formControlName="postalCode" inputmode="numeric" />
+                  <input
+                    appTrimOnBlur
+                    id="pd-postal-code"
+                    class="pd-input"
+                    formControlName="postalCode"
+                    inputmode="numeric"
+                  />
                 </div>
               </div>
 
@@ -87,7 +115,12 @@
 
   <mat-dialog-actions class="pd-actions">
     <button type="button" class="pd-btn" mat-dialog-close [disabled]="saving()">Cancel</button>
-    <button type="submit" class="pd-btn pd-btn-primary" form="profile-form" [disabled]="saving() || loading()">
+    <button
+      type="submit"
+      class="pd-btn pd-btn-primary"
+      form="profile-form"
+      [disabled]="saving() || loading()"
+    >
       {{ saving() ? 'Saving…' : 'Save changes' }}
     </button>
   </mat-dialog-actions>

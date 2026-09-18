@@ -21,6 +21,11 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<!-- CVE-2026-54291: SCRAM-SHA-256-PLUS downgrade allows a MITM to bypass channel-binding
+		     protection. spring-boot-starter-parent 4.0.7's own dependency management still
+		     pins 42.7.11; this property override is Spring Boot's documented way to bump a
+		     managed dependency ahead of the parent BOM catching up. -->
+		<postgresql.version>42.7.12</postgresql.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -155,6 +160,17 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<!-- Writes META-INF/build-info.properties (group, artifact, name, version, build
+					     time) into the jar. Spring Boot Actuator's InfoEndpoint picks it up
+					     automatically and serves it as info.build.* at /actuator/info — otherwise
+					     that endpoint has nothing to report at all. -->
+					<execution>
+						<goals>
+							<goal>build-info</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

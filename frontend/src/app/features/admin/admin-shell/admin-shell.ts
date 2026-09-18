@@ -11,7 +11,14 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
-import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  ActivatedRoute,
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 import { filter, map } from 'rxjs';
 
 import { AccountService } from '../../../core/auth/account.service';
@@ -20,6 +27,7 @@ import { ThemeService } from '../../../core/theme/theme.service';
 import { ChangePasswordDialog } from '../../../layout/change-password-dialog/change-password-dialog';
 import { ProfileDialog } from '../../../layout/profile-dialog/profile-dialog';
 import { AdminNavCountsService } from '../admin-nav-counts.service';
+import { Skeleton } from '../../../shared/skeleton/skeleton';
 import { AdminIcon } from '../ui/admin-icon/admin-icon';
 
 interface NavItem {
@@ -27,6 +35,8 @@ interface NavItem {
   readonly route: string;
   readonly icon: 'people' | 'add' | 'invite' | 'audit';
   readonly count: () => number | null;
+  /** Whether this entry carries a badge at all, so only those show a loader while it loads. */
+  readonly hasBadge: boolean;
 }
 
 /**
@@ -38,7 +48,15 @@ interface NavItem {
 @Component({
   selector: 'app-admin-shell',
   encapsulation: ViewEncapsulation.None,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatDialogModule, MatMenuModule, AdminIcon],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MatDialogModule,
+    MatMenuModule,
+    AdminIcon,
+    Skeleton,
+  ],
   templateUrl: './admin-shell.html',
   styleUrl: './admin-shell.scss',
 })
@@ -61,9 +79,7 @@ export class AdminShell implements OnInit {
   private static readonly HANDSET_QUERY = '(max-width: 899px)';
 
   readonly isHandset = toSignal(
-    this.breakpointObserver
-      .observe(AdminShell.HANDSET_QUERY)
-      .pipe(map((result) => result.matches)),
+    this.breakpointObserver.observe(AdminShell.HANDSET_QUERY).pipe(map((result) => result.matches)),
     { initialValue: this.breakpointObserver.isMatched(AdminShell.HANDSET_QUERY) },
   );
 
@@ -92,15 +108,34 @@ export class AdminShell implements OnInit {
   });
 
   readonly navItems: readonly NavItem[] = [
-    { label: 'People', route: '/admin/users', icon: 'people', count: () => this.counts.peopleCount() },
-    { label: 'Add user', route: '/admin/users/new', icon: 'add', count: () => null },
+    {
+      label: 'People',
+      route: '/admin/users',
+      icon: 'people',
+      count: () => this.counts.peopleCount(),
+      hasBadge: true,
+    },
+    {
+      label: 'Add user',
+      route: '/admin/users/new',
+      icon: 'add',
+      count: () => null,
+      hasBadge: false,
+    },
     {
       label: 'Invites',
       route: '/admin/invites',
       icon: 'invite',
       count: () => this.counts.pendingInviteCount(),
+      hasBadge: true,
     },
-    { label: 'Audit trail', route: '/admin/audit', icon: 'audit', count: () => null },
+    {
+      label: 'Audit trail',
+      route: '/admin/audit',
+      icon: 'audit',
+      count: () => null,
+      hasBadge: false,
+    },
   ];
 
   private readonly currentUrl = toSignal(

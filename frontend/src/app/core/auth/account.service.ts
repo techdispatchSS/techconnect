@@ -53,7 +53,7 @@ export class AccountService {
 
   /** Resolves identically for unknown addresses — the backend never reveals which exist. */
   forgotPassword(email: string): Observable<void> {
-    return this.http.post<void>('v1/auth/forgot-password', { email });
+    return this.http.post<void>('v1/auth/forgot-password', { email: email.trim() });
   }
 
   resetPassword(token: string, password: string): Observable<void> {

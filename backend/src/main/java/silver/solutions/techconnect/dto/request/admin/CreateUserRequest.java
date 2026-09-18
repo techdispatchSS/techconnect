@@ -10,7 +10,8 @@ import silver.solutions.techconnect.entity.UserRole;
 
 /** Address is required here so every user onboarded through the portal has one. */
 public record CreateUserRequest(
-        @NotBlank @Size(max = 255) String name,
+        @NotBlank @Size(max = 255) String firstName,
+        @NotBlank @Size(max = 255) String lastName,
         @NotBlank @Email @Size(max = 255) String email,
         @Size(max = 32) String phone,
         @NotNull @Valid AddressRequest address,

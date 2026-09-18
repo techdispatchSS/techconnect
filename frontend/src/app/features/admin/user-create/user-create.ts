@@ -53,7 +53,8 @@ export class UserCreate {
   readonly created = signal<CreateUserResponse | null>(null);
 
   readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(255)]],
+    firstName: ['', [Validators.required, Validators.maxLength(255)]],
+    lastName: ['', [Validators.required, Validators.maxLength(255)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
     phone: ['', [Validators.maxLength(32)]],
     address: this.fb.nonNullable.group({
@@ -66,10 +67,10 @@ export class UserCreate {
     role: ['TECHNICIAN' as UserRole, [Validators.required]],
   });
 
-  // Zoneless change detection: a template read of `form.controls.name.value` never
+  // Zoneless change detection: a template read of `form.controls.firstName.value` never
   // re-renders on keystrokes, since it isn't a signal — the invite preview needs these.
-  readonly previewName = toSignal(this.form.controls.name.valueChanges, {
-    initialValue: this.form.controls.name.value,
+  readonly previewFirstName = toSignal(this.form.controls.firstName.valueChanges, {
+    initialValue: this.form.controls.firstName.value,
   });
   readonly previewRole = toSignal(this.form.controls.role.valueChanges, {
     initialValue: this.form.controls.role.value,
@@ -88,11 +89,12 @@ export class UserCreate {
     this.submitting.set(true);
     this.errorMessage.set(null);
 
-    const { name, email, phone, address, role } = this.form.getRawValue();
+    const { firstName, lastName, email, phone, address, role } = this.form.getRawValue();
 
     this.adminUsers
       .create({
-        name,
+        firstName,
+        lastName,
         email,
         phone: phone.trim() || null,
         address: { ...address, province: address.province as Province },
@@ -143,7 +145,8 @@ export class UserCreate {
   addAnother(): void {
     this.created.set(null);
     this.form.reset({
-      name: '',
+      firstName: '',
+      lastName: '',
       email: '',
       phone: '',
       address: { street: '', suburb: '', city: '', province: '', postalCode: '' },

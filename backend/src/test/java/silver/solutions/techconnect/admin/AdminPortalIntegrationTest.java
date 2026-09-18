@@ -66,7 +66,7 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                         .header("Authorization", "Bearer " + managerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"Thabo Mokoena","email":"%s","phone":"+27821234567",
+                                {"firstName":"Thabo","lastName":"Mokoena","email":"%s","phone":"+27821234567",
                                  "address":%s,"role":"TECHNICIAN"}
                                 """.formatted(email, VALID_ADDRESS)))
                 .andExpect(status().isCreated())
@@ -108,7 +108,7 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                         .header("Authorization", "Bearer " + managerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"Impostor","email":"%s","address":%s,
+                                {"firstName":"Impostor","lastName":"Test","email":"%s","address":%s,
                                  "role":"TECHNICIAN"}
                                 """.formatted(email.toUpperCase(), VALID_ADDRESS)))
                 .andExpect(status().isConflict());
@@ -120,7 +120,7 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                         .header("Authorization", "Bearer " + managerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"Second Manager","email":"%s","address":%s,
+                                {"firstName":"Second","lastName":"Manager","email":"%s","address":%s,
                                  "role":"MANAGER"}
                                 """.formatted(unique("manager2"), VALID_ADDRESS)))
                 .andExpect(status().isCreated())
@@ -136,7 +136,7 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                         .header("Authorization", "Bearer " + managerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"No Address","email":"%s","role":"TECHNICIAN"}
+                                {"firstName":"No","lastName":"Address","email":"%s","role":"TECHNICIAN"}
                                 """.formatted(unique("noaddr"))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors.address").exists());
@@ -532,7 +532,7 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                         .header("Authorization", "Bearer " + managerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"Test Technician","email":"%s",
+                                {"firstName":"Test","lastName":"Technician","email":"%s",
                                  "address":%s,"role":"TECHNICIAN"}
                                 """.formatted(email, TECHNICIAN_ADDRESS)))
                 .andExpect(status().isCreated())

@@ -29,7 +29,8 @@ export interface AdminUser {
 }
 
 export interface CreateUserRequest {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string | null;
   /** Required — every user onboarded through the portal has a complete address. */

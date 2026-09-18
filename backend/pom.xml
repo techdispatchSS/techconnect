@@ -160,6 +160,17 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<!-- Writes META-INF/build-info.properties (group, artifact, name, version, build
+					     time) into the jar. Spring Boot Actuator's InfoEndpoint picks it up
+					     automatically and serves it as info.build.* at /actuator/info — otherwise
+					     that endpoint has nothing to report at all. -->
+					<execution>
+						<goals>
+							<goal>build-info</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

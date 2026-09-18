@@ -520,3 +520,18 @@ textarea.controller-input {
   --controller-priority-low-border: rgba(16, 17, 20, 0.16);
   --controller-priority-low-fg: #6a6e76;
 }
+
+// The header bar is permanent dark chrome (`--controller-color-sidebar`) in both themes, so what
+// sits on it keeps the dark-theme content colours. Otherwise the theme toggle (and any other
+// control using these tokens) picks up the light theme's near-black text and disappears into
+// the bar. `color` is repeated because `.controller-shell` already resolved it to the light
+// value and children inherit that resolved colour rather than the variable.
+:root[data-theme='light'] .controller-shell-header {
+  --controller-color-text: #edeff1;
+  --controller-color-muted: #9aa1a8;
+  --controller-color-emphasis: #ffffff;
+  --controller-color-divider: rgba(255, 255, 255, 0.12);
+  --controller-color-divider-soft: rgba(255, 255, 255, 0.08);
+  --controller-color-divider-strong: rgba(255, 255, 255, 0.25);
+  color: #edeff1;
+}

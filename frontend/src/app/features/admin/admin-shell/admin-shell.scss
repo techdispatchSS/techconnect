@@ -744,6 +744,17 @@ textarea.admin-input {
   --admin-status-disabled-fg: #5b5e66;
 }
 
+// The header bar is permanent dark chrome (`--admin-neutral-900`) in both themes, so what sits
+// on it must keep the dark-theme text and divider colours. Without this the breadcrumb, page
+// title and theme toggle inherit the light theme's near-black text and vanish into the bar.
+// `color` is set again explicitly because `.admin-shell` already resolved it to the light value
+// and children inherit that resolved colour, not the variable.
+:root[data-theme='light'] .admin-shell-header {
+  --admin-color-text: #ffffff;
+  --admin-color-divider: color-mix(in srgb, #ffffff 14%, transparent);
+  color: #ffffff;
+}
+
 // The confirm dialog above is portaled outside `.admin-shell` by Angular Material's CDK
 // overlay, so it can't inherit `--admin-*` custom properties and uses literal colors
 // instead (see the big comment at the top of that block). `:root[data-theme='light']` is

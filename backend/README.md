@@ -41,7 +41,7 @@ Only a Manager can create users, so a fresh database has no way in. On startup, 
 
 ```
 ============================================================
- Bootstrap administrator created: admin@techconnect.app
+ Bootstrap administrator created: admin@tech-connect.app
  Set the password using this single-use link (expires in 72h):
 
  http://localhost:4200/activate?token=...

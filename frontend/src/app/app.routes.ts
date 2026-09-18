@@ -52,7 +52,8 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard, roleGuard],
     data: { roles: ['CONTROLLER'] },
-    loadChildren: () => import('./features/controller/controller.routes').then((m) => m.controllerRoutes),
+    loadChildren: () =>
+      import('./features/controller/controller.routes').then((m) => m.controllerRoutes),
   },
 
   // --- Authenticated: everything else inside the application shell ---
@@ -67,18 +68,9 @@ export const routes: Routes = [
           import('./features/errors/forbidden/forbidden').then((m) => m.Forbidden),
         title: 'Not available · TechConnect',
       },
-      // Placeholders until the real screens exist. Without them these role homes matched
+      // Placeholder until the technician app exists. Without it this role home matched
       // nothing, fell through to `**`, and bounced straight back into the role redirect.
-      {
-        path: 'incidents',
-        loadComponent: () =>
-          import('./features/under-construction/under-construction').then(
-            (m) => m.UnderConstruction,
-          ),
-        canActivate: [roleGuard],
-        data: { roles: ['CONTROLLER'] },
-        title: 'Dispatch board · TechConnect',
-      },
+      // (The controller's /incidents is the real dashboard above.)
       {
         path: 'jobs',
         loadComponent: () =>

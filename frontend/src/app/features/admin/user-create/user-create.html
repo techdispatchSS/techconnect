@@ -79,16 +79,32 @@
         <form [formGroup]="form" (ngSubmit)="submit()" class="uc-form">
           <div class="uc-form-grid">
             <div class="admin-field">
-              <label for="uc-name">Full name</label>
+              <label for="uc-first-name">First name</label>
               <input
-                id="uc-name"
+                id="uc-first-name"
                 class="admin-input"
-                formControlName="name"
-                placeholder="e.g. Nomsa Khumalo"
+                formControlName="firstName"
+                placeholder="e.g. Nomsa"
                 autocomplete="off"
               />
-              @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-                <p class="admin-field-error">Name is required</p>
+              @if (
+                form.controls.firstName.hasError('required') && form.controls.firstName.touched
+              ) {
+                <p class="admin-field-error">First name is required</p>
+              }
+            </div>
+
+            <div class="admin-field">
+              <label for="uc-last-name">Last name</label>
+              <input
+                id="uc-last-name"
+                class="admin-input"
+                formControlName="lastName"
+                placeholder="e.g. Khumalo"
+                autocomplete="off"
+              />
+              @if (form.controls.lastName.hasError('required') && form.controls.lastName.touched) {
+                <p class="admin-field-error">Last name is required</p>
               }
             </div>
 
@@ -303,7 +319,7 @@
         <span class="uc-preview-kicker">Invite email preview</span>
         <span class="uc-preview-title">You've been added to TechConnect</span>
         <p class="uc-preview-body">
-          Hi {{ previewName() || 'there' }} — your account has been set up as a
+          Hi {{ previewFirstName() || 'there' }} — your account has been set up as a
           {{ roleLabels[previewRole()] }}. Tap below to set a password and check that your details
           are right.
         </p>

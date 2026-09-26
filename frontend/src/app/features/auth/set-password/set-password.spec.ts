@@ -7,7 +7,7 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 import { AccountService } from '../../../core/auth/account.service';
 import { SetPassword, SetPasswordMode } from './set-password';
 
-const GOOD_PASSWORD = 'Sup3r-secret-pass-123';
+const GOOD_PASSWORD = 'correct-horse-battery-staple';
 
 describe('SetPassword', () => {
   let fixture: ComponentFixture<SetPassword>;

@@ -1,0 +1,2 @@
+# Test fixture: a made-up password constant in a spec, flagged by generic-api-key. Not a secret.
+f2dbb29b9a5e88e7b21740ec8b3a521b319194b9:frontend/src/app/features/auth/set-password/set-password.spec.ts:generic-api-key:10

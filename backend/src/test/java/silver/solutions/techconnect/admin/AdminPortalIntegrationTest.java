@@ -328,6 +328,57 @@ class AdminPortalIntegrationTest extends AbstractPostgresIntegrationTest {
                 .andExpect(jsonPath("$.error").value("Invalid credentials"));
     }
 
+    /** The lock is a 15-minute window, not a permanent state — sign-in works again after it. */
+    @Test
+    void letsALockedAccountSignInAgainOnceTheLockHasExpired() throws Exception {
+        String email = unique("lockexpiry");
+        manager(email);
+
+        for (int attempt = 1; attempt <= 5; attempt++) {
+            mvc.perform(login(email, "definitely-the-wrong-password"))
+                    .andExpect(status().isUnauthorized());
+        }
+        assertThat(users.findByEmailIgnoreCase(email).orElseThrow().isLocked()).isTrue();
+
+        // Wind the clock past the window by moving the lock into the past.
+        User locked = users.findByEmailIgnoreCase(email).orElseThrow();
+        locked.setLockedUntil(java.time.Instant.now().minusSeconds(60));
+        users.save(locked);
+
+        mvc.perform(login(email, MANAGER_PASSWORD)).andExpect(status().isOk());
+
+        assertThat(users.findByEmailIgnoreCase(email).orElseThrow())
+                .satisfies(user -> {
+                    assertThat(user.isLocked()).isFalse();
+                    assertThat(user.getFailedLoginAttempts()).isZero();
+                });
+    }
+
+    /** Failures must be *consecutive* — a good sign-in starts the count again from zero. */
+    @Test
+    void resetsTheFailureCountAfterASuccessfulSignIn() throws Exception {
+        String email = unique("resetcount");
+        manager(email);
+
+        for (int attempt = 1; attempt <= 4; attempt++) {
+            mvc.perform(login(email, "definitely-the-wrong-password"))
+                    .andExpect(status().isUnauthorized());
+        }
+        assertThat(users.findByEmailIgnoreCase(email).orElseThrow().getFailedLoginAttempts())
+                .isEqualTo(4);
+
+        mvc.perform(login(email, MANAGER_PASSWORD)).andExpect(status().isOk());
+        assertThat(users.findByEmailIgnoreCase(email).orElseThrow().getFailedLoginAttempts())
+                .isZero();
+
+        // Four more failures after the reset must not lock the account (4 + 4 would have).
+        for (int attempt = 1; attempt <= 4; attempt++) {
+            mvc.perform(login(email, "definitely-the-wrong-password"))
+                    .andExpect(status().isUnauthorized());
+        }
+        assertThat(users.findByEmailIgnoreCase(email).orElseThrow().isLocked()).isFalse();
+    }
+
     /**
      * Regression guard: optional filters must not be bound as untyped nulls. Doing so makes
      * PostgreSQL fail with "function lower(bytea) does not exist" as soon as one is omitted.

@@ -26,7 +26,23 @@
 		     pins 42.7.11; this property override is Spring Boot's documented way to bump a
 		     managed dependency ahead of the parent BOM catching up. -->
 		<postgresql.version>42.7.12</postgresql.version>
+		<!-- Spring Boot's own BOM doesn't manage the AWS SDK v2 (that's Spring Cloud AWS'
+		     job, which this project doesn't otherwise depend on) — pinned here instead. -->
+		<aws-sdk.version>2.46.7</aws-sdk.version>
 	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>${aws-sdk.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -92,6 +108,20 @@
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- Phase 2 (photo/document storage, PRD §7) infra, wired ahead of the feature itself
+		     (#4): S3 client only for now — SQS/SNS get added alongside whatever feature first
+		     needs them, rather than depending on services nothing calls yet. -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+		</dependency>
+		<!-- AWS SDK v2 needs an HTTP client implementation on the classpath; apache-client is
+		     its default synchronous choice and matches the blocking, non-reactive style of the
+		     rest of this app (spring-boot-starter-web, not -webflux). -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>apache-client</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -151,6 +181,14 @@
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>testcontainers-junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Proves the S3 client wiring end-to-end against a real (local) S3 API, rather than
+		     against the developer's already-running docker-compose LocalStack — the same
+		     reasoning as PostgreSQLContainer above for the database. -->
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers-localstack</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

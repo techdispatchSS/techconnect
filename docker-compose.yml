@@ -36,6 +36,59 @@ services:
       timeout: 5s
       retries: 10
 
+  backend:
+    build:
+      context: ./backend
+    container_name: techconnect-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    environment:
+      # Container-to-container hostnames and ports — always the service name and the
+      # container's own internal port, not the (possibly remapped) host-side values above.
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-techconnect}
+      POSTGRES_USER: ${POSTGRES_USER:-techconnect}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-techconnect}
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      # No default on purpose (see .env.example) — an unset secret fails the container
+      # fast and clearly, rather than starting a backend nothing can sign a JWT with.
+      TECHCONNECT_JWT_SECRET: ${TECHCONNECT_JWT_SECRET:?Set TECHCONNECT_JWT_SECRET in .env — see .env.example (openssl rand -base64 48)}
+      TECHCONNECT_APP_BASE_URL: ${TECHCONNECT_APP_BASE_URL:-http://localhost:4200}
+      TECHCONNECT_MAIL_FROM: ${TECHCONNECT_MAIL_FROM:-no-reply@tech-connect.app}
+      TECHCONNECT_BOOTSTRAP_ADMIN_EMAIL: ${TECHCONNECT_BOOTSTRAP_ADMIN_EMAIL:-}
+      TECHCONNECT_BOOTSTRAP_ADMIN_NAME: ${TECHCONNECT_BOOTSTRAP_ADMIN_NAME:-TechConnect Admin}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      # No curl in the JRE-alpine runtime image, but BusyBox's wget is already there.
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: techconnect-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-4200}:80"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   localstack:
     # Use localstack/localstack-pro instead if LOCALSTACK_AUTH_TOKEN is set below,
     # since cognito-idp/cognito-identity require a Pro license.

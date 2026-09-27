@@ -12,7 +12,8 @@ public record TechConnectProperties(
         Activation activation,
         Login login,
         BootstrapAdmin bootstrapAdmin,
-        Mail mail) {
+        Mail mail,
+        Aws aws) {
 
     public record Jwt(String secret, Duration expiry, String issuer) {}
 
@@ -28,4 +29,11 @@ public record TechConnectProperties(
     public record BootstrapAdmin(String email, String name) {}
 
     public record Mail(String from) {}
+
+    /**
+     * Phase 2 (photo/document storage, PRD §7) AWS wiring. {@code endpointOverride} is blank in
+     * every real environment — the SDK then talks to actual AWS — and is set to LocalStack's
+     * {@code http://localhost:4566} only in local/dev config.
+     */
+    public record Aws(String region, String endpointOverride, String documentsBucket) {}
 }

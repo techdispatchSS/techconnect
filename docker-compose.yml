@@ -46,6 +46,8 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_healthy
+      localstack:
+        condition: service_healthy
     environment:
       # Container-to-container hostnames and ports — always the service name and the
       # container's own internal port, not the (possibly remapped) host-side values above.
@@ -63,6 +65,12 @@ services:
       TECHCONNECT_MAIL_FROM: ${TECHCONNECT_MAIL_FROM:-no-reply@tech-connect.app}
       TECHCONNECT_BOOTSTRAP_ADMIN_EMAIL: ${TECHCONNECT_BOOTSTRAP_ADMIN_EMAIL:-}
       TECHCONNECT_BOOTSTRAP_ADMIN_NAME: ${TECHCONNECT_BOOTSTRAP_ADMIN_NAME:-TechConnect Admin}
+      # S3 client wiring (#4, Phase 2 photo/document storage) — the internal service name and
+      # port, not LOCALSTACK_PORT (that's only the host-side mapping for tools running outside
+      # Docker, e.g. `awslocal` on the host).
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ENDPOINT_OVERRIDE: http://localstack:4566
+      AWS_DOCUMENTS_BUCKET: ${AWS_DOCUMENTS_BUCKET:-techconnect-local}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     healthcheck:

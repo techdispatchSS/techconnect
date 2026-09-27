@@ -16,6 +16,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import silver.solutions.techconnect.AbstractPostgresIntegrationTest;
+import silver.solutions.techconnect.entity.DispatchResponse;
+import silver.solutions.techconnect.entity.DispatchResponseStatus;
 import silver.solutions.techconnect.entity.Incident;
 import silver.solutions.techconnect.entity.IncidentPriority;
 import silver.solutions.techconnect.entity.IncidentStatus;
@@ -145,6 +147,97 @@ class ControllerDashboardIntegrationTest extends AbstractPostgresIntegrationTest
         assertThat(dispatchResponses.findByDispatchId(dispatchId)).hasSize(2);
         assertThat(incidents.findById(site.getId())).isPresent()
                 .get().satisfies(i -> assertThat(i.getStatus()).isEqualTo(IncidentStatus.IN_PROGRESS));
+    }
+
+    @Test
+    void reportsDispatchProgressIncludingEachTechniciansResponse() throws Exception {
+        String controllerToken = controllerToken();
+        Incident site = incident("Progress Co", IncidentStatus.NEW, IncidentPriority.HIGH);
+        User invited = technician("invited", TechnicianStatus.AVAILABLE);
+        User accepted = technician("accepted", TechnicianStatus.AVAILABLE);
+
+        String createBody = mvc.perform(post("/v1/controller/dispatches")
+                        .header("Authorization", "Bearer " + controllerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"incidentId":"%s","dispatchType":"BROADCAST","jobType":"Incident",
+                                 "requiredSkills":["Networking"],"requiredCertifications":[],
+                                 "slaResponse":"4 hrs","siteContact":"John Smith",
+                                 "notesForTechnician":"Core switch offline.",
+                                 "technicianIds":["%s","%s"]}
+                                """.formatted(site.getId(), invited.getId(), accepted.getId())))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID dispatchId = UUID.fromString(jsonValue(createBody, "id"));
+
+        // No technician-accept endpoint exists yet (FR-05/06/07 isn't built) — the response
+        // is flipped directly in the repository to exercise the read side of this endpoint.
+        DispatchResponse response = dispatchResponses.findByDispatchId(dispatchId).stream()
+                .filter(r -> r.getTechnicianId().equals(accepted.getId()))
+                .findFirst().orElseThrow();
+        response.setResponse(DispatchResponseStatus.ACCEPTED);
+        response.setRespondedAt(Instant.now());
+        dispatchResponses.save(response);
+
+        mvc.perform(get("/v1/controller/incidents/{id}/progress", site.getId())
+                        .header("Authorization", "Bearer " + controllerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.incident.id").value(site.getId().toString()))
+                .andExpect(jsonPath("$.dispatchId").value(dispatchId.toString()))
+                .andExpect(jsonPath("$.dispatchType").value("BROADCAST"))
+                .andExpect(jsonPath("$.jobType").value("Incident"))
+                .andExpect(jsonPath("$.requiredSkills[0]").value("Networking"))
+                .andExpect(jsonPath("$.responses.length()").value(2))
+                .andExpect(jsonPath("$.responses[?(@.technicianId=='" + accepted.getId() + "')].response")
+                        .value("ACCEPTED"))
+                .andExpect(jsonPath("$.responses[?(@.technicianId=='" + invited.getId() + "')].response")
+                        .value("PENDING"))
+                .andExpect(jsonPath("$.acceptedTechnicianName").value(accepted.getName()));
+    }
+
+    /** Status can't say whether a dispatch exists — an OVERDUE incident may or may not have one. */
+    @Test
+    void flagsWhetherAnOverdueIncidentHasADispatch() throws Exception {
+        String controllerToken = controllerToken();
+        Incident overdue = incident("LateCo", IncidentStatus.OVERDUE, IncidentPriority.HIGH);
+        User tech = technician("late", TechnicianStatus.AVAILABLE);
+
+        mvc.perform(get("/v1/controller/incidents/{id}", overdue.getId())
+                        .header("Authorization", "Bearer " + controllerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("OVERDUE"))
+                .andExpect(jsonPath("$.hasDispatch").value(false));
+
+        mvc.perform(post("/v1/controller/dispatches")
+                        .header("Authorization", "Bearer " + controllerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"incidentId":"%s","dispatchType":"ASSIGN","technicianIds":["%s"]}
+                                """.formatted(overdue.getId(), tech.getId())))
+                .andExpect(status().isCreated());
+
+        // Still OVERDUE — creating a dispatch only moves NEW incidents — but now it has one.
+        mvc.perform(get("/v1/controller/incidents/{id}", overdue.getId())
+                        .header("Authorization", "Bearer " + controllerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("OVERDUE"))
+                .andExpect(jsonPath("$.hasDispatch").value(true));
+
+        mvc.perform(get("/v1/controller/incidents").param("status", "OVERDUE")
+                        .header("Authorization", "Bearer " + controllerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id=='" + overdue.getId() + "')].hasDispatch")
+                        .value(true));
+    }
+
+    @Test
+    void refusesProgressForAnIncidentWithNoDispatchYet() throws Exception {
+        String controllerToken = controllerToken();
+        Incident site = incident("NoDispatchCo", IncidentStatus.NEW, IncidentPriority.LOW);
+
+        mvc.perform(get("/v1/controller/incidents/{id}/progress", site.getId())
+                        .header("Authorization", "Bearer " + controllerToken))
+                .andExpect(status().isNotFound());
     }
 
     @Test

@@ -535,3 +535,111 @@ textarea.controller-input {
   --controller-color-divider-strong: rgba(255, 255, 255, 0.25);
   color: #edeff1;
 }
+
+// ════════════════════════════════════════════════════════════════════════
+// New-incident toasts — a fixed stack over everything else in the shell, so one shows up
+// regardless of which controller screen is currently open. Built from the chrome-tier tokens
+// (`--controller-color-sidebar` etc.), not the switchable content ones, so it reads the same
+// dark "Industry" card in both themes rather than needing its own light-mode override block.
+// ════════════════════════════════════════════════════════════════════════
+.controller-shell-toasts {
+  position: fixed;
+  z-index: 40;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+}
+
+.controller-toast {
+  display: flex;
+  align-items: stretch;
+  background: var(--controller-color-sidebar);
+  border: 1px solid var(--controller-chrome-divider);
+  border-left: 2px solid var(--controller-color-accent);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  animation: controller-toast-in 0.22s ease-out;
+
+  // "Low" priority is the one pill variant whose tokens switch with the theme (see the
+  // `[data-theme='light']` block at the top of this file) — pinned back to their dark values
+  // here so it stays legible against this toast's always-dark background in light mode too.
+  --controller-priority-low-bg: rgba(255, 255, 255, 0.05);
+  --controller-priority-low-border: rgba(255, 255, 255, 0.16);
+  --controller-priority-low-fg: #9aa1a8;
+}
+@keyframes controller-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .controller-toast {
+    animation: none;
+  }
+}
+
+.controller-toast-open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+}
+.controller-toast-open:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.controller-toast-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--controller-color-accent);
+}
+.controller-toast-ticket {
+  font-family: var(--controller-font-heading);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--controller-chrome-text);
+}
+.controller-toast-client {
+  font-size: 12.5px;
+  color: var(--controller-chrome-text);
+}
+.controller-toast-issue {
+  font-size: 11.5px;
+  color: var(--controller-chrome-muted);
+}
+.controller-toast-open .controller-pill {
+  margin-top: 2px;
+}
+
+.controller-toast-close {
+  flex: none;
+  align-self: flex-start;
+  padding: 8px 10px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--controller-chrome-muted);
+}
+.controller-toast-close:hover {
+  color: var(--controller-chrome-text);
+}

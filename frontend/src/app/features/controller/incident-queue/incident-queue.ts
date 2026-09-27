@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, interval, startWith } from 'rxjs';
 
 import { ControllerApiService } from '../controller-api.service';
@@ -27,7 +27,15 @@ const PAGE_SIZE = 20;
 export class IncidentQueue implements OnInit {
   private readonly api = inject(ControllerApiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+
+  /** A `?selected=` deep link from a new-incident toast (see `ControllerShell.openAlert`).
+   * Tracked outside the Router's own snapshot because clicking a toast while already on this
+   * route reuses the existing component instance rather than re-running `ngOnInit` — only a
+   * live subscription to `queryParamMap` (below) sees that kind of same-route navigation. */
+  private preselectId: string | null = null;
+  private lastAppliedPreselectId: string | null = null;
 
   readonly tabs = QUEUE_TABS;
   readonly priorityLabels = PRIORITY_LABELS;
@@ -61,6 +69,28 @@ export class IncidentQueue implements OnInit {
   });
 
   ngOnInit(): void {
+    // Fires with the current value immediately on subscribe, and again on every later
+    // same-route navigation — including a toast click while the queue is already open,
+    // which `ActivatedRoute.snapshot` alone would miss.
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const id = params.get('selected');
+      if (!id || id === this.lastAppliedPreselectId) {
+        return;
+      }
+      const alreadyLoaded = this.incidents().find((incident) => incident.id === id);
+      if (alreadyLoaded) {
+        this.lastAppliedPreselectId = id;
+        this.selectedId.set(id);
+        return;
+      }
+      // Not in what's currently loaded — either this is the first navigation into the page
+      // (nothing loaded yet) or a different tab is showing. Every toast is for a NEW
+      // incident, so switch to that tab and fetch for it directly.
+      this.preselectId = id;
+      this.activeTab.set('New');
+      this.load();
+    });
+
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.load());
@@ -83,16 +113,28 @@ export class IncidentQueue implements OnInit {
     this.selectedId.set(incident.id);
   }
 
-  createDispatch(): void {
+  /** "Create dispatch" until one has gone out, "View progress" after — decided by whether a
+   * dispatch actually exists, not by status: an OVERDUE incident can be either, and sending
+   * one without a dispatch to the progress page would only 404. */
+  openIncident(): void {
     const incident = this.selected();
-    if (incident) {
-      this.router.navigate(['/incidents/dispatch', incident.id]);
+    if (!incident) {
+      return;
     }
+    const segment = incident.hasDispatch ? 'progress' : 'dispatch';
+    this.router.navigate(['/incidents', segment, incident.id]);
+  }
+
+  actionLabel(incident: Incident): string {
+    return incident.hasDispatch ? 'View progress' : 'Create dispatch';
   }
 
   /** Minutes since an incident was logged, matching the queue's "Age" column. */
   ageLabel(incident: Incident): string {
-    const minutes = Math.max(0, Math.round((Date.now() - new Date(incident.createdAt).getTime()) / 60_000));
+    const minutes = Math.max(
+      0,
+      Math.round((Date.now() - new Date(incident.createdAt).getTime()) / 60_000),
+    );
     if (minutes < 60) {
       return `${minutes}m`;
     }
@@ -148,7 +190,14 @@ export class IncidentQueue implements OnInit {
     const tab = this.activeTab();
     this.api
       .listIncidents({
-        status: tab === 'New' ? 'NEW' : tab === 'In progress' ? 'IN_PROGRESS' : tab === 'Overdue' ? 'OVERDUE' : undefined,
+        status:
+          tab === 'New'
+            ? 'NEW'
+            : tab === 'In progress'
+              ? 'IN_PROGRESS'
+              : tab === 'Overdue'
+                ? 'OVERDUE'
+                : undefined,
         unassigned: tab === 'Unassigned' ? true : undefined,
         q: this.searchControl.value,
         page: 0,
@@ -158,6 +207,15 @@ export class IncidentQueue implements OnInit {
         next: (page) => {
           this.incidents.set(page.content);
           this.loading.set(false);
+
+          if (this.preselectId && this.preselectId !== this.lastAppliedPreselectId) {
+            const match = page.content.find((incident) => incident.id === this.preselectId);
+            if (match) {
+              this.lastAppliedPreselectId = this.preselectId;
+              this.selectedId.set(this.preselectId);
+              return;
+            }
+          }
           if (!this.selectedId() && page.content.length > 0) {
             this.selectedId.set(page.content[0].id);
           }

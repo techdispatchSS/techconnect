@@ -1,0 +1,153 @@
+@if (notFound()) {
+  <p class="tp-empty">
+    No dispatch has been created for this incident yet.
+    <a routerLink="/incidents/queue">Back to queue</a>
+  </p>
+} @else if (loadFailed()) {
+  <p class="tp-empty">Couldn't load this ticket's progress. Try again shortly.</p>
+} @else if (progress(); as p) {
+  <div class="tp">
+    <div class="controller-card tp-meta">
+      <span class="tp-meta-item"
+        ><span>Ticket</span><strong>{{ p.incident.ticketRef }}</strong></span
+      >
+      <span class="tp-meta-item"
+        ><span>Client</span><strong>{{ p.incident.clientName }}</strong></span
+      >
+      <span class="tp-meta-item"
+        ><span>Site</span><strong>{{ p.incident.siteAddress ?? '—' }}</strong></span
+      >
+      <span class="tp-meta-item"
+        ><span>Issue</span><strong>{{ p.incident.issueType ?? '—' }}</strong></span
+      >
+      @if (p.incident.priority) {
+        <span class="tp-meta-item">
+          <span>Priority</span><strong>{{ priorityLabels[p.incident.priority] }}</strong>
+        </span>
+      }
+      <span class="tp-meta-item"
+        ><span>SLA</span><strong>{{ p.incident.sla ?? '—' }}</strong></span
+      >
+      <a routerLink="/incidents/queue" class="controller-btn controller-btn-secondary tp-meta-back">
+        Back to queue
+      </a>
+    </div>
+
+    @if (p.dispatchStatus === 'ACCEPTED') {
+      <div class="controller-card tp-banner tp-banner--accepted">
+        <span class="tp-banner-title">Assigned to {{ p.acceptedTechnicianName }}</span>
+        <span class="tp-banner-hint">This technician accepted the dispatch.</span>
+      </div>
+    } @else if (p.dispatchStatus === 'EXPIRED') {
+      <div class="controller-card tp-banner tp-banner--expired">
+        <span class="tp-banner-title">No technician accepted in time</span>
+        <span class="tp-banner-hint"
+          >The response window lapsed. Send a new dispatch to try again.</span
+        >
+        <button
+          type="button"
+          class="controller-btn controller-btn-primary"
+          (click)="dispatchAgain()"
+        >
+          Dispatch again
+        </button>
+      </div>
+    } @else {
+      <div class="controller-card tp-banner">
+        <span class="tp-banner-title">Waiting for a technician to respond</span>
+        @if (expiryLabel(); as label) {
+          <span class="tp-banner-hint">{{ label }}</span>
+          <span class="tp-expiry-bar">
+            <span class="tp-expiry-bar-fill" [style.width.%]="expiryProgressPct()"></span>
+          </span>
+        }
+      </div>
+    }
+
+    <div class="tp-body">
+      <section class="controller-card tp-details">
+        <h6 class="tp-section-title">Dispatch details</h6>
+        <div class="tp-fact">
+          <span>Method</span>
+          <span>{{ p.dispatchType === 'BROADCAST' ? 'Broadcast' : 'Direct assign' }}</span>
+        </div>
+        <div class="tp-fact">
+          <span>Job type</span><span>{{ p.jobType ?? '—' }}</span>
+        </div>
+        <div class="tp-fact">
+          <span>SLA response</span><span>{{ p.slaResponse ?? '—' }}</span>
+        </div>
+        <div class="tp-fact">
+          <span>Site contact</span><span>{{ p.siteContact ?? '—' }}</span>
+        </div>
+        <div class="tp-fact">
+          <span>Sent</span><span>{{ p.dispatchCreatedAt | date: 'HH:mm' }}</span>
+        </div>
+
+        @if (p.requiredSkills.length > 0) {
+          <div class="tp-tags-block">
+            <span class="tp-tags-label">Required skills</span>
+            <span class="tp-tags">
+              @for (skill of p.requiredSkills; track skill) {
+                <span class="tp-tag">{{ skill }}</span>
+              }
+            </span>
+          </div>
+        }
+        @if (p.requiredCertifications.length > 0) {
+          <div class="tp-tags-block">
+            <span class="tp-tags-label">Required certifications</span>
+            <span class="tp-tags">
+              @for (cert of p.requiredCertifications; track cert) {
+                <span class="tp-tag">{{ cert }}</span>
+              }
+            </span>
+          </div>
+        }
+        @if (p.notesForTechnician) {
+          <div class="tp-notes">
+            <span class="tp-tags-label">Notes for technician</span>
+            <span class="tp-notes-text">{{ p.notesForTechnician }}</span>
+          </div>
+        }
+      </section>
+
+      <section class="tp-responses">
+        <h6 class="tp-section-title">Technician responses</h6>
+        <div class="controller-card tp-table-card">
+          <table class="controller-table">
+            <thead>
+              <tr>
+                <th>Technician</th>
+                <th>Response</th>
+                <th style="text-align: right">Responded</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of sortedResponses(); track r.technicianId) {
+                <tr [class.tp-row--accepted]="r.response === 'ACCEPTED'">
+                  <td class="tp-tech-name">{{ r.technicianName }}</td>
+                  <td>
+                    <span [class]="responsePillClass(r.response)">{{
+                      responseLabel(r.response)
+                    }}</span>
+                  </td>
+                  <td style="text-align: right">
+                    {{ r.respondedAt ? (r.respondedAt | date: 'HH:mm') : '—' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <p class="tp-roadmap-note">
+          On-site progress (en route, on site, work complete) will show up here once the technician
+          app is live.
+        </p>
+      </section>
+    </div>
+  </div>
+} @else {
+  <p class="tp-empty">Loading…</p>
+}

@@ -3,15 +3,29 @@
 } @else if (incident(); as inc) {
   <div class="cd">
     <div class="controller-card cd-meta">
-      <span class="cd-meta-item"><span>Ticket</span><strong>{{ inc.ticketRef }}</strong></span>
-      <span class="cd-meta-item"><span>Client</span><strong>{{ inc.clientName }}</strong></span>
-      <span class="cd-meta-item"><span>Site</span><strong>{{ inc.siteAddress ?? '—' }}</strong></span>
-      <span class="cd-meta-item"><span>Issue</span><strong>{{ inc.issueType ?? '—' }}</strong></span>
+      <span class="cd-meta-item"
+        ><span>Ticket</span><strong>{{ inc.ticketRef }}</strong></span
+      >
+      <span class="cd-meta-item"
+        ><span>Client</span><strong>{{ inc.clientName }}</strong></span
+      >
+      <span class="cd-meta-item"
+        ><span>Site</span><strong>{{ inc.siteAddress ?? '—' }}</strong></span
+      >
+      <span class="cd-meta-item"
+        ><span>Issue</span><strong>{{ inc.issueType ?? '—' }}</strong></span
+      >
       @if (inc.priority) {
-        <span class="cd-meta-item"><span>Priority</span><strong>{{ priorityLabels[inc.priority] }}</strong></span>
+        <span class="cd-meta-item"
+          ><span>Priority</span><strong>{{ priorityLabels[inc.priority] }}</strong></span
+        >
       }
-      <span class="cd-meta-item"><span>SLA</span><strong>{{ inc.sla ?? '—' }}</strong></span>
-      <a routerLink="/incidents/queue" class="controller-btn controller-btn-secondary cd-meta-back">Back to queue</a>
+      <span class="cd-meta-item"
+        ><span>SLA</span><strong>{{ inc.sla ?? '—' }}</strong></span
+      >
+      <a routerLink="/incidents/queue" class="controller-btn controller-btn-secondary cd-meta-back"
+        >Back to queue</a
+      >
     </div>
 
     <div class="cd-body">
@@ -50,7 +64,12 @@
         </div>
         <div class="controller-field">
           <label for="cd-notes">Notes for technician</label>
-          <textarea id="cd-notes" class="controller-input" formControlName="notesForTechnician" rows="3"></textarea>
+          <textarea
+            id="cd-notes"
+            class="controller-input"
+            formControlName="notesForTechnician"
+            rows="3"
+          ></textarea>
         </div>
 
         <h6 class="cd-section-title cd-section-title--spaced">Dispatch method</h6>
@@ -63,7 +82,9 @@
           <span class="cd-method-dot"></span>
           <span class="cd-method-text">
             <span class="cd-method-label">Broadcast to selected technicians</span>
-            <span class="cd-method-hint">All picked technicians are notified at once — first to accept takes the job.</span>
+            <span class="cd-method-hint"
+              >All picked technicians are notified at once — first to accept takes the job.</span
+            >
           </span>
         </button>
         <button
@@ -75,7 +96,9 @@
           <span class="cd-method-dot"></span>
           <span class="cd-method-text">
             <span class="cd-method-label">Assign to a specific technician</span>
-            <span class="cd-method-hint">Skips the race. The job lands directly on one technician's app.</span>
+            <span class="cd-method-hint"
+              >Skips the race. The job lands directly on one technician's app.</span
+            >
           </span>
         </button>
       </section>
@@ -106,25 +129,48 @@
               </thead>
               <tbody>
                 @for (tech of technicians(); track tech.id) {
-                  <tr (click)="toggleTechnician(tech.id)" [class.cd-row--selected]="selectedIds().has(tech.id)">
+                  <tr
+                    (click)="toggleTechnician(tech.id)"
+                    [class.cd-row--selected]="selectedIds().has(tech.id)"
+                  >
                     <td>
-                      <span class="cd-checkbox" [class.cd-checkbox--checked]="selectedIds().has(tech.id)">
-                        @if (selectedIds().has(tech.id)) { ✓ }
+                      <span
+                        class="cd-checkbox"
+                        [class.cd-checkbox--checked]="selectedIds().has(tech.id)"
+                      >
+                        @if (selectedIds().has(tech.id)) {
+                          ✓
+                        }
                       </span>
                     </td>
                     <td class="cd-tech-name">{{ tech.name }}</td>
                     <td>
                       <span class="cd-score">
-                        <span class="cd-score-bar"><span class="cd-score-fill" [style]="scoreBarStyle(tech.score)"></span></span>
+                        <span class="cd-score-bar"
+                          ><span class="cd-score-fill" [style]="scoreBarStyle(tech.score)"></span
+                        ></span>
                         <span class="cd-score-value">{{ tech.score }}</span>
                       </span>
                     </td>
                     <td>{{ tech.distanceKm !== null ? tech.distanceKm + ' km' : '—' }}</td>
-                    <td>{{ tech.matchedSkills }} / {{ tech.totalRequiredSkills || tech.matchedSkills }}</td>
+                    <td>
+                      {{ tech.matchedSkills }} /
+                      {{ tech.totalRequiredSkills || tech.matchedSkills }}
+                    </td>
                     <td>{{ tech.completedJobCount }}</td>
                     <td style="text-align: right">
-                      <span class="controller-pill" [class.controller-pill--medium]="tech.status === 'AVAILABLE'" [class.controller-pill--low]="tech.status !== 'AVAILABLE'">
-                        {{ tech.status === 'AVAILABLE' ? 'Available' : tech.status === 'ON_JOB' ? 'On a job' : 'Offline' }}
+                      <span
+                        class="controller-pill"
+                        [class.controller-pill--medium]="tech.status === 'AVAILABLE'"
+                        [class.controller-pill--low]="tech.status !== 'AVAILABLE'"
+                      >
+                        {{
+                          tech.status === 'AVAILABLE'
+                            ? 'Available'
+                            : tech.status === 'ON_JOB'
+                              ? 'On a job'
+                              : 'Offline'
+                        }}
                       </span>
                     </td>
                   </tr>
@@ -137,13 +183,21 @@
         <div class="controller-card cd-selected">
           <span class="cd-selected-label">Selected for dispatch ({{ selectedIds().size }})</span>
           @if (selectedTechnicians().length === 0) {
-            <span class="cd-selected-empty">No technicians selected yet — pick from the list above.</span>
+            <span class="cd-selected-empty"
+              >No technicians selected yet — pick from the list above.</span
+            >
           } @else {
             <span class="cd-selected-chips">
               @for (tech of selectedTechnicians(); track tech.id) {
                 <span class="cd-chip">
                   <span>{{ tech.name }}</span>
-                  <button type="button" (click)="removeTechnician(tech.id)" aria-label="Remove technician">×</button>
+                  <button
+                    type="button"
+                    (click)="removeTechnician(tech.id)"
+                    aria-label="Remove technician"
+                  >
+                    ×
+                  </button>
                 </span>
               }
             </span>
@@ -155,14 +209,22 @@
             <span class="cd-submit-error">Couldn't create the dispatch. Try again.</span>
           }
           <span class="cd-submit-hint">Broadcasts expire after 10 minutes · first accept wins</span>
-          <a routerLink="/incidents/queue" class="controller-btn controller-btn-secondary">Cancel</a>
+          <a routerLink="/incidents/queue" class="controller-btn controller-btn-secondary"
+            >Cancel</a
+          >
           <button
             type="button"
             class="controller-btn controller-btn-primary"
             [disabled]="selectedIds().size === 0 || submitting()"
             (click)="submit()"
           >
-            {{ submitting() ? 'Dispatching…' : method() === 'BROADCAST' ? 'Broadcast job' : 'Assign job' }}
+            {{
+              submitting()
+                ? 'Dispatching…'
+                : method() === 'BROADCAST'
+                  ? 'Broadcast job'
+                  : 'Assign job'
+            }}
           </button>
         </div>
       </section>
@@ -170,7 +232,9 @@
       <aside class="cd-coverage">
         <div class="controller-card cd-coverage-card">
           <h6 class="cd-section-title">Technician coverage</h6>
-          <p class="cd-coverage-hint">Live technician positions relative to {{ inc.siteAddress ?? 'the incident site' }}.</p>
+          <p class="cd-coverage-hint">
+            Live technician positions relative to {{ inc.siteAddress ?? 'the incident site' }}.
+          </p>
           <app-technician-map
             [siteLatitude]="inc.siteLatitude"
             [siteLongitude]="inc.siteLongitude"
@@ -179,12 +243,23 @@
           />
           @for (tech of technicians(); track tech.id) {
             <span class="cd-coverage-row">
-              <span class="cd-coverage-dot" [class.cd-coverage-dot--busy]="tech.status !== 'AVAILABLE'"></span>
+              <span
+                class="cd-coverage-dot"
+                [class.cd-coverage-dot--busy]="tech.status !== 'AVAILABLE'"
+              ></span>
               <span class="cd-coverage-meta">
                 <span class="cd-coverage-name">{{ tech.name }}</span>
-                <span class="cd-coverage-status">{{ tech.status === 'AVAILABLE' ? 'Available' : tech.status === 'ON_JOB' ? 'On a job' : 'Offline' }}</span>
+                <span class="cd-coverage-status">{{
+                  tech.status === 'AVAILABLE'
+                    ? 'Available'
+                    : tech.status === 'ON_JOB'
+                      ? 'On a job'
+                      : 'Offline'
+                }}</span>
               </span>
-              <span class="cd-coverage-distance">{{ tech.distanceKm !== null ? tech.distanceKm + ' km' : '—' }}</span>
+              <span class="cd-coverage-distance">{{
+                tech.distanceKm !== null ? tech.distanceKm + ' km' : '—'
+              }}</span>
             </span>
           }
         </div>

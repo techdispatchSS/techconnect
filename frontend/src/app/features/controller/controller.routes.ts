@@ -12,9 +12,14 @@ export const controllerRoutes: Routes = [
   },
   {
     path: 'dispatch/:incidentId',
-    loadComponent: () =>
-      import('./create-dispatch/create-dispatch').then((m) => m.CreateDispatch),
+    loadComponent: () => import('./create-dispatch/create-dispatch').then((m) => m.CreateDispatch),
     title: 'Create dispatch · TechConnect',
     data: { heading: 'Create dispatch' },
+  },
+  {
+    path: 'progress/:incidentId',
+    loadComponent: () => import('./ticket-progress/ticket-progress').then((m) => m.TicketProgress),
+    title: 'Ticket progress · TechConnect',
+    data: { heading: 'Ticket progress' },
   },
 ];

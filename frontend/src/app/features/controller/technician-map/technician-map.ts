@@ -76,7 +76,8 @@ export class TechnicianMap implements AfterViewInit, OnChanges, OnDestroy {
       // Dark-mode the light OSM raster to match the controller dashboard's theme.
       const pane = this.map.getPane('tilePane');
       if (pane) {
-        pane.style.filter = 'invert(1) hue-rotate(185deg) brightness(0.92) contrast(0.88) saturate(0.55)';
+        pane.style.filter =
+          'invert(1) hue-rotate(185deg) brightness(0.92) contrast(0.88) saturate(0.55)';
       }
     } else {
       this.map.eachLayer((layer) => {
@@ -95,7 +96,9 @@ export class TechnicianMap implements AfterViewInit, OnChanges, OnDestroy {
     const bounds: L.LatLngExpression[] = [];
 
     for (const pin of pins) {
-      const marker = L.marker([pin.latitude, pin.longitude], { icon: this.pinIcon(pin) }).addTo(this.map);
+      const marker = L.marker([pin.latitude, pin.longitude], { icon: this.pinIcon(pin) }).addTo(
+        this.map,
+      );
       marker.bindPopup(pin.popup);
       bounds.push([pin.latitude, pin.longitude]);
 

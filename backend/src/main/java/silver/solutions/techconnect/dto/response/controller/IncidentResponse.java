@@ -24,5 +24,9 @@ public record IncidentResponse(
         String additionalNotes,
         Instant slaDueAt,
         Instant createdAt,
-        List<String> requiredSkills) {
+        List<String> requiredSkills,
+        /** Whether any dispatch has ever been created for this incident. Status alone can't
+         * say: an OVERDUE incident may or may not have one, and the dashboard needs to offer
+         * "Create dispatch" versus "View progress" accordingly. */
+        boolean hasDispatch) {
 }

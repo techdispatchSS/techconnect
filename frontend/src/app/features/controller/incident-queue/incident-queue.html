@@ -11,9 +11,9 @@
       type="button"
       class="controller-btn controller-btn-primary"
       [disabled]="!selected()"
-      (click)="createDispatch()"
+      (click)="openIncident()"
     >
-      Create dispatch
+      {{ selected() ? actionLabel(selected()!) : 'Create dispatch' }}
     </button>
   </div>
 
@@ -78,10 +78,7 @@
             </thead>
             <tbody>
               @for (row of incidents(); track row.id) {
-                <tr
-                  (click)="select(row)"
-                  [class.iq-row--selected]="selected()?.id === row.id"
-                >
+                <tr (click)="select(row)" [class.iq-row--selected]="selected()?.id === row.id">
                   <td class="iq-ticket">{{ row.ticketRef }}</td>
                   <td class="iq-client">{{ row.clientName }}</td>
                   <td>{{ row.siteAddress ?? '—' }}</td>
@@ -107,24 +104,38 @@
       <aside class="controller-card iq-detail">
         <div class="iq-detail-head">
           <span class="iq-detail-ticket">{{ sel.ticketRef }}</span>
-          <span class="iq-detail-meta">{{ sel.clientName }} · {{ sel.siteAddress ?? 'No site on file' }}</span>
+          <span class="iq-detail-meta"
+            >{{ sel.clientName }} · {{ sel.siteAddress ?? 'No site on file' }}</span
+          >
           @if (sel.priority) {
             <span [class]="priorityClass(sel)">{{ priorityLabels[sel.priority] }}</span>
           }
         </div>
 
         <div class="iq-detail-facts">
-          <div class="iq-fact"><span>Issue</span><span>{{ sel.issueType ?? '—' }}</span></div>
-          <div class="iq-fact"><span>Logged</span><span>{{ sel.createdAt | date: 'HH:mm' }}</span></div>
-          <div class="iq-fact"><span>Contact</span><span>{{ sel.contactName ?? '—' }}</span></div>
-          <div class="iq-fact"><span>Phone</span><span>{{ sel.contactPhone ?? '—' }}</span></div>
-          <div class="iq-fact"><span>Status</span><span>{{ sel.status }}</span></div>
+          <div class="iq-fact">
+            <span>Issue</span><span>{{ sel.issueType ?? '—' }}</span>
+          </div>
+          <div class="iq-fact">
+            <span>Logged</span><span>{{ sel.createdAt | date: 'HH:mm' }}</span>
+          </div>
+          <div class="iq-fact">
+            <span>Contact</span><span>{{ sel.contactName ?? '—' }}</span>
+          </div>
+          <div class="iq-fact">
+            <span>Phone</span><span>{{ sel.contactPhone ?? '—' }}</span>
+          </div>
+          <div class="iq-fact">
+            <span>Status</span><span>{{ sel.status }}</span>
+          </div>
         </div>
 
         @if (slaCountdown(sel); as countdown) {
           <div class="iq-sla">
             <span class="iq-sla-label">SLA clock</span>
-            <span class="iq-sla-value" [class.iq-sla-value--overdue]="sel.overdue">{{ countdown }}</span>
+            <span class="iq-sla-value" [class.iq-sla-value--overdue]="sel.overdue">{{
+              countdown
+            }}</span>
             <span class="iq-sla-bar">
               <span class="iq-sla-bar-fill" [style.width.%]="slaProgressPct(sel)"></span>
             </span>
@@ -149,8 +160,12 @@
           </div>
         }
 
-        <button type="button" class="controller-btn controller-btn-primary controller-btn-block" (click)="createDispatch()">
-          Create dispatch
+        <button
+          type="button"
+          class="controller-btn controller-btn-primary controller-btn-block"
+          (click)="openIncident()"
+        >
+          {{ actionLabel(sel) }}
         </button>
       </aside>
     }

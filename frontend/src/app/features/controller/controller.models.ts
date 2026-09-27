@@ -3,6 +3,7 @@ export type IncidentPriority = 'HIGH' | 'MEDIUM' | 'LOW';
 export type IncidentStatus = 'NEW' | 'IN_PROGRESS' | 'ON_HOLD' | 'OVERDUE' | 'CLOSED';
 export type DispatchType = 'BROADCAST' | 'ASSIGN';
 export type DispatchLifecycleStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED';
+export type DispatchResponseStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'NO_RESPONSE';
 export type TechnicianAvailability = 'AVAILABLE' | 'ON_JOB' | 'OFFLINE';
 
 /** PRD §8.2's pagination envelope — redefined per feature rather than shared, matching
@@ -34,6 +35,9 @@ export interface Incident {
   slaDueAt: string | null;
   createdAt: string;
   requiredSkills: string[];
+  /** True once any dispatch has been created — what decides "Create dispatch" versus "View
+   * progress", since an OVERDUE (or any other) status doesn't say either way. */
+  hasDispatch: boolean;
 }
 
 export interface IncidentKpis {
@@ -84,6 +88,36 @@ export interface DispatchCreateResponse {
   status: DispatchLifecycleStatus;
   expiresAt: string;
   invitedTechnicianIds: string[];
+}
+
+export interface DispatchResponseEntry {
+  technicianId: string;
+  technicianName: string;
+  response: DispatchResponseStatus;
+  respondedAt: string | null;
+}
+
+/**
+ * The ticket progress view: the incident, the most recent dispatch sent for it, and how every
+ * invited technician has responded so far. There is deliberately no on-site job timeline (en
+ * route / on site / work started) here — the technician app that would write those events
+ * doesn't exist yet, so there's nothing real to show beyond dispatch and response state.
+ */
+export interface IncidentProgress {
+  incident: Incident;
+  dispatchId: string;
+  dispatchType: DispatchType;
+  dispatchStatus: DispatchLifecycleStatus;
+  jobType: string | null;
+  requiredSkills: string[];
+  requiredCertifications: string[];
+  slaResponse: string | null;
+  siteContact: string | null;
+  notesForTechnician: string | null;
+  dispatchCreatedAt: string;
+  dispatchExpiresAt: string;
+  responses: DispatchResponseEntry[];
+  acceptedTechnicianName: string | null;
 }
 
 /** The queue's filter tabs — "Unassigned" and the KPI counts share one source of truth

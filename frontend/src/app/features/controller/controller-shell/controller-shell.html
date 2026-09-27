@@ -26,8 +26,16 @@
         (click)="closeSidebarOnHandset()"
       >
         <span class="controller-shell-nav-item-main">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="3" y="4" width="18" height="16" /><path d="M3 9h18M8 13h9M8 16.5h6" />
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <rect x="3" y="4" width="18" height="16" />
+            <path d="M3 9h18M8 13h9M8 16.5h6" />
           </svg>
           <span>Incident queue</span>
         </span>
@@ -36,19 +44,41 @@
         }
       </a>
 
-      <span class="controller-shell-nav-item controller-shell-nav-item--disabled" title="Part of the technician job flow — not built yet">
+      <span
+        class="controller-shell-nav-item controller-shell-nav-item--disabled"
+        title="Part of the technician job flow — not built yet"
+      >
         <span class="controller-shell-nav-item-main">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="12" r="8.5" /><path d="M12 8v4.5l3 1.8" />
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="M12 8v4.5l3 1.8" />
           </svg>
           <span>Active jobs</span>
         </span>
       </span>
 
-      <span class="controller-shell-nav-item controller-shell-nav-item--disabled" title="Part of the technician job flow — not built yet">
+      <span
+        class="controller-shell-nav-item controller-shell-nav-item--disabled"
+        title="Part of the technician job flow — not built yet"
+      >
         <span class="controller-shell-nav-item-main">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M5 4h11l3 3v13H5z" /><path d="m9 13 2.2 2.2L15.5 11" />
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path d="M5 4h11l3 3v13H5z" />
+            <path d="m9 13 2.2 2.2L15.5 11" />
           </svg>
           <span>Review &amp; close</span>
         </span>
@@ -104,12 +134,28 @@
         [attr.aria-label]="theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
       >
         @if (theme() === 'dark') {
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
             <circle cx="12" cy="12" r="4.2" />
-            <path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
+            <path
+              d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"
+            />
           </svg>
         } @else {
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
             <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" />
           </svg>
         }
@@ -120,4 +166,38 @@
       <router-outlet />
     </div>
   </div>
+
+  @if (notifier.alerts().length > 0) {
+    <div class="controller-shell-toasts" aria-live="polite">
+      @for (alert of notifier.alerts(); track alert.id) {
+        <div
+          class="controller-toast"
+          (mouseenter)="notifier.cancelAutoDismiss(alert.id)"
+          (mouseleave)="notifier.scheduleAutoDismiss(alert.id)"
+        >
+          <button type="button" class="controller-toast-open" (click)="openAlert(alert)">
+            <span class="controller-toast-badge">New incident</span>
+            <span class="controller-toast-ticket">{{ alert.incident.ticketRef }}</span>
+            <span class="controller-toast-client">{{ alert.incident.clientName }}</span>
+            <span class="controller-toast-issue">{{
+              alert.incident.issueType ?? 'Issue not specified'
+            }}</span>
+            @if (alert.incident.priority) {
+              <span [class]="alertPriorityClass(alert)">{{
+                priorityLabels[alert.incident.priority]
+              }}</span>
+            }
+          </button>
+          <button
+            type="button"
+            class="controller-toast-close"
+            aria-label="Dismiss notification"
+            (click)="dismissAlert($event, alert.id)"
+          >
+            ×
+          </button>
+        </div>
+      }
+    </div>
+  }
 </div>

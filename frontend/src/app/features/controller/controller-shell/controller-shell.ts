@@ -1,5 +1,14 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, OnInit, ViewEncapsulation, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  ViewEncapsulation,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
@@ -18,7 +27,8 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { ThemeService } from '../../../core/theme/theme.service';
 import { ChangePasswordDialog } from '../../../layout/change-password-dialog/change-password-dialog';
 import { ProfileDialog } from '../../../layout/profile-dialog/profile-dialog';
-import { ControllerApiService } from '../controller-api.service';
+import { PRIORITY_LABELS } from '../controller.models';
+import { IncidentAlert, NewIncidentNotifierService } from '../new-incident-notifier.service';
 
 /**
  * Owns the controller dashboard's own frame — sidebar, header and the routed screen
@@ -39,9 +49,12 @@ export class ControllerShell implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly api = inject(ControllerApiService);
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly themeService = inject(ThemeService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly notifier = inject(NewIncidentNotifierService);
+
+  readonly priorityLabels = PRIORITY_LABELS;
 
   readonly theme = this.themeService.theme;
 
@@ -80,8 +93,9 @@ export class ControllerShell implements OnInit {
     return (first + last).toUpperCase();
   });
 
-  /** New-incident count badges the "Incident queue" nav entry, matching the design mockup. */
-  readonly newCount = signal<number | null>(null);
+  /** New-incident count badges the "Incident queue" nav entry, matching the design mockup —
+   * sourced live from `notifier`, the same poll that drives the toast alerts below. */
+  readonly newCount = this.notifier.newCount;
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -104,10 +118,32 @@ export class ControllerShell implements OnInit {
     // A stored token can still be signed and unexpired yet already revoked by the backend —
     // confirm the session once here so a dead one lands on the login screen immediately.
     this.account.me().subscribe({ error: () => undefined });
-    this.api.kpis().subscribe({
-      next: (kpis) => this.newCount.set(kpis.newCount),
-      error: () => this.newCount.set(null),
+    this.notifier.start(this.destroyRef);
+  }
+
+  /** Sends the Controller to the queue with this incident selected — new incidents always
+   * still need a look before dispatching, so this stops short of the dispatch form itself. */
+  openAlert(alert: IncidentAlert): void {
+    this.notifier.dismiss(alert.id);
+    void this.router.navigate(['/incidents/queue'], {
+      queryParams: { selected: alert.incident.id },
     });
+  }
+
+  dismissAlert(event: Event, id: string): void {
+    event.stopPropagation();
+    this.notifier.dismiss(id);
+  }
+
+  alertPriorityClass(alert: IncidentAlert): string {
+    switch (alert.incident.priority) {
+      case 'HIGH':
+        return 'controller-pill controller-pill--high';
+      case 'MEDIUM':
+        return 'controller-pill controller-pill--medium';
+      default:
+        return 'controller-pill controller-pill--low';
+    }
   }
 
   toggleSidebar(): void {

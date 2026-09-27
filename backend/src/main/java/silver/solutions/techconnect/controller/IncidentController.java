@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import silver.solutions.techconnect.dto.response.common.PageResponse;
 import silver.solutions.techconnect.dto.response.controller.IncidentKpiResponse;
+import silver.solutions.techconnect.dto.response.controller.IncidentProgressResponse;
 import silver.solutions.techconnect.dto.response.controller.IncidentResponse;
 import silver.solutions.techconnect.entity.IncidentPriority;
 import silver.solutions.techconnect.entity.IncidentStatus;
@@ -57,5 +58,11 @@ public class IncidentController {
     @GetMapping("/{id}")
     public IncidentResponse get(@PathVariable UUID id) {
         return incidentService.get(id);
+    }
+
+    /** The dispatch that was sent and how every invited technician has responded so far. */
+    @GetMapping("/{id}/progress")
+    public IncidentProgressResponse progress(@PathVariable UUID id) {
+        return incidentService.progress(id);
     }
 }

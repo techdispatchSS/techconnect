@@ -8,6 +8,7 @@ import {
   Incident,
   IncidentKpis,
   IncidentListFilters,
+  IncidentProgress,
   PageResponse,
   TechnicianCandidate,
 } from './controller.models';
@@ -44,6 +45,12 @@ export class ControllerApiService {
 
   getIncident(id: string): Observable<Incident> {
     return this.http.get<Incident>(`v1/controller/incidents/${id}`);
+  }
+
+  /** The dispatch that was sent for this incident and how each invited technician has
+   * responded so far — the ticket progress view. */
+  getIncidentProgress(id: string): Observable<IncidentProgress> {
+    return this.http.get<IncidentProgress>(`v1/controller/incidents/${id}/progress`);
   }
 
   /** Ranked by skill match, availability and proximity — the ranking itself happens

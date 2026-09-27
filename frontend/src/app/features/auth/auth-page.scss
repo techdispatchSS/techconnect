@@ -254,3 +254,27 @@ form {
   --auth-color-divider: color-mix(in srgb, #1a1b1e 14%, transparent);
   --auth-accent-900: #c65e0a;
 }
+
+// Phone-sized screens (technicians activate their account on mobile, PRD §9.4): thumb-sized
+// tap targets, and 16px input text so iOS Safari doesn't zoom the page in on focus.
+@media (max-width: 599px) {
+  .input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  .auth-submit {
+    min-height: 48px;
+  }
+  .password-toggle {
+    width: 44px;
+    height: 44px;
+    right: 0;
+  }
+  .password-wrap .input {
+    padding-right: 48px;
+  }
+  .auth-links a {
+    display: inline-block;
+    padding: 8px 0;
+  }
+}

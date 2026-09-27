@@ -396,3 +396,23 @@
   --login-color-divider: color-mix(in srgb, #1a1b1e 14%, transparent);
   --login-accent-800: #c65e0a;
 }
+
+// Phone-sized screens: thumb-sized tap targets, and 16px input text so iOS Safari doesn't
+// zoom the page in on focus. Mirrors the same block in auth-page.scss.
+@media (max-width: 599px) {
+  .login-input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  .login-submit {
+    min-height: 48px;
+  }
+  .login-password-toggle {
+    width: 44px;
+    height: 44px;
+    right: 0;
+  }
+  .login-password-wrap .login-input {
+    padding-right: 48px;
+  }
+}

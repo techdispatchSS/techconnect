@@ -14,5 +14,11 @@ public enum AdminAuditAction {
     INVITE_RESENT,
     /** Self-service edit from the profile menu — actor and target are the same user, unlike
      * {@link #USER_UPDATED}, which is a Manager editing someone else. */
-    SELF_PROFILE_UPDATED
+    SELF_PROFILE_UPDATED,
+    /** A Manager accepted a technician application; the target is the account it created. */
+    APPLICATION_APPROVED,
+    /** A Manager rejected an application. No target user: the applicant never gets one. */
+    APPLICATION_REJECTED,
+    /** A Manager opened an applicant's uploaded document (personal information, POPIA). */
+    APPLICATION_DOCUMENT_VIEWED
 }

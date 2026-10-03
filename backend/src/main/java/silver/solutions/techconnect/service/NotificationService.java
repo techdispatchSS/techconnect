@@ -22,4 +22,10 @@ public interface NotificationService {
 
     /** Tells a reinstated user they can sign in again. */
     void sendAccountReactivated(User user, String signInUrl);
+
+    /** Confirms to an applicant (who has no account) that their application was received. */
+    void sendApplicationReceived(String email, String firstName);
+
+    /** Tells an applicant their application was not successful and cannot be resubmitted. */
+    void sendApplicationRejected(String email, String firstName);
 }

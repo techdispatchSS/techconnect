@@ -71,6 +71,10 @@ services:
       AWS_REGION: ${AWS_REGION:-us-east-1}
       AWS_ENDPOINT_OVERRIDE: http://localstack:4566
       AWS_DOCUMENTS_BUCKET: ${AWS_DOCUMENTS_BUCKET:-techconnect-local}
+      # The frontend's nginx is the one proxy in front of the backend here. It overwrites
+      # X-Forwarded-For with the real client address, which is what the public application form's
+      # per-address rate limit keys on — without this it would see nginx's own address for everyone.
+      TECHCONNECT_TRUSTED_PROXY_HOPS: 1
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     healthcheck:

@@ -368,6 +368,12 @@
   color: color-mix(in srgb, var(--login-color-text) 58%, transparent);
 }
 
+// Sits directly under the footnote above, so it needs no second divider.
+.login-footnote--apply {
+  border-top: 0;
+  padding-top: 10px;
+}
+
 @media (max-width: 899px) {
   .login-page {
     grid-template-columns: minmax(0, 1fr);

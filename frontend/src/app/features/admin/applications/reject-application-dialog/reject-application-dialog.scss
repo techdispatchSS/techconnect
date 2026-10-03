@@ -1,0 +1,71 @@
+:host {
+  display: block;
+  color: #edeff1;
+  font-family: 'Barlow', system-ui, sans-serif;
+}
+
+.rd-warning {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  border: 1px solid #ff6b6b;
+  background: color-mix(in srgb, #ff6b6b 12%, transparent);
+  color: #ffb3b3;
+}
+
+.rd-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: color-mix(in srgb, #edeff1 70%, transparent);
+}
+
+.rd-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: #edeff1;
+  background: #16191d;
+  border: 1px solid color-mix(in srgb, #ffffff 18%, transparent);
+  border-radius: 0;
+  resize: vertical;
+}
+.rd-textarea:focus-visible {
+  outline: 2px solid #f08221;
+  outline-offset: 0;
+  border-color: #f08221;
+}
+
+.rd-error {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #ff6b6b;
+}
+
+.rd-btn {
+  font: inherit;
+  font-size: 13.5px;
+  padding: 8px 14px;
+  cursor: pointer;
+  color: #edeff1;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, #ffffff 24%, transparent);
+  border-radius: 0;
+}
+.rd-btn:hover {
+  background: color-mix(in srgb, #ffffff 8%, transparent);
+}
+.rd-btn--danger {
+  color: #ff6b6b;
+  border-color: #ff6b6b;
+}
+.rd-btn--danger:hover {
+  background: color-mix(in srgb, #ff6b6b 14%, transparent);
+}
+.rd-btn:focus-visible {
+  outline: 2px solid #f08221;
+  outline-offset: 2px;
+}

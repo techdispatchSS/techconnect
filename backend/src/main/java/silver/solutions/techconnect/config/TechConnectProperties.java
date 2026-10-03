@@ -2,6 +2,7 @@ package silver.solutions.techconnect.config;
 
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.util.unit.DataSize;
 
 /** Binds the {@code techconnect.*} block of application.properties. */
 @ConfigurationProperties(prefix = "techconnect")
@@ -13,7 +14,25 @@ public record TechConnectProperties(
         Login login,
         BootstrapAdmin bootstrapAdmin,
         Mail mail,
-        Aws aws) {
+        Aws aws,
+        Security security,
+        Applications applications) {
+
+    /**
+     * How many reverse proxies sit between the internet and this app and append to
+     * {@code X-Forwarded-For} (0 locally; 1 behind the ALB or the compose nginx). The client
+     * address is read from that many entries in from the right, so a caller cannot choose their
+     * own rate-limit key by sending a forged header of their own.
+     */
+    public record Security(int trustedProxyHops) {}
+
+    /** Limits for the public technician-application endpoint, which accepts file uploads. */
+    public record Applications(
+            int maxFiles,
+            DataSize maxFileSize,
+            DataSize maxRequestSize,
+            int perIpPerHour,
+            int globalPerHour) {}
 
     public record Jwt(String secret, Duration expiry, String issuer) {}
 

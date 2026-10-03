@@ -1,0 +1,121 @@
+<div class="al-layout">
+  <div class="al-toolbar">
+    <div class="admin-seg" role="tablist" aria-label="Filter by status">
+      @for (tab of tabs; track tab.label) {
+        <label class="admin-seg-opt" [class.admin-seg-opt--active]="statusFilter() === tab.status">
+          <input
+            type="radio"
+            name="apptab"
+            [checked]="statusFilter() === tab.status"
+            (change)="onTab(tab.status)"
+          />
+          <span>{{ tab.label }}</span>
+        </label>
+      }
+    </div>
+
+    <label class="al-search">
+      <app-admin-icon name="search" />
+      <input
+        class="admin-input"
+        placeholder="Search name or email…"
+        [formControl]="searchControl"
+        maxlength="100"
+      />
+    </label>
+  </div>
+
+  @if (loading()) {
+    <div class="admin-progress"></div>
+  }
+
+  <div class="admin-blueprint al-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th style="width: 34%">Applicant</th>
+          <th>Mobile</th>
+          <th>Documents</th>
+          <th>Submitted</th>
+          <th style="text-align: right">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading() && applications().length === 0) {
+          @for (row of skeletonRows; track row) {
+            <tr aria-hidden="true">
+              <td>
+                <app-skeleton width="70%" height="14px" /><br />
+                <app-skeleton width="50%" height="11px" />
+              </td>
+              <td><app-skeleton width="6rem" height="14px" /></td>
+              <td><app-skeleton width="2rem" height="14px" /></td>
+              <td><app-skeleton width="5.5rem" height="14px" /></td>
+              <td style="text-align: right"><app-skeleton width="5rem" height="20px" /></td>
+            </tr>
+          }
+        }
+        @for (application of applications(); track application.id) {
+          <tr
+            class="al-row"
+            tabindex="0"
+            (click)="open(application)"
+            (keydown.enter)="open(application)"
+          >
+            <td>
+              <span class="al-name-meta">
+                <span class="al-name">{{ application.name }}</span>
+                <span class="al-email">{{ application.email }}</span>
+              </span>
+            </td>
+            <td>{{ application.phone }}</td>
+            <td>{{ application.documentCount }}</td>
+            <td>{{ application.submittedAt | date: 'mediumDate' }}</td>
+            <td style="text-align: right">
+              <span class="admin-tag" [class]="'admin-tag ' + tagClass(application.status)">
+                {{ statusLabels[application.status] }}
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (loaded() && !loading() && applications().length === 0) {
+    <p class="admin-empty">
+      @if (loadFailed()) {
+        Could not load applications.
+        <button type="button" class="admin-btn admin-btn-ghost" (click)="load()">Try again</button>.
+      } @else if (statusFilter() === 'PENDING' && !searchControl.value) {
+        No applications are waiting for review.
+      } @else {
+        No applications match.
+      }
+    </p>
+  }
+
+  @if (totalElements() > pageSize()) {
+    <div class="al-pager">
+      <span>Showing {{ pageFrom() }}–{{ pageTo() }} of {{ totalElements() }}</span>
+      <span class="al-pager-buttons">
+        <button
+          type="button"
+          class="admin-btn admin-btn-secondary"
+          [disabled]="pageIndex() === 0"
+          (click)="onPrevPage()"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          class="admin-btn admin-btn-secondary"
+          [disabled]="pageTo() >= totalElements()"
+          (click)="onNextPage()"
+        >
+          Next
+        </button>
+      </span>
+    </div>
+  }
+</div>

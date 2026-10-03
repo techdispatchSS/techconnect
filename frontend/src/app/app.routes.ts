@@ -30,6 +30,14 @@ export const routes: Routes = [
     title: 'Forgot your password · TechConnect',
   },
 
+  // --- Public, but not a way in: a prospective technician applies here with no account. It
+  // issues no token and sits entirely outside the sign-in feature. A Manager reviews it. ---
+  {
+    path: 'apply',
+    loadComponent: () => import('./features/apply/apply').then((m) => m.Apply),
+    title: 'Apply to be a technician · TechConnect',
+  },
+
   // --- Admin portal: its own dedicated shell (Manager-only), not nested inside the
   // generic AppShell — see admin-shell.ts. ---
   {

@@ -33,7 +33,7 @@ import { AdminIcon } from '../ui/admin-icon/admin-icon';
 interface NavItem {
   readonly label: string;
   readonly route: string;
-  readonly icon: 'people' | 'add' | 'invite' | 'audit';
+  readonly icon: 'people' | 'add' | 'invite' | 'audit' | 'badge';
   readonly count: () => number | null;
   /** Whether this entry carries a badge at all, so only those show a loader while it loads. */
   readonly hasBadge: boolean;
@@ -127,6 +127,13 @@ export class AdminShell implements OnInit {
       route: '/admin/invites',
       icon: 'invite',
       count: () => this.counts.pendingInviteCount(),
+      hasBadge: true,
+    },
+    {
+      label: 'Applications',
+      route: '/admin/applications',
+      icon: 'badge',
+      count: () => this.counts.pendingApplicationCount(),
       hasBadge: true,
     },
     {

@@ -62,7 +62,10 @@ export type AdminAuditAction =
   | 'USER_DEACTIVATED'
   | 'USER_REACTIVATED'
   | 'INVITE_RESENT'
-  | 'SELF_PROFILE_UPDATED';
+  | 'SELF_PROFILE_UPDATED'
+  | 'APPLICATION_APPROVED'
+  | 'APPLICATION_REJECTED'
+  | 'APPLICATION_DOCUMENT_VIEWED';
 
 export interface AuditEntry {
   id: string;
@@ -123,4 +126,71 @@ export const AUDIT_ACTION_LABELS: Record<AdminAuditAction, string> = {
   USER_REACTIVATED: 'Reactivated',
   INVITE_RESENT: 'Invite resent',
   SELF_PROFILE_UPDATED: 'Updated their own profile',
+  APPLICATION_APPROVED: 'Application approved',
+  APPLICATION_REJECTED: 'Application rejected',
+  APPLICATION_DOCUMENT_VIEWED: 'Applicant document opened',
 };
+
+// --- Technician applications -------------------------------------------------------------
+
+export type ApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
+  PENDING: 'Awaiting review',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+};
+
+export type ApplicationDocumentKind = 'CERTIFICATE' | 'QUALIFICATION';
+
+export interface ApplicationSummary {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: ApplicationStatus;
+  documentCount: number;
+  submittedAt: string;
+  decidedAt: string | null;
+}
+
+export interface ApplicationDocument {
+  id: string;
+  kind: ApplicationDocumentKind;
+  title: string;
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+}
+
+export interface ApplicationDetail {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: Address | null;
+  experienceSummary: string;
+  skills: string | null;
+  status: ApplicationStatus;
+  documents: ApplicationDocument[];
+  decidedByName: string | null;
+  decidedAt: string | null;
+  decisionReason: string | null;
+  /** The account created on approval; null otherwise. */
+  userId: string | null;
+  submittedAt: string;
+}
+
+export interface ApproveApplicationResponse {
+  application: ApplicationDetail;
+  /** Single-use, expires in 72 hours. Returned so onboarding works without email. */
+  activationUrl: string;
+}
+
+export interface ApplicationListFilters {
+  status: ApplicationStatus | null;
+  q: string;
+  page: number;
+  size: number;
+}

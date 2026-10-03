@@ -74,6 +74,10 @@ public class SecurityConfig {
                                 "/v1/auth/forgot-password",
                                 "/v1/auth/reset-password")
                         .permitAll()
+                        // Public technician applications: POST only, that exact path, and
+                        // nothing else under /v1/applications. There is deliberately no public
+                        // way to read, list or look up an application or its status.
+                        .requestMatchers(HttpMethod.POST, "/v1/applications").permitAll()
                         .requestMatchers("/actuator/health/**").permitAll()
                         // Docs are additionally disabled outright under the "prod" profile
                         // (see application-prod.properties) so they 404 instead of merely

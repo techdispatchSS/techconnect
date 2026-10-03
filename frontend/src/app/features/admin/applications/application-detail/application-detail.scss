@@ -1,0 +1,146 @@
+.ad-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px 32px 40px;
+  max-width: 56rem;
+}
+
+.ad-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  align-self: flex-start;
+}
+
+.ad-card {
+  background: var(--admin-color-surface);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ad-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ad-name {
+  margin: 0;
+  font-size: 22px;
+}
+
+.ad-sub {
+  font-size: 12.5px;
+  color: color-mix(in srgb, var(--admin-color-text) 58%, transparent);
+}
+
+.ad-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 24px;
+  margin: 4px 0 0;
+
+  div {
+    min-width: 0;
+  }
+  dt {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: color-mix(in srgb, var(--admin-color-text) 52%, transparent);
+  }
+  dd {
+    margin: 2px 0 0;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+}
+
+.ad-fact-wide {
+  grid-column: 1 / -1;
+}
+
+.ad-experience {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  // Applicant text keeps its line breaks, and long unbroken strings can't blow out the layout.
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ad-docs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ad-doc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--admin-color-text) 10%, transparent);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.ad-doc-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ad-doc-title {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.ad-doc-file {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--admin-color-text) 55%, transparent);
+  overflow-wrap: anywhere;
+}
+
+.ad-decision {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.ad-decision-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 899px) {
+  .ad-layout {
+    padding: 16px 16px 32px;
+  }
+  .ad-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ad-decision {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ad-decision-actions {
+    justify-content: flex-end;
+  }
+  .ad-doc {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

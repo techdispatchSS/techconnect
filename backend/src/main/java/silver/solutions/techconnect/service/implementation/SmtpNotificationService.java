@@ -86,14 +86,43 @@ public class SmtpNotificationService implements NotificationService {
                 """.formatted(user.getName(), signInUrl));
     }
 
+    @Override
+    public void sendApplicationReceived(String email, String firstName) {
+        sendTo(email, "We received your TechConnect application", """
+                Hi %s,
+
+                Thanks for applying to join TechConnect as a technician. We have your details
+                and your documents, and a manager will review them.
+
+                You will get an email from us once a decision has been made. There is nothing
+                more you need to do, and each person can only apply once.
+                """.formatted(firstName));
+    }
+
+    @Override
+    public void sendApplicationRejected(String email, String firstName) {
+        sendTo(email, "Your TechConnect application", """
+                Hi %s,
+
+                Thank you for your interest in joining TechConnect as a technician. After
+                reviewing your application, we are unable to offer you a place at this time.
+
+                Please note that applications cannot be resubmitted.
+                """.formatted(firstName));
+    }
+
     private void send(User user, String subject, String body) {
+        sendTo(user.getEmail(), subject, body);
+    }
+
+    private void sendTo(String to, String subject, String body) {
         // Logged unconditionally: this is what makes onboarding work before any mail
         // provider is configured, and what a developer reads on first run.
-        log.info("Notification for {} — {}", user.getEmail(), subject);
+        log.info("Notification for {} — {}", to, subject);
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(properties.mail().from());
-        message.setTo(user.getEmail());
+        message.setTo(to);
         message.setSubject(subject);
         message.setText(body);
 
@@ -102,7 +131,7 @@ public class SmtpNotificationService implements NotificationService {
         } catch (MailException e) {
             log.warn("Could not deliver '{}' to {} — the action itself still succeeded. "
                     + "Use the activation URL from the API response or the log above.",
-                    subject, user.getEmail(), e);
+                    subject, to, e);
         }
     }
 }

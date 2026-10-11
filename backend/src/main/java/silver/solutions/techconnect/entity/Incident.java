@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
@@ -16,8 +17,7 @@ import lombok.Setter;
 
 /**
  * A logged fault (PRD FR-02, FR-03) — sourced from Freshdesk or logged directly by a
- * Controller when a client calls in. Feeds the dispatch queue a {@link Dispatch} is raised
- * against.
+ * Controller when a client calls in. This is the queue the controller dashboard works from.
  */
 @Entity
 @Table(name = "incidents")
@@ -38,6 +38,12 @@ public class Incident {
 
     @Column(name = "site_address")
     private String siteAddress;
+
+    @Column(name = "site_latitude")
+    private BigDecimal siteLatitude;
+
+    @Column(name = "site_longitude")
+    private BigDecimal siteLongitude;
 
     @Column(name = "contact_name")
     private String contactName;
@@ -82,7 +88,16 @@ public class Incident {
         this.updatedAt = Instant.now();
     }
 
+    /**
+     * Derived from the clock, not stored: the SLA passing is what makes an incident overdue,
+     * regardless of whether it is new, being dispatched or in hand. Kept in step with the
+     * "Overdue" queue filter and KPI (see {@code IncidentSpecifications}).
+     */
     public boolean isOverdue() {
-        return status != IncidentStatus.CLOSED && slaDueAt != null && slaDueAt.isBefore(Instant.now());
+        if (status == IncidentStatus.CLOSED) {
+            return false;
+        }
+        return status == IncidentStatus.OVERDUE
+                || (slaDueAt != null && slaDueAt.isBefore(Instant.now()));
     }
 }

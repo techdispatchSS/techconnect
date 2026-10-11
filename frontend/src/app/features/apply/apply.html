@@ -1,0 +1,393 @@
+<div class="auth-card ap-card">
+  <h1 class="auth-brand">TechConnect</h1>
+  <p class="auth-subtitle">Apply to join as a technician</p>
+
+  @if (submitted(); as message) {
+    <p class="auth-notice" role="status">{{ message }}</p>
+    <p class="ap-note">
+      Your application is reviewed by a TechConnect manager. If it is accepted, you will receive an
+      email with a link to set up your account.
+    </p>
+    <div class="auth-links"><a routerLink="/login">Back to sign in</a></div>
+  } @else {
+    <p class="ap-intro">
+      Tell us about yourself and attach proof of your certificates and qualifications. This is an
+      application, not an account — you can't sign in until a manager has accepted you.
+    </p>
+
+    @if (errorMessage()) {
+      <p class="auth-error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <!-- Honeypot: people never see or fill this in; bots tend to. -->
+      <div class="ap-hp" aria-hidden="true">
+        <label>
+          Leave this blank
+          <input type="text" tabindex="-1" autocomplete="off" formControlName="website" />
+        </label>
+      </div>
+
+      <fieldset class="ap-section">
+        <legend>About you</legend>
+
+        <div class="ap-grid">
+          <div class="field">
+            <label for="ap-first">First name</label>
+            <input
+              appTrimOnBlur
+              id="ap-first"
+              class="input"
+              formControlName="firstName"
+              autocomplete="given-name"
+              maxlength="100"
+            />
+            @if (form.controls.firstName.touched && form.controls.firstName.invalid) {
+              <p class="field-error">
+                @if (form.controls.firstName.hasError('pattern')) {
+                  Use letters only
+                } @else {
+                  First name is required
+                }
+              </p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="ap-last">Last name</label>
+            <input
+              appTrimOnBlur
+              id="ap-last"
+              class="input"
+              formControlName="lastName"
+              autocomplete="family-name"
+              maxlength="100"
+            />
+            @if (form.controls.lastName.touched && form.controls.lastName.invalid) {
+              <p class="field-error">
+                @if (form.controls.lastName.hasError('pattern')) {
+                  Use letters only
+                } @else {
+                  Last name is required
+                }
+              </p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="ap-email">Email</label>
+            <input
+              appTrimOnBlur
+              id="ap-email"
+              class="input"
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              autocapitalize="none"
+              spellcheck="false"
+              maxlength="254"
+            />
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <p class="field-error">Enter a valid email address</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="ap-phone">Mobile number</label>
+            <input
+              appTrimOnBlur
+              id="ap-phone"
+              class="input"
+              type="tel"
+              formControlName="phone"
+              autocomplete="tel"
+              placeholder="082 000 0000"
+              maxlength="20"
+            />
+            @if (form.controls.phone.touched && form.controls.phone.invalid) {
+              <p class="field-error">Enter a valid phone number</p>
+            }
+          </div>
+
+          <div class="field ap-span2">
+            <label for="ap-id">South African ID number</label>
+            <input
+              appTrimOnBlur
+              id="ap-id"
+              class="input"
+              formControlName="idNumber"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="20"
+              aria-describedby="ap-id-hint"
+            />
+            <p id="ap-id-hint" class="field-hint">
+              13 digits. Used only to check your application and shown only to managers.
+            </p>
+            @if (form.controls.idNumber.touched && form.controls.idNumber.invalid) {
+              <p class="field-error">
+                @if (form.controls.idNumber.hasError('required')) {
+                  ID number is required
+                } @else {
+                  Enter a valid 13-digit South African ID number
+                }
+              </p>
+            }
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="ap-section" formGroupName="address">
+        <legend>Where you're based</legend>
+        <p class="field-hint">
+          We use this to match you with jobs near you, so every field is required.
+        </p>
+
+        <div class="ap-grid">
+          <div class="field ap-span2">
+            <label for="ap-street">Street</label>
+            <input
+              appTrimOnBlur
+              id="ap-street"
+              class="input"
+              formControlName="street"
+              autocomplete="address-line1"
+              maxlength="255"
+            />
+            @if (
+              form.controls.address.controls.street.touched &&
+              form.controls.address.controls.street.invalid
+            ) {
+              <p class="field-error">Street is required</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="ap-suburb">Suburb</label>
+            <input
+              appTrimOnBlur
+              id="ap-suburb"
+              class="input"
+              formControlName="suburb"
+              autocomplete="address-level3"
+              maxlength="120"
+            />
+            @if (
+              form.controls.address.controls.suburb.touched &&
+              form.controls.address.controls.suburb.invalid
+            ) {
+              <p class="field-error">Suburb is required</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="ap-city">City</label>
+            <input
+              appTrimOnBlur
+              id="ap-city"
+              class="input"
+              formControlName="city"
+              autocomplete="address-level2"
+              maxlength="120"
+            />
+            @if (
+              form.controls.address.controls.city.touched &&
+              form.controls.address.controls.city.invalid
+            ) {
+              <p class="field-error">City is required</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="ap-province">Province</label>
+            <select id="ap-province" class="input" formControlName="province">
+              <option value="">Select…</option>
+              @for (province of provinces; track province) {
+                <option [value]="province">{{ provinceLabels[province] }}</option>
+              }
+            </select>
+            @if (
+              form.controls.address.controls.province.touched &&
+              form.controls.address.controls.province.invalid
+            ) {
+              <p class="field-error">Choose a province</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="ap-postal">Postal code</label>
+            <input
+              appTrimOnBlur
+              id="ap-postal"
+              class="input"
+              formControlName="postalCode"
+              inputmode="numeric"
+              autocomplete="postal-code"
+              maxlength="4"
+            />
+            @if (
+              form.controls.address.controls.postalCode.touched &&
+              form.controls.address.controls.postalCode.invalid
+            ) {
+              <p class="field-error">Enter a 4-digit postal code</p>
+            }
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="ap-section">
+        <legend>Your experience</legend>
+
+        <div class="field">
+          <label for="ap-experience">Tell us about your work experience</label>
+          <textarea
+            id="ap-experience"
+            class="input ap-textarea"
+            formControlName="experienceSummary"
+            rows="5"
+            maxlength="4000"
+          ></textarea>
+          @if (form.controls.experienceSummary.touched && form.controls.experienceSummary.invalid) {
+            <p class="field-error">
+              @if (form.controls.experienceSummary.hasError('minlength')) {
+                Please write at least a couple of sentences (20 characters)
+              } @else {
+                Tell us about your experience
+              }
+            </p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="ap-skills">Skills (optional)</label>
+          <input
+            appTrimOnBlur
+            id="ap-skills"
+            class="input"
+            formControlName="skills"
+            placeholder="e.g. CCTV, structured cabling, fibre splicing"
+            maxlength="1000"
+          />
+        </div>
+      </fieldset>
+
+      <fieldset class="ap-section">
+        <legend>Proof of certificates and qualifications</legend>
+        <p class="field-hint">
+          Attach at least one. PDF, JPG or PNG, up to {{ maxFileSize }} each, {{ maxFiles }} files
+          at most. Scanned or photographed copies are fine.
+        </p>
+
+        <label
+          class="ap-drop"
+          [class.ap-drop--active]="dragging()"
+          [class.ap-drop--error]="proofMissing()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="dragging.set(false)"
+          (drop)="onDrop($event)"
+        >
+          <input
+            type="file"
+            class="ap-drop-input"
+            multiple
+            [accept]="accept"
+            [disabled]="!canAddMore()"
+            (change)="onFilesChosen($event)"
+          />
+          <span class="ap-drop-title">
+            {{ canAddMore() ? 'Choose files, or drop them here' : 'File limit reached' }}
+          </span>
+          <span class="ap-drop-sub">PDF, JPG or PNG</span>
+        </label>
+
+        @if (proofMissing()) {
+          <p class="field-error" role="alert">Attach at least one certificate or qualification</p>
+        }
+        @for (problem of fileProblems(); track problem) {
+          <p class="field-error" role="alert">{{ problem }}</p>
+        }
+
+        @if (documents().length > 0) {
+          <ul class="ap-files">
+            @for (doc of documents(); track doc.key) {
+              <li class="ap-file">
+                <div class="ap-file-head">
+                  <span class="ap-file-name">{{ doc.file.name }}</span>
+                  <span class="ap-file-size">{{ formatBytes(doc.file.size) }}</span>
+                  <button
+                    type="button"
+                    class="ap-file-remove"
+                    (click)="removeDocument(doc.key)"
+                    [attr.aria-label]="'Remove ' + doc.file.name"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div class="ap-grid">
+                  <div class="field">
+                    <label [for]="'ap-doc-title-' + doc.key">What is this?</label>
+                    <input
+                      class="input"
+                      [id]="'ap-doc-title-' + doc.key"
+                      [value]="doc.title"
+                      maxlength="200"
+                      placeholder="e.g. CCNA certificate"
+                      (input)="setTitle(doc.key, $any($event.target).value)"
+                    />
+                    @if (triedToSubmit() && doc.title.trim() === '') {
+                      <p class="field-error">Give this file a name</p>
+                    }
+                  </div>
+                  <div class="field">
+                    <label [for]="'ap-doc-kind-' + doc.key">Type</label>
+                    <select
+                      class="input"
+                      [id]="'ap-doc-kind-' + doc.key"
+                      [value]="doc.kind"
+                      (change)="setKind(doc.key, $any($event.target).value)"
+                    >
+                      @for (kind of kinds; track kind) {
+                        <option [value]="kind" [selected]="kind === doc.kind">
+                          {{ kindLabels[kind] }}
+                        </option>
+                      }
+                    </select>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </fieldset>
+
+      <fieldset class="ap-section">
+        <legend>Privacy</legend>
+        <p class="ap-privacy">
+          We use your details and documents only to assess this application. They are stored
+          securely and seen only by TechConnect managers. Each person can apply once — if an
+          application is unsuccessful we keep a record of it so it can't be submitted again.
+        </p>
+        <label class="ap-check">
+          <input type="checkbox" formControlName="consent" />
+          <span
+            >I agree to TechConnect processing my personal information for this application.</span
+          >
+        </label>
+        @if (form.controls.consent.touched && form.controls.consent.invalid) {
+          <p class="field-error">You need to agree before you can apply</p>
+        }
+      </fieldset>
+
+      <div class="auth-actions">
+        <button type="submit" class="auth-submit" [disabled]="submitting()">
+          {{ submitting() ? 'Sending…' : 'Submit application' }}
+        </button>
+        @if (submitting()) {
+          <span class="auth-progress"></span>
+        }
+      </div>
+    </form>
+
+    <div class="auth-links"><a routerLink="/login">Back to sign in</a></div>
+  }
+</div>

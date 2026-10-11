@@ -74,6 +74,10 @@ public class SecurityConfig {
                                 "/v1/auth/forgot-password",
                                 "/v1/auth/reset-password")
                         .permitAll()
+                        // Public technician applications: POST only, that exact path, and
+                        // nothing else under /v1/applications. There is deliberately no public
+                        // way to read, list or look up an application or its status.
+                        .requestMatchers(HttpMethod.POST, "/v1/applications").permitAll()
                         .requestMatchers("/actuator/health/**").permitAll()
                         // Docs are additionally disabled outright under the "prod" profile
                         // (see application-prod.properties) so they 404 instead of merely
@@ -84,6 +88,12 @@ public class SecurityConfig {
                         // FR-01: administration of controllers and technicians is the
                         // Manager's alone (M-06).
                         .requestMatchers("/v1/admin/**").hasRole("MANAGER")
+                        // FR-02/FR-03/FR-04: the incident queue and dispatch creation are the
+                        // Controller's alone.
+                        .requestMatchers("/v1/controller/**").hasRole("CONTROLLER")
+                        // FR-04: a technician answers their own dispatches — and nothing else
+                        // under this prefix is reachable by any other role.
+                        .requestMatchers("/v1/technician/**").hasRole("TECHNICIAN")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter)))

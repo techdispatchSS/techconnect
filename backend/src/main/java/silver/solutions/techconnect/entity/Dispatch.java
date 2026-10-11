@@ -50,6 +50,31 @@ public class Dispatch {
     @Column(name = "created_by")
     private UUID createdBy;
 
+    @Column(name = "job_type")
+    private String jobType;
+
+    @Column(name = "required_skills")
+    private String requiredSkills;
+
+    @Column(name = "required_certifications")
+    private String requiredCertifications;
+
+    @Column(name = "sla_response")
+    private String slaResponse;
+
+    @Column(name = "site_contact")
+    private String siteContact;
+
+    @Column(name = "notes_for_technician")
+    private String notesForTechnician;
+
+    /** How many times invitees have been told about this dispatch (the first send counts). */
+    @Column(name = "notification_count", nullable = false)
+    private int notificationCount;
+
+    @Column(name = "last_notified_at")
+    private Instant lastNotifiedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 }

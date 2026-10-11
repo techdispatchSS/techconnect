@@ -3,11 +3,17 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { PlaceAddressComponent, addressFromComponents } from './place-address';
 
+/** A resolved suggestion: the structured address, plus where Google places it on the map. */
+export type ResolvedPlace = ReturnType<typeof addressFromComponents> & {
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+};
+
 export interface AddressSuggestion {
   readonly mainText: string;
   readonly secondaryText: string;
-  /** Resolves the suggestion into structured address fields. */
-  resolve(): Promise<ReturnType<typeof addressFromComponents>>;
+  /** Resolves the suggestion into structured address fields and coordinates. */
+  resolve(): Promise<ResolvedPlace>;
 }
 
 // Only the slice of the Places (New) JS API used here — typed locally rather than pulling in
@@ -19,6 +25,7 @@ interface PlacePrediction {
   toPlace(): {
     fetchFields(request: { fields: string[] }): Promise<unknown>;
     readonly addressComponents?: readonly PlaceAddressComponent[];
+    readonly location?: { lat(): number; lng(): number } | null;
   };
 }
 
@@ -77,10 +84,14 @@ export class GooglePlacesService {
         secondaryText: prediction.secondaryText?.text ?? '',
         resolve: async () => {
           const place = prediction.toPlace();
-          await place.fetchFields({ fields: ['addressComponents'] });
+          await place.fetchFields({ fields: ['addressComponents', 'location'] });
           // A selection ends the billing session; the next search starts a fresh one.
           this.sessionToken = null;
-          return addressFromComponents(place.addressComponents ?? []);
+          return {
+            ...addressFromComponents(place.addressComponents ?? []),
+            latitude: place.location?.lat() ?? null,
+            longitude: place.location?.lng() ?? null,
+          };
         },
       }));
   }

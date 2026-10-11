@@ -1,0 +1,31 @@
+import { Routes } from '@angular/router';
+
+/** Controller dashboard (FR-02–FR-04). Reached only through the CONTROLLER-guarded
+ * `incidents` route, which renders `ControllerShell` around every route below. */
+export const controllerRoutes: Routes = [
+  { path: '', pathMatch: 'full', redirectTo: 'queue' },
+  {
+    path: 'queue',
+    loadComponent: () => import('./incident-queue/incident-queue').then((m) => m.IncidentQueue),
+    title: 'Incident queue · TechConnect',
+    data: { heading: 'Incident queue' },
+  },
+  {
+    path: 'new',
+    loadComponent: () => import('./incident-create/incident-create').then((m) => m.IncidentCreate),
+    title: 'Log incident · TechConnect',
+    data: { heading: 'Log incident' },
+  },
+  {
+    path: 'dispatch/:incidentId',
+    loadComponent: () => import('./create-dispatch/create-dispatch').then((m) => m.CreateDispatch),
+    title: 'Create dispatch · TechConnect',
+    data: { heading: 'Create dispatch' },
+  },
+  {
+    path: 'progress/:incidentId',
+    loadComponent: () => import('./ticket-progress/ticket-progress').then((m) => m.TicketProgress),
+    title: 'Ticket progress · TechConnect',
+    data: { heading: 'Ticket progress' },
+  },
+];

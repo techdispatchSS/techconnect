@@ -1,0 +1,158 @@
+<form class="ic" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <section class="controller-card ic-card">
+    <h6 class="ic-section-title">Client and site</h6>
+
+    <div class="controller-field">
+      <label for="ic-client"
+        >Client name <span class="ic-required" aria-hidden="true">*</span></label
+      >
+      <input
+        id="ic-client"
+        class="controller-input"
+        formControlName="clientName"
+        autocomplete="organization"
+        appTrimOnBlur
+        [attr.aria-invalid]="form.controls.clientName.invalid && form.controls.clientName.touched"
+        aria-describedby="ic-client-error"
+      />
+      @if (form.controls.clientName.touched && form.controls.clientName.errors) {
+        <span class="ic-error" id="ic-client-error" role="alert">Client name is required.</span>
+      }
+    </div>
+
+    <div class="controller-field">
+      <label for="ic-site">Site address</label>
+      <app-street-input
+        class="ic-street"
+        inputId="ic-site"
+        inputClass="controller-input"
+        placeholder="Street, suburb, city"
+        [control]="form.controls.siteAddress"
+        (picked)="onAddressPicked($event)"
+      />
+      @if (coordinates()) {
+        <span class="ic-hint ic-hint--ok">Map location found for this address.</span>
+      } @else if (form.controls.siteAddress.value) {
+        <span class="ic-hint"
+          >No map location for this address, so technician distances won't be calculated.</span
+        >
+      }
+    </div>
+
+    <div class="ic-row">
+      <div class="controller-field">
+        <label for="ic-contact">Contact name</label>
+        <input
+          id="ic-contact"
+          class="controller-input"
+          formControlName="contactName"
+          autocomplete="off"
+          appTrimOnBlur
+        />
+      </div>
+      <div class="controller-field">
+        <label for="ic-phone">Contact phone</label>
+        <input
+          id="ic-phone"
+          class="controller-input"
+          formControlName="contactPhone"
+          inputmode="tel"
+          autocomplete="off"
+          appTrimOnBlur
+          [attr.aria-invalid]="
+            form.controls.contactPhone.invalid && form.controls.contactPhone.touched
+          "
+          aria-describedby="ic-phone-error"
+        />
+        @if (form.controls.contactPhone.touched && form.controls.contactPhone.errors) {
+          <span class="ic-error" id="ic-phone-error" role="alert"
+            >Use digits, spaces, + ( ) and - only.</span
+          >
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="controller-card ic-card">
+    <h6 class="ic-section-title">The fault</h6>
+
+    <div class="ic-row">
+      <div class="controller-field">
+        <label for="ic-issue">Issue type</label>
+        <input
+          id="ic-issue"
+          class="controller-input"
+          formControlName="issueType"
+          list="ic-issue-types"
+          autocomplete="off"
+          appTrimOnBlur
+        />
+        <datalist id="ic-issue-types">
+          @for (type of issueTypes; track type) {
+            <option [value]="type"></option>
+          }
+        </datalist>
+      </div>
+
+      <div class="controller-field">
+        <label for="ic-sla">Response target</label>
+        <select id="ic-sla" class="controller-input" formControlName="slaHours">
+          <option value="">Default for priority ({{ defaultHint }} hrs)</option>
+          @for (hours of slaOptions; track hours) {
+            <option [value]="hours">{{ hours }} {{ hours === 1 ? 'hr' : 'hrs' }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <fieldset class="ic-priority">
+      <legend>Priority</legend>
+      <div class="ic-priority-options" role="radiogroup" aria-label="Priority">
+        @for (priority of priorities; track priority) {
+          <button
+            type="button"
+            role="radio"
+            class="ic-priority-option"
+            [class.ic-priority-option--active]="form.controls.priority.value === priority"
+            [attr.aria-checked]="form.controls.priority.value === priority"
+            (click)="setPriority(priority)"
+          >
+            {{ priorityLabels[priority] }}
+          </button>
+        }
+      </div>
+    </fieldset>
+
+    <div class="controller-field">
+      <label for="ic-description">What is wrong</label>
+      <textarea
+        id="ic-description"
+        class="controller-input"
+        formControlName="description"
+        rows="4"
+        placeholder="What the client reported, in their words."
+      ></textarea>
+    </div>
+
+    <div class="controller-field">
+      <label for="ic-notes">Additional notes</label>
+      <textarea
+        id="ic-notes"
+        class="controller-input"
+        formControlName="additionalNotes"
+        rows="3"
+        placeholder="Access arrangements, hazards, anything the technician should know."
+      ></textarea>
+    </div>
+  </section>
+
+  <div class="ic-actions">
+    @if (errorMessage(); as message) {
+      <span class="ic-error ic-error--form" role="alert">{{ message }}</span>
+    }
+    <a routerLink="/incidents/queue" class="controller-btn controller-btn-secondary">Cancel</a>
+    <button type="submit" class="controller-btn controller-btn-primary" [disabled]="submitting()">
+      {{ submitting() ? 'Logging…' : 'Log incident' }}
+    </button>
+  </div>
+</form>

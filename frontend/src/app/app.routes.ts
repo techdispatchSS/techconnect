@@ -30,6 +30,14 @@ export const routes: Routes = [
     title: 'Forgot your password · TechConnect',
   },
 
+  // --- Public, but not a way in: a prospective technician applies here with no account. It
+  // issues no token and sits entirely outside the sign-in feature. A Manager reviews it. ---
+  {
+    path: 'apply',
+    loadComponent: () => import('./features/apply/apply').then((m) => m.Apply),
+    title: 'Apply to be a technician · TechConnect',
+  },
+
   // --- Admin portal: its own dedicated shell (Manager-only), not nested inside the
   // generic AppShell — see admin-shell.ts. ---
   {
@@ -40,6 +48,20 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
     data: { roles: ['MANAGER'] },
     loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes),
+  },
+
+  // --- Controller dashboard: its own dedicated shell (Controller-only), matching the
+  // design mockup's dark "Industry" theme rather than the generic AppShell. ---
+  {
+    path: 'incidents',
+    loadComponent: () =>
+      import('./features/controller/controller-shell/controller-shell').then(
+        (m) => m.ControllerShell,
+      ),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['CONTROLLER'] },
+    loadChildren: () =>
+      import('./features/controller/controller.routes').then((m) => m.controllerRoutes),
   },
 
   // --- Authenticated: everything else inside the application shell ---
@@ -54,18 +76,9 @@ export const routes: Routes = [
           import('./features/errors/forbidden/forbidden').then((m) => m.Forbidden),
         title: 'Not available · TechConnect',
       },
-      // Placeholders until the real screens exist. Without them these role homes matched
+      // Placeholder until the technician app exists. Without it this role home matched
       // nothing, fell through to `**`, and bounced straight back into the role redirect.
-      {
-        path: 'incidents',
-        loadComponent: () =>
-          import('./features/under-construction/under-construction').then(
-            (m) => m.UnderConstruction,
-          ),
-        canActivate: [roleGuard],
-        data: { roles: ['CONTROLLER'] },
-        title: 'Dispatch board · TechConnect',
-      },
+      // (The controller's /incidents is the real dashboard above.)
       {
         path: 'jobs',
         loadComponent: () =>

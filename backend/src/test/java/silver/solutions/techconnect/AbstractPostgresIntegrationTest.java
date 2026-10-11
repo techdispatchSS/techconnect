@@ -39,5 +39,8 @@ public abstract class AbstractPostgresIntegrationTest {
         registry.add("techconnect.app-base-url", () -> "http://localhost:4200");
         // Disabled so each test creates its own manager and the tests stay independent.
         registry.add("techconnect.bootstrap-admin.email", () -> "");
+        // The dispatch-expiry sweep and Freshdesk poll are driven explicitly by the tests that
+        // cover them; a live timer would race the fixtures.
+        registry.add("techconnect.scheduling.enabled", () -> "false");
     }
 }

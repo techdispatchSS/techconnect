@@ -2,6 +2,7 @@ package silver.solutions.techconnect.config;
 
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.util.unit.DataSize;
 
 /** Binds the {@code techconnect.*} block of application.properties. */
 @ConfigurationProperties(prefix = "techconnect")
@@ -13,7 +14,40 @@ public record TechConnectProperties(
         Login login,
         BootstrapAdmin bootstrapAdmin,
         Mail mail,
-        Aws aws) {
+        Aws aws,
+        Security security,
+        Applications applications,
+        Simulation simulation) {
+
+    /**
+     * Stand-ins for parties that are not connected yet, so the dashboard can be exercised and
+     * user-tested end to end: a simulated Freshdesk (tickets appear on demand and flow through
+     * the real sync path) and a "respond as technician" control for dispatches, since the
+     * technician app does not exist. Off unless explicitly enabled — never enable it against
+     * real operations, because it makes up incidents.
+     */
+    public record Simulation(boolean enabled) {}
+
+    /** Null-safe: tests and callers that build the properties by hand may omit the block. */
+    public boolean simulationEnabled() {
+        return simulation != null && simulation.enabled();
+    }
+
+    /**
+     * How many reverse proxies sit between the internet and this app and append to
+     * {@code X-Forwarded-For} (0 locally; 1 behind the ALB or the compose nginx). The client
+     * address is read from that many entries in from the right, so a caller cannot choose their
+     * own rate-limit key by sending a forged header of their own.
+     */
+    public record Security(int trustedProxyHops) {}
+
+    /** Limits for the public technician-application endpoint, which accepts file uploads. */
+    public record Applications(
+            int maxFiles,
+            DataSize maxFileSize,
+            DataSize maxRequestSize,
+            int perIpPerHour,
+            int globalPerHour) {}
 
     public record Jwt(String secret, Duration expiry, String issuer) {}
 

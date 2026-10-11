@@ -86,14 +86,82 @@ public class SmtpNotificationService implements NotificationService {
                 """.formatted(user.getName(), signInUrl));
     }
 
+    @Override
+    public void sendApplicationReceived(String email, String firstName) {
+        sendTo(email, "We received your TechConnect application", """
+                Hi %s,
+
+                Thanks for applying to join TechConnect as a technician. We have your details
+                and your documents, and a manager will review them.
+
+                You will get an email from us once a decision has been made. There is nothing
+                more you need to do, and each person can only apply once.
+                """.formatted(firstName));
+    }
+
+    @Override
+    public void sendApplicationRejected(String email, String firstName) {
+        sendTo(email, "Your TechConnect application", """
+                Hi %s,
+
+                Thank you for your interest in joining TechConnect as a technician. After
+                reviewing your application, we are unable to offer you a place at this time.
+
+                Please note that applications cannot be resubmitted.
+                """.formatted(firstName));
+    }
+
+    @Override
+    public void sendDispatchNotice(User technician, DispatchNotice notice) {
+        String subject = (notice.reminder() ? "Reminder: job waiting for your answer — " : "New job: ")
+                + notice.ticketRef() + " · " + notice.clientName()
+                + (notice.priority() == null ? "" : " (" + notice.priority().name().toLowerCase() + ")");
+        send(technician, subject, """
+                Hi %s,
+
+                %s
+
+                Ticket:   %s
+                Client:   %s
+                Site:     %s
+                Issue:    %s
+                Priority: %s
+                %s
+                Respond by: %s UTC
+
+                Sign in to TechConnect to accept or decline: %s
+                """.formatted(
+                technician.getName(),
+                notice.reminder()
+                        ? "A job sent to you is still waiting for an answer."
+                        : "A new job has been sent to you and is waiting for your answer.",
+                notice.ticketRef(),
+                notice.clientName(),
+                orDash(notice.siteAddress()),
+                orDash(notice.issueType()),
+                notice.priority() == null ? "—" : notice.priority().name().toLowerCase(),
+                notice.notes() == null || notice.notes().isBlank() ? "" : "Notes:    " + notice.notes(),
+                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                        .withZone(java.time.ZoneOffset.UTC).format(notice.expiresAt()),
+                properties.appBaseUrl()));
+    }
+
+    private static String orDash(String value) {
+        return value == null || value.isBlank() ? "—" : value;
+    }
+
     private void send(User user, String subject, String body) {
+        sendTo(user.getEmail(), subject, body);
+    }
+
+    private void sendTo(String to, String subject, String body) {
         // Logged unconditionally: this is what makes onboarding work before any mail
         // provider is configured, and what a developer reads on first run.
-        log.info("Notification for {} — {}", user.getEmail(), subject);
+        log.info("Notification for {} — {}", to, subject);
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(properties.mail().from());
-        message.setTo(user.getEmail());
+        message.setTo(to);
         message.setSubject(subject);
         message.setText(body);
 
@@ -102,7 +170,7 @@ public class SmtpNotificationService implements NotificationService {
         } catch (MailException e) {
             log.warn("Could not deliver '{}' to {} — the action itself still succeeded. "
                     + "Use the activation URL from the API response or the log above.",
-                    subject, user.getEmail(), e);
+                    subject, to, e);
         }
     }
 }

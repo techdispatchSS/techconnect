@@ -23,6 +23,22 @@ export const adminRoutes: Routes = [
     data: { heading: 'Invites & activation' },
   },
   {
+    path: 'applications',
+    loadComponent: () =>
+      import('./applications/application-list/application-list').then((m) => m.ApplicationList),
+    title: 'Applications · TechConnect',
+    data: { heading: 'Technician applications' },
+  },
+  {
+    path: 'applications/:id',
+    loadComponent: () =>
+      import('./applications/application-detail/application-detail').then(
+        (m) => m.ApplicationDetailPage,
+      ),
+    title: 'Review application · TechConnect',
+    data: { heading: 'Review application' },
+  },
+  {
     path: 'audit',
     loadComponent: () => import('./audit-list/audit-list').then((m) => m.AuditList),
     title: 'Audit trail · TechConnect',

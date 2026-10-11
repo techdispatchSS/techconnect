@@ -1,0 +1,24 @@
+<h2 mat-dialog-title>Reject {{ data.applicantName }}?</h2>
+<mat-dialog-content>
+  <p class="rd-warning">
+    This is permanent. Their record is kept, they are told by email, and they will not be able to
+    apply again.
+  </p>
+  <label class="rd-label" for="rd-reason">Reason (kept on the record, not sent to them)</label>
+  <textarea
+    id="rd-reason"
+    class="rd-textarea"
+    rows="4"
+    maxlength="1000"
+    [formControl]="reason"
+  ></textarea>
+  @if (reason.touched && reason.invalid) {
+    <p class="rd-error" role="alert">A reason is required</p>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button type="button" class="rd-btn" mat-dialog-close>Cancel</button>
+  <button type="button" class="rd-btn rd-btn--danger" (click)="confirm()">
+    Reject permanently
+  </button>
+</mat-dialog-actions>

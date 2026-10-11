@@ -1,0 +1,174 @@
+<div class="ad-layout">
+  <a routerLink="/admin/applications" class="ad-back">
+    <app-admin-icon name="arrow-left" /> All applications
+  </a>
+
+  @if (loading()) {
+    <div class="admin-blueprint ad-card" aria-busy="true">
+      <app-skeleton width="40%" height="22px" />
+      <app-skeleton width="60%" height="14px" />
+      <app-skeleton width="100%" height="90px" />
+    </div>
+  } @else if (loadFailed() || !application()) {
+    <p class="admin-empty">
+      Could not load this application.
+      <button type="button" class="admin-btn admin-btn-ghost" (click)="load()">Try again</button>.
+    </p>
+  } @else {
+    @let app = application()!;
+
+    <div class="admin-blueprint ad-card">
+      <div class="ad-head">
+        <div>
+          <h2 class="ad-name">{{ app.firstName }} {{ app.lastName }}</h2>
+          <span class="ad-sub">Applied {{ app.submittedAt | date: 'mediumDate' }}</span>
+        </div>
+        <span
+          class="admin-tag"
+          [class.admin-tag-pending]="app.status === 'PENDING'"
+          [class.admin-tag-active]="app.status === 'APPROVED'"
+          [class.admin-tag-disabled]="app.status === 'REJECTED'"
+        >
+          {{ statusLabels[app.status] }}
+        </span>
+      </div>
+
+      <dl class="ad-facts">
+        <div>
+          <dt>Email</dt>
+          <dd>{{ app.email }}</dd>
+        </div>
+        <div>
+          <dt>Mobile</dt>
+          <dd>{{ app.phone }}</dd>
+        </div>
+
+        <div>
+          <dt>ID number</dt>
+          <dd>{{ app.idNumber ?? 'Not provided' }}</dd>
+        </div>
+        @if (app.address; as address) {
+          <div class="ad-fact-wide">
+            <dt>Based in</dt>
+            <dd>
+              {{ address.street }}, {{ address.suburb }}, {{ address.city }},
+              {{ provinceLabels[address.province] }} {{ address.postalCode }}
+            </dd>
+          </div>
+        }
+        @if (app.skills) {
+          <div class="ad-fact-wide">
+            <dt>Skills</dt>
+            <dd>{{ app.skills }}</dd>
+          </div>
+        }
+      </dl>
+
+      <h6 class="admin-section-title">Experience</h6>
+      <!-- Plain interpolation only: applicant text is untrusted and is never bound as HTML. -->
+      <p class="ad-experience">{{ app.experienceSummary }}</p>
+    </div>
+
+    <div class="admin-blueprint ad-card">
+      <h6 class="admin-section-title">
+        Proof of certificates and qualifications ({{ app.documents.length }})
+      </h6>
+      <p class="admin-hint">
+        Files are downloaded rather than opened in the browser, because they come from an unverified
+        applicant. Open them in your PDF or image viewer.
+      </p>
+
+      <ul class="ad-docs">
+        @for (doc of app.documents; track doc.id) {
+          <li class="ad-doc">
+            <span class="ad-doc-meta">
+              <span class="ad-doc-title">{{ doc.title }}</span>
+              <span class="ad-doc-file">
+                {{ doc.kind === 'CERTIFICATE' ? 'Certificate' : 'Qualification' }} ·
+                {{ doc.filename }} · {{ formatBytes(doc.sizeBytes) }}
+              </span>
+            </span>
+            <button
+              type="button"
+              class="admin-btn admin-btn-secondary"
+              [disabled]="downloadingId() === doc.id"
+              (click)="download(doc)"
+            >
+              {{ downloadingId() === doc.id ? 'Downloading…' : 'Download' }}
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+
+    @if (app.status === 'PENDING') {
+      <div class="admin-blueprint ad-card ad-decision">
+        <div>
+          <h6 class="admin-section-title">Decision</h6>
+          <p class="admin-hint">
+            Only a manager can accept or reject. Rejecting is permanent: the applicant is kept on
+            record and cannot apply again.
+          </p>
+        </div>
+        <div class="ad-decision-actions">
+          <button
+            type="button"
+            class="admin-btn admin-btn-secondary admin-btn-danger"
+            [disabled]="deciding()"
+            (click)="reject()"
+          >
+            Reject
+          </button>
+          <button
+            type="button"
+            class="admin-btn admin-btn-primary admin-blueprint"
+            [disabled]="deciding()"
+            (click)="approve()"
+          >
+            {{ deciding() ? 'Saving…' : 'Approve' }}
+          </button>
+        </div>
+      </div>
+    } @else {
+      <div class="admin-blueprint ad-card">
+        <h6 class="admin-section-title">
+          {{ app.status === 'APPROVED' ? 'Approved' : 'Rejected' }}
+        </h6>
+        <p class="ad-sub">
+          By {{ app.decidedByName ?? 'a manager' }} on {{ app.decidedAt | date: 'medium' }}
+        </p>
+        @if (app.decisionReason) {
+          <p class="ad-experience">{{ app.decisionReason }}</p>
+        }
+        @if (app.status === 'REJECTED') {
+          <p class="admin-hint">
+            This record is kept permanently so the applicant cannot apply again.
+          </p>
+        }
+        @if (app.status === 'APPROVED' && app.userId) {
+          <p class="admin-hint">
+            Their technician account was created. They have been emailed a link to set a password;
+            you can also resend it from <a routerLink="/admin/invites">Invites</a>.
+          </p>
+        }
+
+        @if (activationUrl(); as url) {
+          <div class="admin-blueprint admin-invite-box">
+            <div class="admin-invite-row">
+              <code class="admin-invite-url">{{ url }}</code>
+              <button
+                type="button"
+                class="admin-btn admin-btn-icon"
+                (click)="copyActivationUrl()"
+                aria-label="Copy activation link"
+              >
+                <app-admin-icon name="copy" />
+              </button>
+            </div>
+          </div>
+          <p class="admin-hint">Single-use and expires in 72 hours.</p>
+        }
+      </div>
+    }
+  }
+</div>

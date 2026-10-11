@@ -23,6 +23,7 @@ import { filter, map } from 'rxjs';
 
 import { AccountService } from '../../../core/auth/account.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ThemeService } from '../../../core/theme/theme.service';
 import { ChangePasswordDialog } from '../../../layout/change-password-dialog/change-password-dialog';
 import { ProfileDialog } from '../../../layout/profile-dialog/profile-dialog';
 import { AdminNavCountsService } from '../admin-nav-counts.service';
@@ -32,7 +33,7 @@ import { AdminIcon } from '../ui/admin-icon/admin-icon';
 interface NavItem {
   readonly label: string;
   readonly route: string;
-  readonly icon: 'people' | 'add' | 'invite' | 'audit';
+  readonly icon: 'people' | 'add' | 'invite' | 'audit' | 'badge';
   readonly count: () => number | null;
   /** Whether this entry carries a badge at all, so only those show a loader while it loads. */
   readonly hasBadge: boolean;
@@ -66,7 +67,14 @@ export class AdminShell implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly themeService = inject(ThemeService);
   readonly counts = inject(AdminNavCountsService);
+
+  readonly theme = this.themeService.theme;
+
+  toggleTheme(): void {
+    this.themeService.toggle();
+  }
 
   private static readonly HANDSET_QUERY = '(max-width: 899px)';
 
@@ -119,6 +127,13 @@ export class AdminShell implements OnInit {
       route: '/admin/invites',
       icon: 'invite',
       count: () => this.counts.pendingInviteCount(),
+      hasBadge: true,
+    },
+    {
+      label: 'Applications',
+      route: '/admin/applications',
+      icon: 'badge',
+      count: () => this.counts.pendingApplicationCount(),
       hasBadge: true,
     },
     {

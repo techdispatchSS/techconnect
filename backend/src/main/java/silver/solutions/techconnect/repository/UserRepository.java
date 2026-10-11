@@ -1,11 +1,13 @@
 package silver.solutions.techconnect.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import silver.solutions.techconnect.entity.User;
 import silver.solutions.techconnect.entity.UserRole;
+import silver.solutions.techconnect.entity.UserStatus;
 
 /**
  * Optional filtering for the admin user list is expressed with {@link JpaSpecificationExecutor}
@@ -22,4 +24,7 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     boolean existsByEmailIgnoreCase(String email);
 
     boolean existsByRole(UserRole role);
+
+    /** The controller dashboard's dispatch-candidate pool (FR-04). */
+    List<User> findByRoleAndStatus(UserRole role, UserStatus status);
 }

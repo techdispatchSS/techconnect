@@ -17,17 +17,25 @@ html {
       density: 0,
     )
   );
+}
 
-  /* --- Monochrome brand override ---
-   *
-   * The stock azure/blue M3 palette read as generic Material-demo blue rather than a
-   * deliberate brand. Angular Material's fixed palette list (azure, violet, rose, etc.) has
-   * no true neutral/grayscale option, and hand-authoring a full custom M3 tonal palette (13
-   * tone stops x 5 roles) is not worth the fragility. Every Material component already reads
-   * color exclusively through these `--mat-sys-*` custom properties, so overriding the roles
-   * that actually show up in this UI is the supported, lower-risk path to a black/white/gray
-   * identity — anything left un-overridden just falls back to the azure base above.
-   */
+/* --- Monochrome brand override ---
+ *
+ * The stock azure/blue M3 palette read as generic Material-demo blue rather than a
+ * deliberate brand. Angular Material's fixed palette list (azure, violet, rose, etc.) has
+ * no true neutral/grayscale option, and hand-authoring a full custom M3 tonal palette (13
+ * tone stops x 5 roles) is not worth the fragility. Every Material component already reads
+ * color exclusively through these `--mat-sys-*` custom properties, so overriding the roles
+ * that actually show up in this UI is the supported, lower-risk path to a black/white/gray
+ * identity — anything left un-overridden just falls back to the azure base above.
+ *
+ * Light is the default (bare `html`, no attribute needed); dark lives under
+ * `html[data-theme='dark']`. `ThemeService` sets that attribute — see core/theme —
+ * and index.html sets it once, synchronously, before first paint to avoid a flash.
+ */
+html {
+  color-scheme: light;
+
   --mat-sys-primary: #17181c;
   --mat-sys-on-primary: #ffffff;
   --mat-sys-primary-container: #e9e9ec;
@@ -69,15 +77,49 @@ html {
   --mat-card-filled-container-shape: 1rem;
 }
 
-body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
-  color-scheme: light;
+html[data-theme='dark'] {
+  color-scheme: dark;
 
-  // The canvas is a step darker than card/panel surfaces (`--mat-sys-surface`, pure white)
-  // so every panel reads as a distinct raised surface rather than blending into the page —
-  // the black-sidenav/white-canvas/white-card contrast the redesign is built around.
+  --mat-sys-primary: #e2e3e6;
+  --mat-sys-on-primary: #17181c;
+  --mat-sys-primary-container: #2c2d32;
+  --mat-sys-on-primary-container: #e9e9ec;
+  --mat-sys-secondary: #a7aab3;
+  --mat-sys-on-secondary: #17181c;
+  --mat-sys-secondary-container: #2c2d32;
+  --mat-sys-on-secondary-container: #e9e9ec;
+  --mat-sys-tertiary: #e2e3e6;
+  --mat-sys-on-tertiary: #17181c;
+  --mat-sys-tertiary-container: #2c2d32;
+  --mat-sys-on-tertiary-container: #e9e9ec;
+
+  --mat-sys-surface: #1c1d21;
+  --mat-sys-surface-dim: #131417;
+  --mat-sys-surface-bright: #3a3b40;
+  --mat-sys-surface-container-lowest: #0e0f11;
+  --mat-sys-surface-container-low: #1a1b1e;
+  --mat-sys-surface-container: #202126;
+  --mat-sys-surface-container-high: #2a2b30;
+  --mat-sys-surface-container-highest: #35363b;
+  --mat-sys-background: #131417;
+  --mat-sys-on-background: #e9e9ec;
+  --mat-sys-on-surface: #e9e9ec;
+  --mat-sys-on-surface-variant: #a7aab3;
+  --mat-sys-outline: #4a4b50;
+  --mat-sys-outline-variant: #2c2d32;
+  --mat-sys-inverse-surface: #e9e9ec;
+  --mat-sys-inverse-on-surface: #17181c;
+  --mat-sys-inverse-primary: #3a3b40;
+
+  --mat-card-elevated-container-color: #1c1d21;
+  --mat-card-elevated-container-elevation:
+    0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+body {
+  // The canvas is a step darker than card/panel surfaces (`--mat-sys-surface`) so every
+  // panel reads as a distinct raised surface rather than blending into the page — the
+  // sidenav/canvas/card contrast the redesign is built around, in either theme.
   background-color: var(--mat-sys-background);
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);

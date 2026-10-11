@@ -16,6 +16,7 @@ import silver.solutions.techconnect.dto.response.admin.CreateUserResponse;
 import silver.solutions.techconnect.dto.response.admin.InviteResponse;
 import silver.solutions.techconnect.dto.response.admin.UserResponse;
 import silver.solutions.techconnect.dto.response.common.PageResponse;
+import silver.solutions.techconnect.entity.Address;
 import silver.solutions.techconnect.entity.AdminAuditAction;
 import silver.solutions.techconnect.entity.TechnicianProfile;
 import silver.solutions.techconnect.entity.TechnicianStatus;
@@ -102,9 +103,42 @@ public class AdminUserService {
      */
     @Transactional
     public CreateUserResponse create(UUID actorId, CreateUserRequest request) {
-        UserRole role = request.role();
+        return provision(
+                actorId,
+                request.firstName(),
+                request.lastName(),
+                request.email(),
+                request.phone(),
+                addressMapper.toEntity(request.address()),
+                request.role());
+    }
 
-        if (users.existsByEmailIgnoreCase(request.email())) {
+    /**
+     * Approving a technician application creates the account through exactly the same path as
+     * "Add user", so an approved applicant ends up indistinguishable from one a Manager added by
+     * hand: pending activation, a technician profile, an audit row and an emailed invite.
+     */
+    @Transactional
+    public CreateUserResponse provisionTechnician(
+            UUID actorId,
+            String firstName,
+            String lastName,
+            String email,
+            String phone,
+            Address address) {
+        return provision(actorId, firstName, lastName, email, phone, address, UserRole.TECHNICIAN);
+    }
+
+    private CreateUserResponse provision(
+            UUID actorId,
+            String firstName,
+            String lastName,
+            String email,
+            String phone,
+            Address address,
+            UserRole role) {
+
+        if (users.existsByEmailIgnoreCase(email)) {
             throw ApiException.conflict("A user with that email address already exists.");
         }
 
@@ -113,10 +147,10 @@ public class AdminUserService {
         // claims, audit log, initials, invite/notification copy) only ever wants a single
         // display name — so they're joined once here rather than threading first/last through
         // every consumer.
-        user.setName((request.firstName().trim() + " " + request.lastName().trim()).trim());
-        user.setEmail(request.email().trim());
-        user.setPhone(Strings.blankToNull(request.phone()));
-        user.setAddress(addressMapper.toEntity(request.address()));
+        user.setName((firstName.trim() + " " + lastName.trim()).trim());
+        user.setEmail(email.trim());
+        user.setPhone(Strings.blankToNull(phone));
+        user.setAddress(address);
         user.setRole(role);
         user.setStatus(UserStatus.PENDING_ACTIVATION);
         user.setCreatedBy(actorId);

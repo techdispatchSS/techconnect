@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
+import { AdminApplicationService } from './admin-application.service';
 import { AdminUserService } from './admin-user.service';
 
 /**
@@ -15,14 +16,23 @@ import { AdminUserService } from './admin-user.service';
 @Injectable({ providedIn: 'root' })
 export class AdminNavCountsService {
   private readonly adminUsers = inject(AdminUserService);
+  private readonly adminApplications = inject(AdminApplicationService);
 
   readonly peopleCount = signal<number | null>(null);
   readonly pendingInviteCount = signal<number | null>(null);
+  /** Technician applications still awaiting a decision. */
+  readonly pendingApplicationCount = signal<number | null>(null);
   /** True only until the first result arrives, so the badges show a loader once and then
    * quietly swap values on later refreshes instead of flickering back to a placeholder. */
   readonly loading = signal(true);
 
   refresh(): void {
+    // Its own request: a failure here shouldn't blank the People and Invites badges, or vice versa.
+    this.adminApplications.pendingCount().subscribe({
+      next: (count) => this.pendingApplicationCount.set(count),
+      error: () => undefined,
+    });
+
     forkJoin({
       people: this.adminUsers.list({ role: null, status: null, q: '', page: 0, size: 1 }),
       pending: this.adminUsers.list({

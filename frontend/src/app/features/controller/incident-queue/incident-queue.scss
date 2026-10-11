@@ -1,0 +1,385 @@
+.iq {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.iq-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.iq-toolbar {
+  flex-wrap: wrap;
+}
+.iq-search {
+  flex: 1 1 320px;
+  max-width: 360px;
+}
+.iq-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.iq-filter-label {
+  font-size: 12px;
+  color: var(--controller-color-muted);
+}
+.iq-filter select {
+  width: auto;
+  min-width: 140px;
+}
+
+// Demo-only strip: visibly not part of the real product, so nobody mistakes simulated tickets
+// for live ones.
+.iq-sim {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border: 1px dashed rgba(240, 130, 33, 0.55);
+  background: rgba(240, 130, 33, 0.06);
+}
+.iq-sim-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  background: var(--controller-color-accent);
+  color: #12140f;
+}
+.iq-sim-text {
+  font-size: 12.5px;
+  color: var(--controller-color-muted);
+  margin-right: auto;
+}
+.iq-sim-error {
+  font-size: 12.5px;
+  color: var(--controller-color-accent);
+}
+
+.iq-ticket-btn {
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+.iq-ticket-btn:hover {
+  text-decoration: underline;
+}
+.iq-ticket-btn:focus-visible {
+  outline: 2px solid var(--controller-color-accent);
+  outline-offset: 3px;
+}
+
+.iq-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.iq-pager-range {
+  margin-right: auto;
+  font-size: 12.5px;
+  color: var(--controller-color-muted);
+}
+.iq-pager-page {
+  font-size: 12.5px;
+  color: var(--controller-color-muted);
+}
+
+.iq-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.iq-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border-left: 2px solid var(--controller-color-divider-strong);
+}
+.iq-kpi--accent {
+  border-left-color: var(--controller-color-accent);
+}
+.iq-kpi-label {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--controller-color-muted);
+}
+.iq-kpi-value {
+  font-family: var(--controller-font-heading);
+  font-weight: 700;
+  font-size: 38px;
+  line-height: 1;
+  color: var(--controller-color-emphasis);
+}
+.iq-kpi--accent .iq-kpi-value {
+  color: var(--controller-color-accent);
+}
+
+.iq-body {
+  display: grid;
+  grid-template-columns: minmax(560px, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .iq-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.iq-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.iq-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.iq-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  padding: 6px 13px;
+  font-family: var(--controller-font-heading);
+  font-weight: 600;
+  font-size: 13px;
+  background: transparent;
+  border: 1px solid var(--controller-color-divider);
+  color: var(--controller-color-muted);
+}
+.iq-tab--active {
+  background: var(--controller-color-accent);
+  border-color: var(--controller-color-accent);
+  color: #12140f;
+}
+.iq-tab-count {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.iq-table-card {
+  padding: 2px 14px 10px;
+  overflow-x: auto;
+}
+.iq-empty {
+  padding: 24px 4px;
+  color: var(--controller-color-muted);
+  font-size: 13.5px;
+  margin: 0;
+}
+.iq-ticket {
+  font-family: var(--controller-font-heading);
+  font-weight: 600;
+  color: var(--controller-color-accent-soft);
+}
+.iq-client {
+  color: var(--controller-color-emphasis);
+}
+.controller-table tbody tr {
+  cursor: pointer;
+}
+.iq-row--selected td {
+  background: rgba(240, 130, 33, 0.1);
+  box-shadow: inset 2px 0 0 var(--controller-color-accent);
+}
+.iq-age--overdue {
+  font-family: var(--controller-font-heading);
+  font-weight: 600;
+  color: var(--controller-color-accent);
+}
+
+.iq-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  border-top: 2px solid var(--controller-color-accent);
+  position: sticky;
+  top: 96px;
+}
+.iq-detail-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+.iq-detail-ticket {
+  font-family: var(--controller-font-heading);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--controller-color-emphasis);
+}
+.iq-detail-meta {
+  font-size: 12.5px;
+  color: var(--controller-color-muted);
+}
+
+.iq-detail-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.iq-fact {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+}
+.iq-fact span:first-child {
+  color: var(--controller-color-muted);
+  min-width: 72px;
+}
+.iq-fact span:last-child {
+  margin-left: auto;
+  text-align: right;
+}
+
+.iq-sla {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--controller-color-divider-soft);
+}
+.iq-sla-label {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--controller-color-accent);
+}
+.iq-sla-value {
+  font-family: var(--controller-font-heading);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--controller-color-emphasis);
+}
+.iq-sla-value--overdue {
+  color: var(--controller-color-accent);
+}
+.iq-sla-bar {
+  display: block;
+  height: 6px;
+  background: var(--controller-color-divider-soft);
+}
+.iq-sla-bar-fill {
+  display: block;
+  height: 100%;
+  background: rgba(240, 130, 33, 0.7);
+}
+
+.iq-skills,
+.iq-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--controller-color-divider-soft);
+}
+.iq-skills-label,
+.iq-notes-label {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--controller-color-accent);
+}
+.iq-skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.iq-skill-tag {
+  font-size: 11.5px;
+  padding: 3px 9px;
+  border: 1px solid rgba(240, 130, 33, 0.42);
+  color: var(--controller-color-accent-soft);
+  background: rgba(240, 130, 33, 0.09);
+}
+.iq-notes-text {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--controller-color-muted);
+}
+
+// Where the dispatch stands, in the row and on the ticket. "Waiting" is the live state, so it is
+// the one that carries the accent; the rest are quieter.
+.iq-dispatch-chip {
+  display: inline-block;
+  font-size: 11.5px;
+  padding: 3px 9px;
+  white-space: nowrap;
+  border: 1px solid var(--controller-color-divider);
+  color: var(--controller-color-muted);
+}
+.iq-dispatch-chip--waiting {
+  border-color: rgba(240, 130, 33, 0.55);
+  background: rgba(240, 130, 33, 0.1);
+  color: var(--controller-color-accent-soft);
+}
+.iq-dispatch-chip--accepted {
+  border-color: var(--controller-color-divider-strong);
+  color: var(--controller-color-emphasis);
+}
+.iq-dispatch-chip--expired,
+.iq-dispatch-chip--declined {
+  border-style: dashed;
+  color: var(--controller-color-accent);
+}
+
+.iq-dispatch {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--controller-color-divider);
+  border-left: 3px solid var(--controller-color-divider-strong);
+}
+.iq-dispatch--waiting {
+  border-left-color: var(--controller-color-accent);
+  background: rgba(240, 130, 33, 0.07);
+}
+.iq-dispatch--expired,
+.iq-dispatch--declined {
+  border-left-color: var(--controller-color-accent);
+}
+.iq-dispatch-label {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--controller-color-accent);
+}
+.iq-dispatch-headline {
+  font-family: var(--controller-font-heading);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--controller-color-emphasis);
+}
+.iq-dispatch-detail {
+  font-size: 12.5px;
+  color: var(--controller-color-muted);
+}
+.iq-dispatch .controller-btn {
+  margin-top: 6px;
+}
+.iq-dispatch-feedback {
+  font-size: 12.5px;
+  color: var(--controller-color-accent-soft);
+}
+.iq-dispatch-feedback--error {
+  color: var(--controller-color-accent);
+}

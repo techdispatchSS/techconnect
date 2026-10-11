@@ -322,6 +322,40 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         assertThat(applications.count()).isEqualTo(before);
     }
 
+    @Test
+    void refusesAnIdNumberThatIsNotWellFormed() throws Exception {
+        String valid = SaIds.random();
+        char last = valid.charAt(12);
+        String badChecksum = valid.substring(0, 12) + (char) ('0' + (last - '0' + 1) % 10);
+
+        for (String bad : new String[] {badChecksum, valid.substring(0, 12), valid + "0",
+                "90010150000A8", "", "900230500008" + "0"}) {
+            Applicant a = Applicant.unique("badid");
+            a.idNumber = bad;
+            submit(a, validPdf()).andExpect(status().isBadRequest());
+            assertThat(exists(a)).as("id '%s'", bad).isFalse();
+        }
+    }
+
+    @Test
+    void aRejectedApplicantCannotReturnEvenWithANewEmailAndANewPhoneNumber() throws Exception {
+        String token = managerToken();
+        Applicant original = Applicant.unique("idblock");
+        submit(original, validPdf()).andExpect(status().isAccepted());
+        reject(token, find(original).getId(), "Not suitable").andExpect(status().isOk());
+        long before = applications.count();
+
+        // Brand-new email and brand-new phone number: only the ID number gives them away.
+        Applicant returning = Applicant.unique("idblock-again");
+        returning.idNumber = original.idNumber;
+        submit(returning, validPdf()).andExpect(status().isAccepted());
+
+        assertThat(applications.count()).isEqualTo(before);
+        assertThat(exists(returning)).isFalse();
+        assertThat(storage.objects).as("no files were stored for the blocked attempt")
+                .hasSize(documents.findByApplicationIdOrderByCreatedAtAsc(find(original).getId()).size());
+    }
+
     // --- who may review --------------------------------------------------------------------
 
     @Test
@@ -378,7 +412,9 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.documents[0].title").value("CCNA certificate"))
-                .andExpect(jsonPath("$.documents[0].filename").value("cert.pdf"));
+                .andExpect(jsonPath("$.documents[0].filename").value("cert.pdf"))
+                // The Manager sees the applicant's ID number under their details.
+                .andExpect(jsonPath("$.idNumber").value(a.idNumber));
 
         mvc.perform(get("/v1/admin/applications/" + saved.getId() + "/documents/" + docId)
                         .header("Authorization", "Bearer " + token))
@@ -579,6 +615,7 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         String lastName = "Khumalo";
         String email;
         String phone;
+        String idNumber = SaIds.random();
         String experience = "Eight years installing and maintaining network and CCTV systems.";
         boolean consent = true;
         String website = "";
@@ -594,13 +631,13 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
 
         String toJson(String documents) {
             return """
-                    {"firstName":"%s","lastName":"%s","email":"%s","phone":"%s",
+                    {"firstName":"%s","lastName":"%s","email":"%s","phone":"%s","idNumber":"%s",
                      "address":{"street":"1 Test Street","suburb":"Umhlanga","city":"Durban",
                                 "province":"KWAZULU_NATAL","postalCode":"4001"},
                      "experienceSummary":"%s","skills":"CCTV, structured cabling",
                      "documents":[%s],"consent":%s,"website":"%s"}"""
                     .formatted(firstName, lastName, email.replace("\r", "\\r").replace("\n", "\\n"),
-                            phone, experience.replace("\u0000", "\\u0000").replace("\u001b", "\\u001b"),
+                            phone, idNumber, experience.replace("\u0000", "\\u0000").replace("\u001b", "\\u001b"),
                             documents, consent, website);
         }
     }

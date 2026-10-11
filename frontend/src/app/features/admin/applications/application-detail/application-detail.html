@@ -42,6 +42,11 @@
           <dt>Mobile</dt>
           <dd>{{ app.phone }}</dd>
         </div>
+
+        <div>
+          <dt>ID number</dt>
+          <dd>{{ app.idNumber ?? 'Not provided' }}</dd>
+        </div>
         @if (app.address; as address) {
           <div class="ad-fact-wide">
             <dt>Based in</dt>
@@ -69,8 +74,8 @@
         Proof of certificates and qualifications ({{ app.documents.length }})
       </h6>
       <p class="admin-hint">
-        Files are downloaded rather than opened in the browser, because they come from an
-        unverified applicant. Open them in your PDF or image viewer.
+        Files are downloaded rather than opened in the browser, because they come from an unverified
+        applicant. Open them in your PDF or image viewer.
       </p>
 
       <ul class="ad-docs">

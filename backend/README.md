@@ -111,8 +111,8 @@ Applications are a separate table from `users` and share nothing with `/v1/auth`
 | `POST /v1/admin/applications/{id}/approve` · `/reject` | Manager only. Decided once (`409` after). Reject needs a reason. |
 
 **A rejection is permanent.** There is one application per person, ever: unique indexes on a
-*normalised* email (case, `+tag`, and Gmail dots folded) and a normalised phone number (`+27`/`0`
-folded) mean a rejected applicant can't reapply by retyping their details. The record and its
+*normalised* email (case, `+tag`, and Gmail dots folded), a normalised phone number (`+27`/`0`
+folded) and the applicant's South African ID number (13 digits, checksum-validated) mean a rejected applicant can't reapply by changing their email, their phone number, or both. The record and its
 documents are kept. A repeat submission gets the *same* `202` as a first one and sends no email,
 so the form can't be used to discover who has applied, or to mail-bomb an address.
 

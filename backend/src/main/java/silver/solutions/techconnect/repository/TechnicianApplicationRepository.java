@@ -16,10 +16,12 @@ public interface TechnicianApplicationRepository
                 JpaSpecificationExecutor<TechnicianApplication> {
 
     /**
-     * True if either identifier already belongs to an application of ANY status, which is what
-     * makes a rejection permanent.
+     * True if ANY of the three identifiers already belongs to an application of ANY status, which
+     * is what makes a rejection permanent: changing just the email, or just the phone number, or
+     * both, still leaves the ID number to give the applicant away.
      */
-    boolean existsByEmailNormalizedOrPhoneNormalized(String emailNormalized, String phoneNormalized);
+    boolean existsByEmailNormalizedOrPhoneNormalizedOrIdNumber(
+            String emailNormalized, String phoneNormalized, String idNumber);
 
     long countByStatus(ApplicationStatus status);
 

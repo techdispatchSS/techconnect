@@ -108,6 +108,32 @@
               <p class="field-error">Enter a valid phone number</p>
             }
           </div>
+
+          <div class="field ap-span2">
+            <label for="ap-id">South African ID number</label>
+            <input
+              appTrimOnBlur
+              id="ap-id"
+              class="input"
+              formControlName="idNumber"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="20"
+              aria-describedby="ap-id-hint"
+            />
+            <p id="ap-id-hint" class="field-hint">
+              13 digits. Used only to check your application and shown only to managers.
+            </p>
+            @if (form.controls.idNumber.touched && form.controls.idNumber.invalid) {
+              <p class="field-error">
+                @if (form.controls.idNumber.hasError('required')) {
+                  ID number is required
+                } @else {
+                  Enter a valid 13-digit South African ID number
+                }
+              </p>
+            }
+          </div>
         </div>
       </fieldset>
 
@@ -343,7 +369,9 @@
         </p>
         <label class="ap-check">
           <input type="checkbox" formControlName="consent" />
-          <span>I agree to TechConnect processing my personal information for this application.</span>
+          <span
+            >I agree to TechConnect processing my personal information for this application.</span
+          >
         </label>
         @if (form.controls.consent.touched && form.controls.consent.invalid) {
           <p class="field-error">You need to agree before you can apply</p>

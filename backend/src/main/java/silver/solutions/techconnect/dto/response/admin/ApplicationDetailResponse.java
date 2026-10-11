@@ -12,6 +12,8 @@ public record ApplicationDetailResponse(
         String lastName,
         String email,
         String phone,
+        /** South African ID number: personal information, Manager-only. */
+        String idNumber,
         AddressResponse address,
         String experienceSummary,
         String skills,

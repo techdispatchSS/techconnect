@@ -169,6 +169,8 @@ export interface ApplicationDetail {
   lastName: string;
   email: string;
   phone: string;
+  /** South African ID number. Null only for applications that pre-date the field. */
+  idNumber: string | null;
   address: Address | null;
   experienceSummary: string;
   skills: string | null;

@@ -40,6 +40,7 @@ public class ApplicationMapper {
                 application.getLastName(),
                 application.getEmail(),
                 application.getPhone(),
+                application.getIdNumber(),
                 addressMapper.toAddressResponse(application.getAddress()).orElse(null),
                 application.getExperienceSummary(),
                 application.getSkills(),

@@ -26,6 +26,10 @@
   --login-accent-700: #ffa254;
   --login-accent-800: #f0a265;
   --login-accent-900: #0e1013;
+  // Accent colour for TEXT on the page surface (link hover, error message). Deliberately not
+  // --login-accent-900: that is the hero panel's near-black background, which is the same colour
+  // as the dark-mode page behind the form, so using it for text made it invisible.
+  --login-accent-ink: #f0a265;
 
   display: grid;
   grid-template-columns: 1.05fr 1fr;
@@ -57,7 +61,7 @@
   text-decoration: none;
 }
 .login-page a:hover {
-  color: var(--login-accent-900);
+  color: var(--login-accent-ink);
   text-decoration: underline;
 }
 
@@ -202,7 +206,7 @@
 .login-error-text {
   font-size: 13px;
   line-height: 1.45;
-  color: var(--login-accent-900);
+  color: var(--login-accent-ink);
 }
 
 .login-form {
@@ -401,6 +405,8 @@
   --login-color-text: #1a1b1e;
   --login-color-divider: color-mix(in srgb, #1a1b1e 14%, transparent);
   --login-accent-800: #c65e0a;
+  // On the white surface the near-black reads well (this is what these used before).
+  --login-accent-ink: #0e1013;
 }
 
 // Phone-sized screens: thumb-sized tap targets, and 16px input text so iOS Safari doesn't

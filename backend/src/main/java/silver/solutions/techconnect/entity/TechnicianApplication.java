@@ -53,6 +53,14 @@ public class TechnicianApplication {
     @Column(name = "phone_normalized", nullable = false)
     private String phoneNormalized;
 
+    /**
+     * South African ID number: personal information, shown only to Managers reviewing the
+     * application and never logged. Also an identity key for the one-application-per-person rule.
+     * Null only on rows created before the column existed.
+     */
+    @Column(name = "id_number")
+    private String idNumber;
+
     @Embedded
     private Address address;
 

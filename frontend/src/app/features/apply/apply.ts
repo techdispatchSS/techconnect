@@ -22,6 +22,7 @@ import {
   PickedDocument,
   extensionOf,
   formatBytes,
+  isValidSouthAfricanId,
   problemWithFile,
 } from './apply.models';
 
@@ -33,11 +34,21 @@ import {
 function onTrimmed(validator: ValidatorFn): ValidatorFn {
   return (control: AbstractControl) => {
     const value: unknown = control.value;
-    return validator({ value: typeof value === 'string' ? value.trim() : value } as AbstractControl);
+    return validator({
+      value: typeof value === 'string' ? value.trim() : value,
+    } as AbstractControl);
   };
 }
 
 const NAME_PATTERN = onTrimmed(Validators.pattern(/^[\p{L}][\p{L} .'’-]*$/u));
+
+/** Judges the ID number with spaces ignored, so "900101 5000 085" is accepted as typed. */
+const SA_ID: ValidatorFn = (control) =>
+  typeof control.value === 'string' &&
+  control.value.trim() !== '' &&
+  !isValidSouthAfricanId(control.value)
+    ? { saId: true }
+    : null;
 
 /**
  * Public technician application. Deliberately not part of the sign-in screens: there is no
@@ -87,6 +98,7 @@ export class Apply {
     firstName: ['', [requiredTrimmed, Validators.maxLength(100), NAME_PATTERN]],
     lastName: ['', [requiredTrimmed, Validators.maxLength(100), NAME_PATTERN]],
     email: ['', [Validators.required, onTrimmed(Validators.email), Validators.maxLength(254)]],
+    idNumber: ['', [Validators.required, Validators.maxLength(20), SA_ID]],
     phone: [
       '',
       [Validators.required, onTrimmed(Validators.pattern(/^\+?[0-9][0-9 ()-]{7,18}[0-9]$/))],
@@ -199,6 +211,7 @@ export class Apply {
           lastName: value.lastName,
           email: value.email,
           phone: value.phone,
+          idNumber: value.idNumber.replace(/\s+/g, ''),
           address: { ...value.address, province: value.address.province as Province },
           experienceSummary: value.experienceSummary,
           skills: value.skills.trim() || null,
@@ -231,9 +244,7 @@ export class Apply {
       case 413:
         return server ?? 'Please check your details and files, then try again.';
       case 429:
-        return (
-          server ?? 'Too many applications from your connection. Please try again later.'
-        );
+        return server ?? 'Too many applications from your connection. Please try again later.';
       case 0:
       case 503:
         // The error interceptor already announces these; keep the form's own message calm.

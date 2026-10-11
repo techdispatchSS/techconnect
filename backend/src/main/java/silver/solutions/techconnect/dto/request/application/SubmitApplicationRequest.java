@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 import silver.solutions.techconnect.dto.request.common.AddressRequest;
 import silver.solutions.techconnect.entity.DocumentKind;
+import silver.solutions.techconnect.validation.ValidSouthAfricanId;
 
 /**
  * The JSON half of a public technician application (the proof-of-qualification files travel as
@@ -39,6 +40,10 @@ public record SubmitApplicationRequest(
                         regexp = "^\\+?[0-9][0-9 ()\\-]{7,18}[0-9]$",
                         message = "must be a valid phone number")
                 String phone,
+        @NotBlank
+                @Pattern(regexp = "^\\d{13}$", message = "must be 13 digits")
+                @ValidSouthAfricanId
+                String idNumber,
         @NotNull @Valid AddressRequest address,
         @NotBlank @Size(min = 20, max = 4000) String experienceSummary,
         @Size(max = 1000) String skills,

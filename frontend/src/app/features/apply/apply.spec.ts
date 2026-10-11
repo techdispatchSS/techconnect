@@ -55,6 +55,7 @@ describe('Apply', () => {
     type('#ap-last', 'Khumalo');
     type('#ap-email', 'nomsa@example.com');
     type('#ap-phone', '082 123 4567');
+    type('#ap-id', '9001015000085');
     type('#ap-street', '1 Test Street');
     type('#ap-suburb', 'Umhlanga');
     type('#ap-city', 'Durban');
@@ -92,6 +93,40 @@ describe('Apply', () => {
 
     expect(submit).not.toHaveBeenCalled();
     expect(el.textContent).toContain('Attach at least one certificate or qualification');
+  });
+
+  it('will not send an ID number with a bad checksum, and says why', async () => {
+    await setup();
+    fillValidForm();
+    type('#ap-id', '9001015000084');
+    await attach(pdf());
+    await send();
+
+    expect(submit).not.toHaveBeenCalled();
+    expect(el.textContent).toContain('Enter a valid 13-digit South African ID number');
+  });
+
+  it('requires an ID number', async () => {
+    await setup();
+    fillValidForm();
+    type('#ap-id', '');
+    await attach(pdf());
+    await send();
+
+    expect(submit).not.toHaveBeenCalled();
+    expect(el.textContent).toContain('ID number is required');
+  });
+
+  it('accepts an ID number typed with spaces and sends it as plain digits', async () => {
+    await setup();
+    fillValidForm();
+    type('#ap-id', '900101 5000 085');
+    await attach(pdf());
+    await send();
+
+    expect(submit).toHaveBeenCalledTimes(1);
+    const [request] = submit.mock.calls[0] as [SubmitApplicationRequest, File[]];
+    expect(request.idNumber).toBe('9001015000085');
   });
 
   it('will not send without agreeing to the privacy notice', async () => {

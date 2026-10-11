@@ -76,9 +76,13 @@ export class ApplicationDetailPage implements OnInit {
       next: () => this.downloadingId.set(null),
       error: (error: unknown) => {
         this.downloadingId.set(null);
-        this.snackBar.open(this.messageFrom(error, 'Could not download that document.'), 'Dismiss', {
-          duration: 6000,
-        });
+        this.snackBar.open(
+          this.messageFrom(error, 'Could not download that document.'),
+          'Dismiss',
+          {
+            duration: 6000,
+          },
+        );
       },
     });
   }

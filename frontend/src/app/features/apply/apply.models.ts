@@ -22,6 +22,8 @@ export interface SubmitApplicationRequest {
   lastName: string;
   email: string;
   phone: string;
+  /** South African ID number, digits only. */
+  idNumber: string;
   address: AddressRequest;
   experienceSummary: string;
   skills: string | null;
@@ -68,4 +70,46 @@ export function problemWithFile(file: File): string | null {
     return `"${file.name}" is ${formatBytes(file.size)} — the limit is ${formatBytes(MAX_FILE_BYTES)}.`;
   }
   return null;
+}
+
+/**
+ * Whether `value` looks like a South African ID number: 13 digits, a real birth date, a
+ * citizenship digit of 0 or 1, and the Luhn check digit. Spaces are ignored. This only catches
+ * typos early — the server re-validates it, and no check here can prove the number is real.
+ */
+export function isValidSouthAfricanId(value: string): boolean {
+  const id = value.replace(/\s+/g, '');
+  if (!/^\d{13}$/.test(id)) {
+    return false;
+  }
+
+  const yy = Number(id.slice(0, 2));
+  const mm = Number(id.slice(2, 4));
+  const dd = Number(id.slice(4, 6));
+  const today = new Date();
+  const realDate = [1900, 2000].some((century) => {
+    const born = new Date(century + yy, mm - 1, dd);
+    return (
+      born.getFullYear() === century + yy &&
+      born.getMonth() === mm - 1 &&
+      born.getDate() === dd &&
+      born <= today
+    );
+  });
+  if (!realDate || (id[10] !== '0' && id[10] !== '1')) {
+    return false;
+  }
+
+  let sum = 0;
+  for (let i = 0; i < id.length; i++) {
+    let digit = Number(id[id.length - 1 - i]);
+    if (i % 2 === 1) {
+      digit *= 2;
+      if (digit > 9) {
+        digit -= 9;
+      }
+    }
+    sum += digit;
+  }
+  return sum % 10 === 0;
 }

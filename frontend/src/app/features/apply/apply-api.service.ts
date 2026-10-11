@@ -14,7 +14,10 @@ export class ApplyApiService {
    * to `request.documents` by position. The JSON part is given an explicit
    * `application/json` type — without it the server can't tell it from a text field.
    */
-  submit(request: SubmitApplicationRequest, files: File[]): Observable<ApplicationReceivedResponse> {
+  submit(
+    request: SubmitApplicationRequest,
+    files: File[],
+  ): Observable<ApplicationReceivedResponse> {
     const body = new FormData();
     body.append('application', new Blob([JSON.stringify(request)], { type: 'application/json' }));
     for (const file of files) {

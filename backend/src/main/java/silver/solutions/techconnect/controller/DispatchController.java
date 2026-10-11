@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import silver.solutions.techconnect.dto.request.controller.CreateDispatchRequest;
 import silver.solutions.techconnect.dto.response.controller.DispatchCreateResponse;
+import silver.solutions.techconnect.dto.response.controller.ResendDispatchResponse;
 import silver.solutions.techconnect.dto.response.controller.TechnicianCandidateResponse;
 import silver.solutions.techconnect.security.AuthenticatedUser;
 import silver.solutions.techconnect.service.DispatchService;
@@ -39,6 +40,15 @@ public class DispatchController {
             @PathVariable UUID id,
             @RequestParam(required = false) List<String> skills) {
         return dispatchService.recommend(id, skills);
+    }
+
+    /**
+     * Notifies the technicians who have not answered again. Doesn't extend the response window
+     * or create a new dispatch; refused (409) once answered, expired, or sent a moment ago.
+     */
+    @PostMapping("/dispatches/{id}/resend")
+    public ResendDispatchResponse resend(@PathVariable UUID id) {
+        return dispatchService.resend(id);
     }
 
     @PostMapping("/dispatches")

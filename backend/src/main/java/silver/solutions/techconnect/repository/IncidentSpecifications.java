@@ -2,6 +2,7 @@ package silver.solutions.techconnect.repository;
 
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Subquery;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -24,7 +25,18 @@ public final class IncidentSpecifications {
         return (root, criteriaQuery, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (status != null) {
+            if (status == IncidentStatus.OVERDUE) {
+                // "Overdue" is a view over the clock, not a stored state (nothing sets it): any
+                // open incident whose SLA has passed, whatever stage it is at. A row explicitly
+                // marked OVERDUE still matches.
+                predicates.add(cb.and(
+                        cb.notEqual(root.get("status"), IncidentStatus.CLOSED),
+                        cb.or(
+                                cb.equal(root.get("status"), IncidentStatus.OVERDUE),
+                                cb.and(
+                                        cb.isNotNull(root.get("slaDueAt")),
+                                        cb.lessThan(root.<Instant>get("slaDueAt"), Instant.now())))));
+            } else if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
             }
             if (priority != null) {

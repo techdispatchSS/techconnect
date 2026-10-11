@@ -11,6 +11,12 @@ export const controllerRoutes: Routes = [
     data: { heading: 'Incident queue' },
   },
   {
+    path: 'new',
+    loadComponent: () => import('./incident-create/incident-create').then((m) => m.IncidentCreate),
+    title: 'Log incident · TechConnect',
+    data: { heading: 'Log incident' },
+  },
+  {
     path: 'dispatch/:incidentId',
     loadComponent: () => import('./create-dispatch/create-dispatch').then((m) => m.CreateDispatch),
     title: 'Create dispatch · TechConnect',

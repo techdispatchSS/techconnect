@@ -18,7 +18,8 @@ class ApplicationSubmissionFilterTest {
                 null, null, null, null, null, null, null,
                 new TechConnectProperties.Security(hops),
                 new TechConnectProperties.Applications(
-                        10, DataSize.ofMegabytes(10), DataSize.ofMegabytes(32), perIp, 1000));
+                        10, DataSize.ofMegabytes(10), DataSize.ofMegabytes(32), perIp, 1000),
+                null);
         return new ApplicationSubmissionFilter(
                 new SubmissionThrottle(perIp, 1000, Duration.ofHours(1), Clock.systemUTC()), props);
     }

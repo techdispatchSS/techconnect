@@ -1,6 +1,6 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval, startWith, switchMap } from 'rxjs';
+import { Subject, interval, merge, startWith, switchMap } from 'rxjs';
 
 import { ControllerApiService } from './controller-api.service';
 import { Incident } from './controller.models';
@@ -33,6 +33,7 @@ export class NewIncidentNotifierService {
   readonly newCount = signal<number | null>(null);
   readonly alerts = signal<IncidentAlert[]>([]);
 
+  private readonly refreshRequests = new Subject<void>();
   private knownIds = new Set<string>();
   /** False until the first poll lands, so incidents already NEW when the Controller signs in
    * are counted but not announced — only arrivals after that get a toast. */
@@ -46,9 +47,8 @@ export class NewIncidentNotifierService {
     this.alerts.set([]);
     this.newCount.set(null);
 
-    interval(POLL_INTERVAL_MS)
+    merge(interval(POLL_INTERVAL_MS).pipe(startWith(0)), this.refreshRequests)
       .pipe(
-        startWith(0),
         switchMap(() => this.api.listIncidents({ status: 'NEW', q: '', page: 0, size: 50 })),
         takeUntilDestroyed(destroyRef),
       )
@@ -58,6 +58,12 @@ export class NewIncidentNotifierService {
       });
 
     destroyRef.onDestroy(() => this.clearDismissTimers());
+  }
+
+  /** Checks for arrivals now rather than at the next tick — after something this Controller did
+   * that can add an incident (logging one, a simulated ticket), so the badge is right at once. */
+  refresh(): void {
+    this.refreshRequests.next();
   }
 
   dismiss(id: string): void {

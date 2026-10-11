@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import silver.solutions.techconnect.AbstractPostgresIntegrationTest;
 import silver.solutions.techconnect.entity.DispatchResponse;
@@ -33,6 +34,7 @@ import silver.solutions.techconnect.repository.IncidentRepository;
 import silver.solutions.techconnect.repository.TechnicianProfileRepository;
 import silver.solutions.techconnect.repository.TechnicianSkillRepository;
 import silver.solutions.techconnect.repository.UserRepository;
+import silver.solutions.techconnect.service.NotificationService;
 
 /** Covers the controller dashboard's contract end to end (FR-02–FR-04) against a real PostgreSQL. */
 @AutoConfigureMockMvc
@@ -49,6 +51,7 @@ class ControllerDashboardIntegrationTest extends AbstractPostgresIntegrationTest
     @Autowired private DispatchRepository dispatches;
     @Autowired private DispatchResponseRepository dispatchResponses;
     @Autowired private PasswordEncoder passwordEncoder;
+    @MockitoBean private NotificationService notifications;
 
     /**
      * Tests in this class are deliberately not {@code @Transactional} (see

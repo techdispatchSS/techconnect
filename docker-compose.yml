@@ -75,6 +75,10 @@ services:
       # X-Forwarded-For with the real client address, which is what the public application form's
       # per-address rate limit keys on — without this it would see nginx's own address for everyone.
       TECHCONNECT_TRUSTED_PROXY_HOPS: 1
+      # Demo/user-testing stand-ins (simulated Freshdesk, "answer as technician"). On for this
+      # local stack; set to false in .env to see the dashboard as it will be with nothing
+      # connected. Must stay off anywhere real operations run — it makes up incidents.
+      TECHCONNECT_SIMULATION_ENABLED: ${TECHCONNECT_SIMULATION_ENABLED:-true}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     healthcheck:

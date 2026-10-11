@@ -91,6 +91,9 @@ public class SecurityConfig {
                         // FR-02/FR-03/FR-04: the incident queue and dispatch creation are the
                         // Controller's alone.
                         .requestMatchers("/v1/controller/**").hasRole("CONTROLLER")
+                        // FR-04: a technician answers their own dispatches — and nothing else
+                        // under this prefix is reachable by any other role.
+                        .requestMatchers("/v1/technician/**").hasRole("TECHNICIAN")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter)))

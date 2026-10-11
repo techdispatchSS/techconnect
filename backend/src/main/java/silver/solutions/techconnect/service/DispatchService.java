@@ -14,6 +14,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import silver.solutions.techconnect.dto.response.controller.ResendDispatchResponse;
+import silver.solutions.techconnect.mapper.IncidentMapper;
 import silver.solutions.techconnect.dto.request.controller.CreateDispatchRequest;
 import silver.solutions.techconnect.dto.response.controller.DispatchCreateResponse;
 import silver.solutions.techconnect.dto.response.controller.TechnicianCandidateResponse;
@@ -21,6 +25,7 @@ import silver.solutions.techconnect.entity.Dispatch;
 import silver.solutions.techconnect.entity.DispatchResponse;
 import silver.solutions.techconnect.entity.DispatchResponseStatus;
 import silver.solutions.techconnect.entity.DispatchStatus;
+import silver.solutions.techconnect.entity.DispatchType;
 import silver.solutions.techconnect.entity.Incident;
 import silver.solutions.techconnect.entity.IncidentStatus;
 import silver.solutions.techconnect.entity.TechnicianProfile;
@@ -49,6 +54,9 @@ public class DispatchService {
     /** FR-04: a broadcast's response window before it lapses and re-queues. */
     private static final Duration BROADCAST_WINDOW = Duration.ofMinutes(10);
 
+    /** Least time between two notifications of one dispatch, so a button can't be used to spam. */
+    private static final Duration RESEND_COOLDOWN = Duration.ofSeconds(60);
+
     private final IncidentRepository incidents;
     private final DispatchRepository dispatches;
     private final DispatchResponseRepository dispatchResponses;
@@ -57,6 +65,7 @@ public class DispatchService {
     private final TechnicianSkillRepository technicianSkills;
     private final DispatchMapper dispatchMapper;
     private final JdbcTemplate jdbcTemplate;
+    private final NotificationService notifications;
 
     public DispatchService(
             IncidentRepository incidents,
@@ -66,7 +75,8 @@ public class DispatchService {
             TechnicianProfileRepository technicianProfiles,
             TechnicianSkillRepository technicianSkills,
             DispatchMapper dispatchMapper,
-            JdbcTemplate jdbcTemplate) {
+            JdbcTemplate jdbcTemplate,
+            NotificationService notifications) {
         this.incidents = incidents;
         this.dispatches = dispatches;
         this.dispatchResponses = dispatchResponses;
@@ -75,6 +85,7 @@ public class DispatchService {
         this.technicianSkills = technicianSkills;
         this.dispatchMapper = dispatchMapper;
         this.jdbcTemplate = jdbcTemplate;
+        this.notifications = notifications;
     }
 
     @Transactional(readOnly = true)
@@ -117,11 +128,21 @@ public class DispatchService {
 
     @Transactional
     public DispatchCreateResponse create(UUID actorId, CreateDispatchRequest request) {
-        Incident incident = incidents.findById(request.incidentId())
+        // Row-locked so two Controllers sending the same incident out at once serialise: the
+        // second one then sees the first one's dispatch instead of creating a competing one.
+        Incident incident = incidents.findByIdForUpdate(request.incidentId())
                 .orElseThrow(() -> ApiException.notFound("Incident not found"));
 
         if (request.technicianIds().isEmpty()) {
             throw ApiException.badRequest("Select at least one technician.");
+        }
+        if (incident.getStatus() == IncidentStatus.CLOSED) {
+            throw ApiException.conflict("This incident is closed and can't be dispatched.");
+        }
+        if (dispatches.hasLiveDispatch(
+                incident.getId(), DispatchStatus.ACCEPTED, DispatchStatus.PENDING, Instant.now())) {
+            throw ApiException.conflict(
+                    "This incident already has an active dispatch. Wait for it to be answered or expire.");
         }
 
         List<User> technicians = users.findAllById(request.technicianIds());
@@ -130,6 +151,13 @@ public class DispatchService {
         }
         if (!technicians.stream().allMatch(u -> u.getRole() == UserRole.TECHNICIAN)) {
             throw ApiException.badRequest("Only technicians can be dispatched to a job.");
+        }
+        if (!technicians.stream().allMatch(u -> u.getStatus() == UserStatus.ACTIVE)) {
+            throw ApiException.badRequest(
+                    "One or more selected technicians are not active and can't be dispatched.");
+        }
+        if (request.dispatchType() == DispatchType.ASSIGN && request.technicianIds().size() != 1) {
+            throw ApiException.badRequest("Assign a job to exactly one technician.");
         }
 
         Dispatch dispatch = new Dispatch();
@@ -159,11 +187,107 @@ public class DispatchService {
             incidents.save(incident);
         }
 
+        // The first notification goes out with the dispatch; it is counted so the Controller
+        // can see it, and sent only once the dispatch is safely committed.
+        dispatch.setNotificationCount(1);
+        dispatch.setLastNotifiedAt(Instant.now());
+        dispatches.save(dispatch);
+        notifyAfterCommit(incident, dispatch, technicians, false);
+
         log.info("Dispatch {} ({}) created for incident {} by {} — {} technician(s) invited",
                 dispatch.getId(), dispatch.getDispatchType(), incident.getId(), actorId,
                 request.technicianIds().size());
 
         return dispatchMapper.toCreateResponse(dispatch, request.technicianIds());
+    }
+
+    /**
+     * Sends the same job notice again to every technician who has not yet answered. Declined and
+     * answered technicians are left alone, and so is the response window: this is a nudge, not a
+     * new dispatch.
+     */
+    @Transactional
+    public ResendDispatchResponse resend(UUID dispatchId) {
+        Dispatch dispatch = dispatches.findByIdForUpdate(dispatchId)
+                .orElseThrow(() -> ApiException.notFound("Dispatch not found"));
+        Instant now = Instant.now();
+
+        if (dispatch.getStatus() == DispatchStatus.ACCEPTED) {
+            throw ApiException.conflict("A technician has already accepted this job.");
+        }
+        if (dispatch.getStatus() == DispatchStatus.EXPIRED || !dispatch.getExpiresAt().isAfter(now)) {
+            throw ApiException.conflict("This dispatch has expired. Send a new dispatch instead.");
+        }
+        Instant last = dispatch.getLastNotifiedAt();
+        if (last != null && Duration.between(last, now).compareTo(RESEND_COOLDOWN) < 0) {
+            long wait = RESEND_COOLDOWN.minus(Duration.between(last, now)).toSeconds() + 1;
+            throw ApiException.conflict(
+                    "Technicians were notified moments ago. You can resend in " + wait + " seconds.");
+        }
+
+        List<UUID> waiting = dispatchResponses.findByDispatchId(dispatchId).stream()
+                .filter(r -> r.getResponse() == DispatchResponseStatus.PENDING)
+                .map(DispatchResponse::getTechnicianId)
+                .toList();
+        List<User> recipients = users.findAllById(waiting).stream()
+                .filter(u -> u.getStatus() == UserStatus.ACTIVE)
+                .toList();
+        if (recipients.isEmpty()) {
+            throw ApiException.conflict("There is no one left to notify: everyone has answered.");
+        }
+
+        Incident incident = incidents.findById(dispatch.getIncidentId())
+                .orElseThrow(() -> ApiException.notFound("Incident not found"));
+
+        dispatch.setNotificationCount(dispatch.getNotificationCount() + 1);
+        dispatch.setLastNotifiedAt(now);
+        dispatches.save(dispatch);
+        notifyAfterCommit(incident, dispatch, recipients, true);
+
+        log.info("Dispatch {} resent to {} technician(s) (notification #{})",
+                dispatchId, recipients.size(), dispatch.getNotificationCount());
+        return new ResendDispatchResponse(
+                recipients.size(), dispatch.getNotificationCount(), now);
+    }
+
+    /**
+     * Notifications are best-effort side effects and slow (SMTP), so they go out after the
+     * transaction commits — never while holding the dispatch's row lock, and never for a
+     * dispatch that then rolls back.
+     */
+    private void notifyAfterCommit(
+            Incident incident, Dispatch dispatch, List<User> recipients, boolean reminder) {
+        NotificationService.DispatchNotice notice = new NotificationService.DispatchNotice(
+                IncidentMapper.ticketRef(incident),
+                incident.getClientName(),
+                incident.getSiteAddress(),
+                incident.getIssueType(),
+                incident.getPriority(),
+                dispatch.getNotesForTechnician(),
+                dispatch.getExpiresAt(),
+                reminder);
+
+        Runnable send = () -> {
+            for (User recipient : recipients) {
+                try {
+                    notifications.sendDispatchNotice(recipient, notice);
+                } catch (RuntimeException e) {
+                    log.warn("Could not notify technician {} of dispatch {}",
+                            recipient.getId(), dispatch.getId(), e);
+                }
+            }
+        };
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    send.run();
+                }
+            });
+        } else {
+            send.run();
+        }
     }
 
     private String join(List<String> values) {

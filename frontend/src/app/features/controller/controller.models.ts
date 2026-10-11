@@ -38,6 +38,34 @@ export interface Incident {
   /** True once any dispatch has been created — what decides "Create dispatch" versus "View
    * progress", since an OVERDUE (or any other) status doesn't say either way. */
   hasDispatch: boolean;
+  /** Where the latest dispatch stands — who it went to and who has answered. Null if none sent. */
+  dispatch: DispatchSummary | null;
+}
+
+/** Mirrors the backend `DispatchSummary`: the state a ticket shows after a dispatch goes out. */
+export interface DispatchSummary {
+  id: string;
+  type: DispatchType;
+  status: DispatchLifecycleStatus;
+  sentAt: string;
+  expiresAt: string;
+  /** Technicians it was sent to. */
+  invited: number;
+  /** Of those, how many have not answered. */
+  pending: number;
+  declined: number;
+  /** Never answered before it lapsed, or the job went to someone else first. */
+  noResponse: number;
+  acceptedTechnicianName: string | null;
+  /** Times technicians have been notified, the first send included. */
+  notificationCount: number;
+  lastNotifiedAt: string | null;
+}
+
+export interface ResendResult {
+  notified: number;
+  notificationCount: number;
+  lastNotifiedAt: string;
 }
 
 export interface IncidentKpis {
@@ -118,6 +146,42 @@ export interface IncidentProgress {
   dispatchExpiresAt: string;
   responses: DispatchResponseEntry[];
   acceptedTechnicianName: string | null;
+}
+
+/** An incident the Controller logs by hand (a phone call). Mirrors `CreateIncidentRequest`. */
+export interface CreateIncidentRequest {
+  clientName: string;
+  siteAddress: string | null;
+  siteLatitude: number | null;
+  siteLongitude: number | null;
+  contactName: string | null;
+  contactPhone: string | null;
+  issueType: string | null;
+  priority: IncidentPriority;
+  /** Response target in hours; the server derives one from the priority when omitted. */
+  slaHours: number | null;
+  description: string | null;
+  additionalNotes: string | null;
+}
+
+/** How the Freshdesk connection stands. `simulation` also gates the demo-only controls. */
+export interface FreshdeskStatus {
+  mode: 'SIMULATED' | 'NOT_CONNECTED';
+  simulation: boolean;
+  lastSyncAt: string | null;
+  lastSuccessAt: string | null;
+  lastError: string | null;
+}
+
+export interface SimulatedTicket {
+  ticketId: string;
+  created: number;
+  updated: number;
+}
+
+export interface DispatchAnswer {
+  dispatchId: string;
+  outcome: 'ACCEPTED' | 'DECLINED';
 }
 
 /** The queue's filter tabs — "Unassigned" and the KPI counts share one source of truth

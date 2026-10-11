@@ -43,7 +43,7 @@ class S3DocumentStorageIntegrationTest {
         s3.createBucket(CreateBucketRequest.builder().bucket(BUCKET).build());
         var props = new TechConnectProperties(
                 null, null, null, null, null, null,
-                new TechConnectProperties.Aws("us-east-1", "", BUCKET), null, null);
+                new TechConnectProperties.Aws("us-east-1", "", BUCKET), null, null, null);
         return new S3DocumentStorage(s3, props);
     }
 

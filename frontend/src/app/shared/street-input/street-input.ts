@@ -9,6 +9,13 @@ import { AddressSuggestion, GooglePlacesService } from '../../core/google/google
 
 export type PickedAddress = Omit<Address, 'province'> & { province: Address['province'] | '' };
 
+/** What a pick actually carries: the address, and where Google puts it on the map. Callers
+ * that only care about the address can keep typing the handler as `PickedAddress`. */
+export type PickedPlace = PickedAddress & {
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+};
+
 /**
  * The street field of an address form, with Google address suggestions when a Maps key is
  * configured. Picking a suggestion emits the whole structured address so the parent can fill
@@ -31,7 +38,10 @@ export class StreetInput {
   readonly control = input.required<FormControl<string>>();
   readonly inputId = input.required<string>();
   readonly placeholder = input('');
-  readonly picked = output<PickedAddress>();
+  /** The input's styling class: the admin portal's by default; the controller dashboard
+   * passes its own so the field matches the rest of that form. */
+  readonly inputClass = input('admin-input');
+  readonly picked = output<PickedPlace>();
 
   readonly suggestions = signal<AddressSuggestion[]>([]);
   readonly activeIndex = signal(-1);

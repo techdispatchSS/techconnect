@@ -88,7 +88,16 @@ public class Incident {
         this.updatedAt = Instant.now();
     }
 
+    /**
+     * Derived from the clock, not stored: the SLA passing is what makes an incident overdue,
+     * regardless of whether it is new, being dispatched or in hand. Kept in step with the
+     * "Overdue" queue filter and KPI (see {@code IncidentSpecifications}).
+     */
     public boolean isOverdue() {
-        return status != IncidentStatus.CLOSED && slaDueAt != null && slaDueAt.isBefore(Instant.now());
+        if (status == IncidentStatus.CLOSED) {
+            return false;
+        }
+        return status == IncidentStatus.OVERDUE
+                || (slaDueAt != null && slaDueAt.isBefore(Instant.now()));
     }
 }

@@ -145,6 +145,67 @@ API must allow bodies of at least 32 MB (`client_max_body_size` — already set 
 `TECHCONNECT_TRUSTED_PROXY_HOPS` to the real number of proxies, or every applicant will share one
 rate-limit bucket.
 
+## Controller dashboard
+
+### Dispatch lifecycle (FR-04)
+
+A dispatch is `PENDING` for 10 minutes. During that window a technician answers through
+`POST /v1/technician/dispatches/{id}/accept` or `/decline` (TECHNICIAN role; the technician is
+always the authenticated caller):
+
+- **First accept wins.** Decided under a row lock, so two simultaneous accepts yield one winner
+  and a `409` for the other. Everyone else still pending becomes `NO_RESPONSE`.
+- **Everyone declined** expires the dispatch immediately rather than waiting out the window.
+- **Nobody answered**: a background sweep (every 15s, `techconnect.dispatch.expiry-sweep-interval`)
+  expires it. An accept that arrives after the window but before the sweep is refused too.
+- An expired dispatch puts its incident back to `NEW` so it reappears in the queue (and raises the
+  new-incident alert). An incident cannot have two live dispatches at once, a closed incident
+  cannot be dispatched, and only `ACTIVE` technicians can be invited.
+
+**Notification and resend.** Sending a dispatch emails each invited technician (best-effort, after
+the transaction commits, so a mail outage never blocks dispatching). `POST
+/v1/controller/dispatches/{id}/resend` sends the same notice again to the technicians who have not
+answered — not those who declined — and counts it (`notification_count`, `last_notified_at`).
+It does not extend the response window or create a new dispatch, is refused with a `409` once the
+job is accepted or expired, and is rate-limited to once a minute per dispatch. Email is the only
+channel today; push/SMS would plug in behind `NotificationService.sendDispatchNotice`.
+
+**What the ticket shows.** Every incident carries a `dispatch` summary (technicians invited, how
+many are yet to answer, declined, who accepted, notification count) so the queue and ticket can say
+"Sent to 3 technicians — awaiting confirmation" without a second request.
+
+**Overdue is computed, not stored.** An open incident is overdue the moment its `sla_due_at`
+passes, whatever stage it is at, so the "Overdue" tab, its KPI and each row's flag all come from
+the clock. (`status = OVERDUE` is never written; a row that has it still counts.)
+
+### Freshdesk — simulated until the owners confirm the account
+
+There is no live Freshdesk integration yet. Everything the dashboard needs from it goes through
+`FreshdeskClient`, and the only implementation is `SimulatedFreshdeskClient`, an in-memory stand-in
+that is active only when `techconnect.simulation.enabled=true` (the `dev` profile default; off
+elsewhere unless `TECHCONNECT_SIMULATION_ENABLED=true`).
+
+- Tickets reach the queue through the real path: `FreshdeskSyncService` polls (every 30s,
+  `techconnect.freshdesk.poll-interval`), matches a ticket to its incident by Freshdesk ticket id,
+  and upserts. A repeat pass changes nothing; a resolved ticket closes its incident; an edit in
+  Freshdesk updates details but never undoes TechConnect's own workflow status.
+- Simulated tickets are numbered `SIM-…` so they cannot be mistaken for real ones.
+- With simulation on, the Controller dashboard shows a "Demo" strip to raise a ticket (or an
+  already-overdue one), and the ticket progress page can answer a dispatch as an invited
+  technician. Both are `404` — not merely forbidden — when simulation is off, and the header badge
+  then reads "Freshdesk not connected".
+- The status the header shows comes from `GET /v1/controller/integrations/freshdesk`; it never
+  claims a connection that does not exist.
+
+**To connect the real Freshdesk** a second `FreshdeskClient` is needed (`GET /api/v2/tickets
+?updated_since=…&include=requester,company`). Before that is built the owners need to confirm:
+the Freshdesk domain and an API key; which custom fields carry the site address and its
+coordinates (`FreshdeskIncidentMapper` assumes `cf_site_address`, `cf_site_latitude`,
+`cf_site_longitude`); how Freshdesk priorities and statuses map (assumed: 1/2/3/4 → low/medium/
+high/high; resolved or closed → incident closed); and whether TechConnect must write back to
+Freshdesk (status, notes) — one-way import is all that exists.
+
+
 ## Migrations
 
 Flyway owns the schema; Hibernate runs with `ddl-auto=validate` and must never alter it.

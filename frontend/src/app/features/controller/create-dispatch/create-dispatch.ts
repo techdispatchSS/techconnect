@@ -1,9 +1,11 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 
 import { ControllerApiService } from '../controller-api.service';
+import { needsNewDispatch } from '../dispatch-state';
 import { DispatchType, Incident, PRIORITY_LABELS, TechnicianCandidate } from '../controller.models';
 import { TechnicianMap } from '../technician-map/technician-map';
 
@@ -39,6 +41,7 @@ export class CreateDispatch implements OnInit {
   readonly method = signal<DispatchType>('BROADCAST');
   readonly submitting = signal(false);
   readonly submitFailed = signal(false);
+  readonly submitMessage = signal("Couldn't create the dispatch. Try again.");
 
   readonly form = this.fb.nonNullable.group({
     jobType: ['Incident'],
@@ -56,6 +59,13 @@ export class CreateDispatch implements OnInit {
   ngOnInit(): void {
     this.api.getIncident(this.incidentId).subscribe({
       next: (incident) => {
+        // Already sent (and still out, or taken): there is nothing to create here. Show where
+        // it stands instead of a form whose send button would only be refused. `replaceUrl` so
+        // the browser's Back button doesn't land on this form again.
+        if (!needsNewDispatch(incident.dispatch)) {
+          void this.router.navigate(['/incidents/progress', incident.id], { replaceUrl: true });
+          return;
+        }
         this.incident.set(incident);
         this.form.patchValue({
           requiredSkills: incident.requiredSkills.join(', '),
@@ -144,10 +154,24 @@ export class CreateDispatch implements OnInit {
         technicianIds: [...this.selectedIds()],
       })
       .subscribe({
-        next: () => this.router.navigate(['/incidents/queue']),
-        error: () => {
+        // Land on the ticket's progress, which now says who it was sent to and that it is
+        // awaiting confirmation — rather than back in a list where that state is easy to miss.
+        next: (dispatch) =>
+          this.router.navigate(['/incidents/progress', dispatch.incidentId], { replaceUrl: true }),
+        error: (error: unknown) => {
           this.submitting.set(false);
           this.submitFailed.set(true);
+          // The server says why in plain words for the cases a Controller can act on — someone
+          // else already dispatched this, a technician was deactivated meanwhile.
+          const server =
+            error instanceof HttpErrorResponse && [400, 409].includes(error.status)
+              ? (error.error as { error?: string } | null)?.error
+              : null;
+          this.submitMessage.set(
+            server && server !== 'Validation failed'
+              ? server
+              : "Couldn't create the dispatch. Try again.",
+          );
         },
       });
   }

@@ -173,3 +173,44 @@
   line-height: 1.5;
   color: var(--controller-color-muted);
 }
+
+// Demo-only answer controls (see TicketProgress.answerAs) — visibly marked, never in production.
+.tp-sim-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+.tp-sim-btn {
+  padding: 4px 10px;
+  font-size: 12.5px;
+}
+.tp-sim-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--controller-color-muted);
+}
+.tp-sim-tag {
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  background: var(--controller-color-accent);
+  color: #12140f;
+}
+.tp-sim-error {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--controller-color-accent);
+}
+
+.tp-resend {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+.tp-resend-error {
+  color: var(--controller-color-accent);
+}

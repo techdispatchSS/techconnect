@@ -96,7 +96,7 @@
       <span class="controller-shell-user-avatar">{{ initials() }}</span>
       <span class="controller-shell-user-meta">
         <span class="controller-shell-user-name">{{ displayName() }}</span>
-        <span class="controller-shell-user-role">Controller · On shift</span>
+        <span class="controller-shell-user-role">Controller</span>
       </span>
     </div>
 
@@ -123,9 +123,13 @@
         <div class="controller-shell-breadcrumb">Dispatch / {{ heading() }}</div>
         <h1 class="controller-shell-title">{{ heading() }}</h1>
       </div>
-      <span class="controller-shell-sync-badge">
+      <span
+        class="controller-shell-sync-badge"
+        [class.controller-shell-sync-badge--off]="freshdeskState() !== 'live'"
+        role="status"
+      >
         <span class="controller-shell-sync-dot"></span>
-        Freshdesk sync live
+        {{ freshdeskLabel() }}
       </span>
       <button
         type="button"

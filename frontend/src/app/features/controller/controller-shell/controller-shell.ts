@@ -28,7 +28,18 @@ import { ThemeService } from '../../../core/theme/theme.service';
 import { ChangePasswordDialog } from '../../../layout/change-password-dialog/change-password-dialog';
 import { ProfileDialog } from '../../../layout/profile-dialog/profile-dialog';
 import { PRIORITY_LABELS } from '../controller.models';
+import { FreshdeskStatusService } from '../freshdesk-status.service';
 import { IncidentAlert, NewIncidentNotifierService } from '../new-incident-notifier.service';
+
+/** "synced just now" / "synced 4 min ago" — coarse on purpose; the status is re-read every 30s. */
+function ago(iso: string): string {
+  const seconds = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+  if (seconds < 60) {
+    return 'synced just now';
+  }
+  const minutes = Math.round(seconds / 60);
+  return minutes < 60 ? `synced ${minutes} min ago` : 'synced over an hour ago';
+}
 
 /**
  * Owns the controller dashboard's own frame — sidebar, header and the routed screen
@@ -53,6 +64,7 @@ export class ControllerShell implements OnInit {
   private readonly themeService = inject(ThemeService);
   private readonly destroyRef = inject(DestroyRef);
   readonly notifier = inject(NewIncidentNotifierService);
+  private readonly freshdesk = inject(FreshdeskStatusService);
 
   readonly priorityLabels = PRIORITY_LABELS;
 
@@ -114,11 +126,40 @@ export class ControllerShell implements OnInit {
     return (current.data['heading'] as string | undefined) ?? 'Dispatch';
   });
 
+  /** Where the header badge's colour and wording come from — read from the backend, never
+   * assumed: a badge claiming a live sync nobody has built would be worse than none. */
+  readonly freshdeskState = computed<'live' | 'simulated' | 'off' | 'unknown'>(() => {
+    const status = this.freshdesk.status();
+    if (!status) {
+      return 'unknown';
+    }
+    if (status.mode === 'NOT_CONNECTED') {
+      return 'off';
+    }
+    return status.lastError ? 'off' : status.mode === 'SIMULATED' ? 'simulated' : 'live';
+  });
+
+  readonly freshdeskLabel = computed(() => {
+    const status = this.freshdesk.status();
+    if (!status) {
+      return 'Checking Freshdesk…';
+    }
+    if (status.mode === 'NOT_CONNECTED') {
+      return 'Freshdesk not connected';
+    }
+    if (status.lastError) {
+      return 'Freshdesk sync problem';
+    }
+    const name = status.mode === 'SIMULATED' ? 'Freshdesk simulated' : 'Freshdesk sync live';
+    return status.lastSuccessAt ? `${name} · ${ago(status.lastSuccessAt)}` : name;
+  });
+
   ngOnInit(): void {
     // A stored token can still be signed and unexpired yet already revoked by the backend —
     // confirm the session once here so a dead one lands on the login screen immediately.
     this.account.me().subscribe({ error: () => undefined });
     this.notifier.start(this.destroyRef);
+    this.freshdesk.start(this.destroyRef);
   }
 
   /** Sends the Controller to the queue with this incident selected — new incidents always

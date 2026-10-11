@@ -68,6 +68,13 @@ public class Dispatch {
     @Column(name = "notes_for_technician")
     private String notesForTechnician;
 
+    /** How many times invitees have been told about this dispatch (the first send counts). */
+    @Column(name = "notification_count", nullable = false)
+    private int notificationCount;
+
+    @Column(name = "last_notified_at")
+    private Instant lastNotifiedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 }

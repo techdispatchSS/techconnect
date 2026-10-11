@@ -206,7 +206,7 @@
 
         <div class="cd-submit-row">
           @if (submitFailed()) {
-            <span class="cd-submit-error">Couldn't create the dispatch. Try again.</span>
+            <span class="cd-submit-error" role="alert">{{ submitMessage() }}</span>
           }
           <span class="cd-submit-hint">Broadcasts expire after 10 minutes · first accept wins</span>
           <a routerLink="/incidents/queue" class="controller-btn controller-btn-secondary"

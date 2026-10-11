@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 import silver.solutions.techconnect.dto.response.controller.DispatchResponseEntry;
+import silver.solutions.techconnect.dto.response.controller.DispatchSummary;
 import silver.solutions.techconnect.dto.response.controller.IncidentProgressResponse;
 import silver.solutions.techconnect.dto.response.controller.IncidentResponse;
 import silver.solutions.techconnect.entity.Dispatch;
@@ -16,7 +17,16 @@ import silver.solutions.techconnect.entity.Incident;
 @Component
 public class IncidentMapper {
 
-    public IncidentResponse toIncidentResponse(Incident incident, Dispatch latestDispatch) {
+    /**
+     * @param latestDispatch the incident's most recent dispatch, or null if none was sent
+     * @param responses      every invitee's answer to that dispatch (empty if none)
+     * @param technicianNamesById names for at least the technicians who accepted
+     */
+    public IncidentResponse toIncidentResponse(
+            Incident incident,
+            Dispatch latestDispatch,
+            List<DispatchResponse> responses,
+            Map<UUID, String> technicianNamesById) {
         return new IncidentResponse(
                 incident.getId(),
                 ticketRef(incident),
@@ -36,7 +46,39 @@ public class IncidentMapper {
                 incident.getSlaDueAt(),
                 incident.getCreatedAt(),
                 latestDispatch == null ? List.of() : splitCsv(latestDispatch.getRequiredSkills()),
-                latestDispatch != null);
+                latestDispatch != null,
+                latestDispatch == null ? null : summarise(latestDispatch, responses, technicianNamesById));
+    }
+
+    /** "Sent to 3 technicians, 1 has declined, 2 are still to answer." */
+    public DispatchSummary summarise(
+            Dispatch dispatch, List<DispatchResponse> responses, Map<UUID, String> namesById) {
+        int pending = 0;
+        int declined = 0;
+        int noResponse = 0;
+        String acceptedName = null;
+        for (DispatchResponse response : responses) {
+            switch (response.getResponse()) {
+                case PENDING -> pending++;
+                case DECLINED -> declined++;
+                case NO_RESPONSE -> noResponse++;
+                case ACCEPTED -> acceptedName =
+                        namesById.getOrDefault(response.getTechnicianId(), "Unknown technician");
+            }
+        }
+        return new DispatchSummary(
+                dispatch.getId(),
+                dispatch.getDispatchType(),
+                dispatch.getStatus(),
+                dispatch.getCreatedAt(),
+                dispatch.getExpiresAt(),
+                responses.size(),
+                pending,
+                declined,
+                noResponse,
+                acceptedName,
+                dispatch.getNotificationCount(),
+                dispatch.getLastNotifiedAt());
     }
 
     /**
@@ -65,7 +107,7 @@ public class IncidentMapper {
                 .orElse(null);
 
         return new IncidentProgressResponse(
-                toIncidentResponse(incident, dispatch),
+                toIncidentResponse(incident, dispatch, responses, technicianNamesById),
                 dispatch.getId(),
                 dispatch.getDispatchType(),
                 dispatch.getStatus(),
@@ -83,7 +125,7 @@ public class IncidentMapper {
 
     /** Falls back to a short, stable reference for incidents a Controller logged directly
      * (no Freshdesk ticket) rather than showing a raw UUID in the queue. */
-    private String ticketRef(Incident incident) {
+    public static String ticketRef(Incident incident) {
         if (incident.getFreshdeskTicketId() != null && !incident.getFreshdeskTicketId().isBlank()) {
             return incident.getFreshdeskTicketId();
         }

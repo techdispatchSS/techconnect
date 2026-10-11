@@ -1,13 +1,19 @@
 package silver.solutions.techconnect.controller;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import silver.solutions.techconnect.dto.request.controller.CreateIncidentRequest;
 import silver.solutions.techconnect.dto.response.common.PageResponse;
 import silver.solutions.techconnect.dto.response.controller.IncidentKpiResponse;
 import silver.solutions.techconnect.dto.response.controller.IncidentProgressResponse;
@@ -48,6 +54,12 @@ public class IncidentController {
                 Sort.by(Sort.Direction.ASC, "slaDueAt").and(Sort.by(Sort.Direction.DESC, "createdAt")));
 
         return incidentService.list(status, priority, q, unassigned, pageable);
+    }
+
+    /** A Controller logging a fault they took by phone; it joins the queue as NEW. */
+    @PostMapping
+    public ResponseEntity<IncidentResponse> create(@Valid @RequestBody CreateIncidentRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(incidentService.create(request));
     }
 
     @GetMapping("/kpis")

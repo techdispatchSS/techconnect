@@ -481,6 +481,15 @@ textarea.controller-input {
   background: var(--controller-color-accent);
   display: block;
 }
+// Not connected, or the last sync failed: muted, so it can't be mistaken for "all well".
+.controller-shell-sync-badge--off {
+  border-color: var(--controller-chrome-divider);
+  background: transparent;
+  color: var(--controller-chrome-muted);
+}
+.controller-shell-sync-badge--off .controller-shell-sync-dot {
+  background: var(--controller-chrome-muted);
+}
 
 .controller-shell-content {
   flex: 1 1 auto;

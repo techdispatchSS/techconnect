@@ -7,6 +7,20 @@
         placeholder="Search ticket, client, site…"
       />
     </label>
+    <label class="iq-filter">
+      <span class="iq-filter-label">Priority</span>
+      <select
+        class="controller-input"
+        [value]="priorityFilter()"
+        (change)="setPriorityFilter($any($event.target).value)"
+      >
+        <option value="">All priorities</option>
+        @for (priority of priorities; track priority) {
+          <option [value]="priority">{{ priorityLabels[priority] }}</option>
+        }
+      </select>
+    </label>
+    <a routerLink="/incidents/new" class="controller-btn controller-btn-secondary">Log incident</a>
     <button
       type="button"
       class="controller-btn controller-btn-primary"
@@ -16,6 +30,34 @@
       {{ selected() ? actionLabel(selected()!) : 'Create dispatch' }}
     </button>
   </div>
+
+  @if (simulation()) {
+    <div class="iq-sim" role="group" aria-label="Demo controls">
+      <span class="iq-sim-tag">Demo</span>
+      <span class="iq-sim-text"
+        >Freshdesk is simulated. Raise a ticket to see it arrive the way a real one would.</span
+      >
+      <button
+        type="button"
+        class="controller-btn controller-btn-secondary"
+        [disabled]="simulating()"
+        (click)="simulateTicket(false)"
+      >
+        Simulate Freshdesk ticket
+      </button>
+      <button
+        type="button"
+        class="controller-btn controller-btn-secondary"
+        [disabled]="simulating()"
+        (click)="simulateTicket(true)"
+      >
+        Simulate overdue ticket
+      </button>
+      @if (simulationError(); as message) {
+        <span class="iq-sim-error" role="alert">{{ message }}</span>
+      }
+    </div>
+  }
 
   @if (kpis(); as k) {
     <div class="iq-kpis">
@@ -71,6 +113,7 @@
                 <th>Client</th>
                 <th>Site</th>
                 <th>Issue</th>
+                <th>Dispatch</th>
                 <th>Priority</th>
                 <th>SLA</th>
                 <th style="text-align: right">Age</th>
@@ -79,10 +122,26 @@
             <tbody>
               @for (row of incidents(); track row.id) {
                 <tr (click)="select(row)" [class.iq-row--selected]="selected()?.id === row.id">
-                  <td class="iq-ticket">{{ row.ticketRef }}</td>
+                  <td class="iq-ticket">
+                    <!-- The row is clickable for a mouse; this is how the keyboard gets in. -->
+                    <button
+                      type="button"
+                      class="iq-ticket-btn"
+                      [attr.aria-current]="selected()?.id === row.id ? 'true' : null"
+                      [attr.aria-label]="'Select ' + row.ticketRef + ', ' + row.clientName"
+                      (click)="select(row); $event.stopPropagation()"
+                    >
+                      {{ row.ticketRef }}
+                    </button>
+                  </td>
                   <td class="iq-client">{{ row.clientName }}</td>
                   <td>{{ row.siteAddress ?? '—' }}</td>
                   <td>{{ row.issueType ?? '—' }}</td>
+                  <td>
+                    <span [class]="chipClass(row)" [attr.title]="stateOf(row).detail">{{
+                      stateOf(row).chip
+                    }}</span>
+                  </td>
                   <td>
                     @if (row.priority) {
                       <span [class]="priorityClass(row)">{{ priorityLabels[row.priority] }}</span>
@@ -98,6 +157,29 @@
           </table>
         }
       </div>
+
+      @if (totalPages() > 1) {
+        <nav class="iq-pager" aria-label="Incident queue pages">
+          <span class="iq-pager-range">{{ rangeLabel() }}</span>
+          <button
+            type="button"
+            class="controller-btn controller-btn-secondary"
+            [disabled]="page() === 0"
+            (click)="previousPage()"
+          >
+            Previous
+          </button>
+          <span class="iq-pager-page">Page {{ page() + 1 }} of {{ totalPages() }}</span>
+          <button
+            type="button"
+            class="controller-btn controller-btn-secondary"
+            [disabled]="page() + 1 >= totalPages()"
+            (click)="nextPage()"
+          >
+            Next
+          </button>
+        </nav>
+      }
     </section>
 
     @if (selected(); as sel) {
@@ -126,8 +208,40 @@
             <span>Phone</span><span>{{ sel.contactPhone ?? '—' }}</span>
           </div>
           <div class="iq-fact">
-            <span>Status</span><span>{{ sel.status }}</span>
+            <span>Status</span><span>{{ statusLabel(sel) }}</span>
           </div>
+        </div>
+
+        <div [class]="'iq-dispatch iq-dispatch--' + stateOf(sel).kind">
+          <span class="iq-dispatch-label">Dispatch</span>
+          <span class="iq-dispatch-headline">{{ stateOf(sel).headline }}</span>
+          @if (stateOf(sel).detail; as detail) {
+            <span class="iq-dispatch-detail">{{ detail }}</span>
+          }
+          @if (timeLeftOf(sel); as left) {
+            <span class="iq-dispatch-detail">{{ left }}</span>
+          }
+          @if (notifiedLabel(sel); as notified) {
+            <span class="iq-dispatch-detail">{{ notified }}</span>
+          }
+          @if (canResend(sel)) {
+            <button
+              type="button"
+              class="controller-btn controller-btn-secondary controller-btn-block"
+              [disabled]="resending() !== null"
+              (click)="resend(sel)"
+            >
+              {{ resending() === sel.dispatch?.id ? 'Sending…' : 'Resend notification' }}
+            </button>
+          }
+          @if (resendFeedback(); as feedback) {
+            <span
+              class="iq-dispatch-feedback"
+              [class.iq-dispatch-feedback--error]="!feedback.ok"
+              role="status"
+              >{{ feedback.text }}</span
+            >
+          }
         </div>
 
         @if (slaCountdown(sel); as countdown) {
@@ -153,10 +267,16 @@
           </div>
         }
 
-        @if (sel.description || sel.additionalNotes) {
+        @if (sel.description) {
           <div class="iq-notes">
-            <span class="iq-notes-label">Notes</span>
-            <span class="iq-notes-text">{{ sel.description ?? sel.additionalNotes }}</span>
+            <span class="iq-notes-label">What is wrong</span>
+            <span class="iq-notes-text">{{ sel.description }}</span>
+          </div>
+        }
+        @if (sel.additionalNotes) {
+          <div class="iq-notes">
+            <span class="iq-notes-label">Additional notes</span>
+            <span class="iq-notes-text">{{ sel.additionalNotes }}</span>
           </div>
         }
 

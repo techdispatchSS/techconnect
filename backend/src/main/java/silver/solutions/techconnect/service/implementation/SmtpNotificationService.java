@@ -111,6 +111,45 @@ public class SmtpNotificationService implements NotificationService {
                 """.formatted(firstName));
     }
 
+    @Override
+    public void sendDispatchNotice(User technician, DispatchNotice notice) {
+        String subject = (notice.reminder() ? "Reminder: job waiting for your answer — " : "New job: ")
+                + notice.ticketRef() + " · " + notice.clientName()
+                + (notice.priority() == null ? "" : " (" + notice.priority().name().toLowerCase() + ")");
+        send(technician, subject, """
+                Hi %s,
+
+                %s
+
+                Ticket:   %s
+                Client:   %s
+                Site:     %s
+                Issue:    %s
+                Priority: %s
+                %s
+                Respond by: %s UTC
+
+                Sign in to TechConnect to accept or decline: %s
+                """.formatted(
+                technician.getName(),
+                notice.reminder()
+                        ? "A job sent to you is still waiting for an answer."
+                        : "A new job has been sent to you and is waiting for your answer.",
+                notice.ticketRef(),
+                notice.clientName(),
+                orDash(notice.siteAddress()),
+                orDash(notice.issueType()),
+                notice.priority() == null ? "—" : notice.priority().name().toLowerCase(),
+                notice.notes() == null || notice.notes().isBlank() ? "" : "Notes:    " + notice.notes(),
+                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                        .withZone(java.time.ZoneOffset.UTC).format(notice.expiresAt()),
+                properties.appBaseUrl()));
+    }
+
+    private static String orDash(String value) {
+        return value == null || value.isBlank() ? "—" : value;
+    }
+
     private void send(User user, String subject, String body) {
         sendTo(user.getEmail(), subject, body);
     }

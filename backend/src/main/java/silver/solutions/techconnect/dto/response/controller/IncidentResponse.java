@@ -28,5 +28,7 @@ public record IncidentResponse(
         /** Whether any dispatch has ever been created for this incident. Status alone can't
          * say: an OVERDUE incident may or may not have one, and the dashboard needs to offer
          * "Create dispatch" versus "View progress" accordingly. */
-        boolean hasDispatch) {
+        boolean hasDispatch,
+        /** The latest dispatch and how it stands; null if none has been sent. */
+        DispatchSummary dispatch) {
 }

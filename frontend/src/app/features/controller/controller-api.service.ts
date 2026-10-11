@@ -4,12 +4,17 @@ import { Observable } from 'rxjs';
 
 import {
   CreateDispatchRequest,
+  CreateIncidentRequest,
+  DispatchAnswer,
   DispatchCreateResponse,
+  FreshdeskStatus,
   Incident,
   IncidentKpis,
   IncidentListFilters,
   IncidentProgress,
   PageResponse,
+  ResendResult,
+  SimulatedTicket,
   TechnicianCandidate,
 } from './controller.models';
 
@@ -68,5 +73,41 @@ export class ControllerApiService {
 
   createDispatch(request: CreateDispatchRequest): Observable<DispatchCreateResponse> {
     return this.http.post<DispatchCreateResponse>('v1/controller/dispatches', request);
+  }
+
+  /** Notifies the technicians who haven't answered again. 409 (with a reason) once it has been
+   * answered or expired, or if they were notified moments ago. */
+  resendDispatch(dispatchId: string): Observable<ResendResult> {
+    return this.http.post<ResendResult>(`v1/controller/dispatches/${dispatchId}/resend`, null);
+  }
+
+  /** Logs an incident the Controller took by phone; it joins the queue as NEW. */
+  createIncident(request: CreateIncidentRequest): Observable<Incident> {
+    return this.http.post<Incident>('v1/controller/incidents', request);
+  }
+
+  freshdeskStatus(): Observable<FreshdeskStatus> {
+    return this.http.get<FreshdeskStatus>('v1/controller/integrations/freshdesk');
+  }
+
+  /** Demo only (404 unless simulation is enabled): raises a ticket in the simulated Freshdesk. */
+  simulateFreshdeskTicket(overdue: boolean): Observable<SimulatedTicket> {
+    return this.http.post<SimulatedTicket>(
+      'v1/controller/simulation/freshdesk-tickets',
+      null,
+      overdue ? { params: new HttpParams().set('overdue', 'true') } : {},
+    );
+  }
+
+  /** Demo only: answers a dispatch as one of the technicians it was sent to. */
+  simulateTechnicianResponse(
+    dispatchId: string,
+    technicianId: string,
+    response: 'ACCEPTED' | 'DECLINED',
+  ): Observable<DispatchAnswer> {
+    return this.http.post<DispatchAnswer>(
+      `v1/controller/simulation/dispatches/${dispatchId}/respond`,
+      { technicianId, response },
+    );
   }
 }

@@ -1,5 +1,7 @@
 package silver.solutions.techconnect.service;
 
+import java.time.Instant;
+import silver.solutions.techconnect.entity.IncidentPriority;
 import silver.solutions.techconnect.entity.User;
 
 /**
@@ -28,4 +30,22 @@ public interface NotificationService {
 
     /** Tells an applicant their application was not successful and cannot be resubmitted. */
     void sendApplicationRejected(String email, String firstName);
+
+    /** What a technician needs to know about a job that has been sent to them. */
+    record DispatchNotice(
+            String ticketRef,
+            String clientName,
+            String siteAddress,
+            String issueType,
+            IncidentPriority priority,
+            String notes,
+            Instant expiresAt,
+            /** True when this is a repeat of an earlier notification, not the first. */
+            boolean reminder) {}
+
+    /**
+     * Tells a technician a job has been sent to them and is waiting for their answer. Sent when
+     * the dispatch is created, and again each time the Controller resends it.
+     */
+    void sendDispatchNotice(User technician, DispatchNotice notice);
 }

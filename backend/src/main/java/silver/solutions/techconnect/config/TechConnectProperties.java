@@ -16,7 +16,22 @@ public record TechConnectProperties(
         Mail mail,
         Aws aws,
         Security security,
-        Applications applications) {
+        Applications applications,
+        Simulation simulation) {
+
+    /**
+     * Stand-ins for parties that are not connected yet, so the dashboard can be exercised and
+     * user-tested end to end: a simulated Freshdesk (tickets appear on demand and flow through
+     * the real sync path) and a "respond as technician" control for dispatches, since the
+     * technician app does not exist. Off unless explicitly enabled — never enable it against
+     * real operations, because it makes up incidents.
+     */
+    public record Simulation(boolean enabled) {}
+
+    /** Null-safe: tests and callers that build the properties by hand may omit the block. */
+    public boolean simulationEnabled() {
+        return simulation != null && simulation.enabled();
+    }
 
     /**
      * How many reverse proxies sit between the internet and this app and append to

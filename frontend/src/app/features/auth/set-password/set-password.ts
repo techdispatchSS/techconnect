@@ -10,6 +10,7 @@ import {
   passwordValidators,
   passwordsMatch,
 } from '../../../shared/password.validators';
+import { Logo } from '../../../shared/logo/logo';
 
 export type SetPasswordMode = 'ACTIVATE' | 'RESET';
 
@@ -19,7 +20,7 @@ export type SetPasswordMode = 'ACTIVATE' | 'RESET';
  */
 @Component({
   selector: 'app-set-password',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, Logo],
   templateUrl: './set-password.html',
   styleUrl: '../auth-page.scss',
 })

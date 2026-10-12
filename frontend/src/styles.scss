@@ -36,6 +36,9 @@ html {
 html {
   color-scheme: light;
 
+  // Grey of the TechConnect logo (shared/logo); its orange is fixed.
+  --tc-logo-ink: #4b5054;
+
   --mat-sys-primary: #17181c;
   --mat-sys-on-primary: #ffffff;
   --mat-sys-primary-container: #e9e9ec;
@@ -79,6 +82,8 @@ html {
 
 html[data-theme='dark'] {
   color-scheme: dark;
+
+  --tc-logo-ink: #dfe1e4;
 
   --mat-sys-primary: #e2e3e6;
   --mat-sys-on-primary: #17181c;

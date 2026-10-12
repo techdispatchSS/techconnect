@@ -17,6 +17,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { ChangePasswordDialog } from '../change-password-dialog/change-password-dialog';
 import { ProfileDialog } from '../profile-dialog/profile-dialog';
+import { Logo } from '../../shared/logo/logo';
 
 interface NavItem {
   readonly label: string;
@@ -48,6 +49,7 @@ const NAV_ITEMS: readonly NavItem[] = [
     MatMenuModule,
     MatSidenavModule,
     MatToolbarModule,
+    Logo,
   ],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',

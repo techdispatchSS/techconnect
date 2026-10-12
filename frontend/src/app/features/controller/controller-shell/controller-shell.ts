@@ -30,6 +30,7 @@ import { ProfileDialog } from '../../../layout/profile-dialog/profile-dialog';
 import { PRIORITY_LABELS } from '../controller.models';
 import { FreshdeskStatusService } from '../freshdesk-status.service';
 import { IncidentAlert, NewIncidentNotifierService } from '../new-incident-notifier.service';
+import { Logo } from '../../../shared/logo/logo';
 
 /** "synced just now" / "synced 4 min ago" — coarse on purpose; the status is re-read every 30s. */
 function ago(iso: string): string {
@@ -50,7 +51,7 @@ function ago(iso: string): string {
 @Component({
   selector: 'app-controller-shell',
   encapsulation: ViewEncapsulation.None,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatDialogModule, MatMenuModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatDialogModule, MatMenuModule, Logo],
   templateUrl: './controller-shell.html',
   styleUrl: './controller-shell.scss',
 })

@@ -29,6 +29,7 @@ import { ProfileDialog } from '../../../layout/profile-dialog/profile-dialog';
 import { AdminNavCountsService } from '../admin-nav-counts.service';
 import { Skeleton } from '../../../shared/skeleton/skeleton';
 import { AdminIcon } from '../ui/admin-icon/admin-icon';
+import { Logo } from '../../../shared/logo/logo';
 
 interface NavItem {
   readonly label: string;
@@ -56,6 +57,7 @@ interface NavItem {
     MatMenuModule,
     AdminIcon,
     Skeleton,
+    Logo,
   ],
   templateUrl: './admin-shell.html',
   styleUrl: './admin-shell.scss',

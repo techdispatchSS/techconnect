@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.jayway.jsonpath.JsonPath;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -134,6 +136,81 @@ class IncidentQueueIntegrationTest extends AbstractDispatchIntegrationTest {
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
                 .andExpect(jsonPath("$.overdue").value(true));
         assertThat(overdueCount(controller)).isEqualTo(before + 2);
+    }
+
+    @Test
+    void aManuallyLoggedIncidentIsFoundByTheReferenceShownInTheTable() throws Exception {
+        String controller = controllerToken();
+        Incident logged = incident("RefSearchCo", IncidentStatus.NEW, IncidentPriority.MEDIUM);
+        String shortId = logged.getId().toString().substring(0, 8);
+        String reference = "INC-" + shortId.toUpperCase();
+
+        // Exactly what the table shows, in any case, with the prefix optional, and as a fragment.
+        assertSearchFinds(controller, reference, logged);
+        assertSearchFinds(controller, reference.toLowerCase(), logged);
+        assertSearchFinds(controller, shortId.toUpperCase(), logged);
+        assertSearchFinds(controller, "  " + reference + "  ", logged);
+        assertSearchFinds(controller, shortId.substring(0, 6), logged);
+
+        // The table row itself carries that same reference.
+        mvc.perform(get("/v1/controller/incidents/{id}", logged.getId())
+                        .header("Authorization", "Bearer " + controller))
+                .andExpect(jsonPath("$.ticketRef").value(reference));
+    }
+
+    @Test
+    void anIncidentWithAFreshdeskTicketIsNotFoundByAReferenceItDoesNotShow() throws Exception {
+        String controller = controllerToken();
+        Incident ticketed = incident("TicketedCo", IncidentStatus.NEW, IncidentPriority.LOW);
+        String ticketId = "FD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        ticketed.setFreshdeskTicketId(ticketId);
+        incidents.save(ticketed);
+
+        assertSearchFinds(controller, ticketId, ticketed);
+        assertSearchFinds(controller, ticketId.toLowerCase(), ticketed);
+        // Its row shows the Freshdesk id, so the id-derived reference is not one it answers to.
+        assertSearchFinds(controller, "INC-" + ticketed.getId().toString().substring(0, 8));
+    }
+
+    @Test
+    void percentAndUnderscoreInTheSearchMatchOnlyThemselves() throws Exception {
+        String controller = controllerToken();
+        String tag = UUID.randomUUID().toString().substring(0, 8);
+        Incident percent = incident("Pct%Co-" + tag, IncidentStatus.NEW, IncidentPriority.LOW);
+        Incident percentLookalike = incident("PctXCo-" + tag, IncidentStatus.NEW, IncidentPriority.LOW);
+        Incident underscore = incident("Und_Co-" + tag, IncidentStatus.NEW, IncidentPriority.LOW);
+        Incident underscoreLookalike = incident("UndXCo-" + tag, IncidentStatus.NEW, IncidentPriority.LOW);
+        Incident backslash = incident("Back\\Co-" + tag, IncidentStatus.NEW, IncidentPriority.LOW);
+
+        // As wildcards "%" would match the look-alike too, and "_" any single character.
+        assertSearchFinds(controller, "Pct%Co-" + tag, percent);
+        assertSearchFinds(controller, "Und_Co-" + tag, underscore);
+        assertSearchFinds(controller, "Back\\Co-" + tag, backslash);
+        assertSearchFinds(controller, "%Co-" + tag, percent);
+        assertSearchFinds(controller, "_Co-" + tag + "-nope");
+
+        // A bare "%" is a literal percent sign, not "everything".
+        String body = mvc.perform(get("/v1/controller/incidents")
+                        .param("q", "%").param("size", "100")
+                        .header("Authorization", "Bearer " + controller))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        List<String> names = JsonPath.read(body, "$.content[*].clientName");
+        assertThat(names).isNotEmpty().allMatch(name -> name.contains("%"));
+        assertThat(names).contains(percent.getClientName())
+                .doesNotContain(percentLookalike.getClientName(), underscoreLookalike.getClientName());
+    }
+
+    /** Searches the queue by {@code q} and expects exactly the given incidents, no others. */
+    private void assertSearchFinds(String token, String q, Incident... expected) throws Exception {
+        String body = mvc.perform(get("/v1/controller/incidents")
+                        .param("q", q).param("size", "100")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        List<String> ids = JsonPath.read(body, "$.content[*].id");
+        assertThat(ids).as("results for q=%s", q).containsExactlyInAnyOrder(
+                Arrays.stream(expected).map(i -> i.getId().toString()).toArray(String[]::new));
     }
 
     private void assertOverdueMatches(String token, String name, UUID expected) throws Exception {

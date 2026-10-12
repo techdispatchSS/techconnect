@@ -192,6 +192,11 @@
           @if (sel.priority) {
             <span [class]="priorityClass(sel)">{{ priorityLabels[sel.priority] }}</span>
           }
+          @if (selectedOffPage()) {
+            <span class="iq-detail-offpage"
+              >Not in the rows shown — it is on another page or outside this view.</span
+            >
+          }
         </div>
 
         <div class="iq-detail-facts">

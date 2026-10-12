@@ -81,10 +81,26 @@ export class IncidentQueue implements OnInit {
   readonly resendFeedback = signal<{ ok: boolean; text: string } | null>(null);
   readonly simulationError = signal<string | null>(null);
 
+  /** The deep-linked incident, fetched on its own: it is sorted by SLA like everything else, so
+   * it may sit on a page other than the one loaded (a Medium incident logged just now lands
+   * behind the urgent ones). Without this the panel would fall back to the first row. */
+  private readonly pinned = signal<Incident | null>(null);
+
   readonly selected = computed<Incident | null>(() => {
     const id = this.selectedId();
     const list = this.incidents();
-    return list.find((incident) => incident.id === id) ?? (list.length > 0 ? list[0] : null);
+    const pinned = this.pinned();
+    return (
+      list.find((incident) => incident.id === id) ??
+      (pinned && pinned.id === id ? pinned : null) ??
+      (list.length > 0 ? list[0] : null)
+    );
+  });
+
+  /** The panel is showing an incident that is not among the rows currently listed. */
+  readonly selectedOffPage = computed(() => {
+    const selected = this.selected();
+    return selected !== null && !this.incidents().some((incident) => incident.id === selected.id);
   });
 
   readonly tabCount = computed(() => {
@@ -137,7 +153,14 @@ export class IncidentQueue implements OnInit {
         this.load();
       };
       this.api.getIncident(id).subscribe({
-        next: (incident) => open(incident.status === 'IN_PROGRESS' ? 'In progress' : 'New'),
+        next: (incident) => {
+          // Selected now rather than when the list arrives: it may well be on a later page, and
+          // waiting for it to show up in the rows would leave the panel on the wrong ticket.
+          this.lastAppliedPreselectId = id;
+          this.pinned.set(incident);
+          this.selectedId.set(id);
+          open(incident.status === 'IN_PROGRESS' ? 'In progress' : 'New');
+        },
         error: () => open('New'),
       });
     });
@@ -184,6 +207,7 @@ export class IncidentQueue implements OnInit {
   select(incident: Incident): void {
     // A message about one ticket's resend doesn't belong under another.
     this.resendFeedback.set(null);
+    this.pinned.set(null);
     this.selectedId.set(incident.id);
   }
 
@@ -355,12 +379,31 @@ export class IncidentQueue implements OnInit {
 
   /** A new filter, search or tab starts again from the top of the list. */
   private firstPage(): void {
+    // A different view: the incident that was deep-linked no longer belongs in the panel.
+    this.pinned.set(null);
     this.page.set(0);
     this.load();
   }
 
   private loadKpis(): void {
     this.api.kpis().subscribe({ next: (kpis) => this.kpis.set(kpis), error: () => undefined });
+  }
+
+  /** The pinned incident is not in the listed rows, so the refresh that keeps those current
+   * would otherwise leave it showing a dispatch state that has since moved on. */
+  private refreshPinned(rows: Incident[]): void {
+    const pinned = this.pinned();
+    if (!pinned || rows.some((incident) => incident.id === pinned.id)) {
+      return;
+    }
+    this.api.getIncident(pinned.id).subscribe({
+      next: (fresh) => {
+        if (this.pinned()?.id === fresh.id) {
+          this.pinned.set(fresh);
+        }
+      },
+      error: () => undefined,
+    });
   }
 
   /** `silent` is the background refresh: it swaps the rows in place rather than blanking the
@@ -408,6 +451,9 @@ export class IncidentQueue implements OnInit {
           this.totalPages.set(page.totalPages);
           this.totalElements.set(page.totalElements);
           this.loading.set(false);
+          if (silent) {
+            this.refreshPinned(page.content);
+          }
 
           if (this.preselectId && this.preselectId !== this.lastAppliedPreselectId) {
             const match = page.content.find((incident) => incident.id === this.preselectId);

@@ -1,7 +1,10 @@
 <div class="login-page">
   <aside class="login-hero">
+    <!-- A large, faint mark: gives the otherwise empty panel a visual anchor. Purely decorative. -->
+    <app-logo class="login-hero-watermark" variant="mark" height="480px" [decorative]="true" />
+
     <div class="login-hero-brand">
-      <app-logo class="login-hero-brand-logo" variant="lockup" height="46px" />
+      <app-logo class="login-hero-brand-logo" variant="lockup" height="64px" />
       <span class="login-hero-brand-sub">Field operations platform</span>
     </div>
 
@@ -40,7 +43,7 @@
 
   <main class="login-main">
     <div class="login-form-wrap">
-      <app-logo class="login-mobile-logo" variant="lockup" height="36px" />
+      <app-logo class="login-mobile-logo" variant="lockup" height="44px" />
       <div class="login-title-block">
         <div class="login-title-row">
           <h4 class="login-title">Sign in</h4>

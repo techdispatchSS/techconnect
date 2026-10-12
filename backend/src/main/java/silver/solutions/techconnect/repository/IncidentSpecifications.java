@@ -1,5 +1,6 @@
 package silver.solutions.techconnect.repository;
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Subquery;
 import java.time.Instant;
@@ -15,6 +16,8 @@ import silver.solutions.techconnect.entity.IncidentStatus;
 
 /** Query predicates backing the controller dashboard's incident queue. */
 public final class IncidentSpecifications {
+
+    private static final char LIKE_ESCAPE = '\\';
 
     private IncidentSpecifications() {}
 
@@ -43,11 +46,23 @@ public final class IncidentSpecifications {
                 predicates.add(cb.equal(root.get("priority"), priority));
             }
             if (query != null && !query.isBlank()) {
-                String like = "%" + query.trim().toLowerCase() + "%";
+                String like = "%" + escapeLike(query.trim().toLowerCase()) + "%";
+
+                // An incident logged by hand has no Freshdesk id and is shown as "INC-" plus the
+                // first 8 characters of its id (IncidentMapper.ticketRef). That string is not
+                // stored, so match the same expression: it also makes the "INC-" prefix optional.
+                // JPA's as(String.class) is only an unchecked type-cast, not an SQL cast, hence str().
+                Expression<String> idText = cb.lower(cb.function("str", String.class, root.get("id")));
+                Expression<String> derivedRef = cb.concat("inc-", cb.substring(idText, 1, 8));
+                Predicate hasNoTicketId = cb.or(
+                        cb.isNull(root.get("freshdeskTicketId")),
+                        cb.equal(cb.trim(root.<String>get("freshdeskTicketId")), ""));
+
                 predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("clientName")), like),
-                        cb.like(cb.lower(root.get("siteAddress")), like),
-                        cb.like(cb.lower(root.get("freshdeskTicketId")), like)));
+                        cb.like(cb.lower(root.get("clientName")), like, LIKE_ESCAPE),
+                        cb.like(cb.lower(root.get("siteAddress")), like, LIKE_ESCAPE),
+                        cb.like(cb.lower(root.get("freshdeskTicketId")), like, LIKE_ESCAPE),
+                        cb.and(hasNoTicketId, cb.like(derivedRef, like, LIKE_ESCAPE))));
             }
             if (unassignedOnly) {
                 Subquery<UUID> subquery = criteriaQuery.subquery(UUID.class);
@@ -62,5 +77,10 @@ public final class IncidentSpecifications {
                     ? cb.conjunction()
                     : cb.and(predicates.toArray(Predicate[]::new));
         };
+    }
+
+    /** Makes {@code %} and {@code _} (and the escape character itself) match literally. */
+    private static String escapeLike(String text) {
+        return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 }

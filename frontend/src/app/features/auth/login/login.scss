@@ -69,6 +69,8 @@
 // technician activating their account one-handed on a 5-inch phone needs the
 // sign-in form immediately, not a scrolled-past marketing panel. ──
 .login-hero {
+  // Always-dark panel in both themes, so the logo's grey must be light here.
+  --tc-logo-ink: #f2f2f3;
   background: var(--login-accent-900);
   color: #f2f2f3;
   padding: 44px 52px;
@@ -81,8 +83,10 @@
   flex-direction: column;
   gap: 3px;
 }
-.login-hero-brand-name {
-  font-size: 22px;
+.login-mobile-logo {
+  // Only shown once the hero panel (which carries the logo) is hidden — see the media query.
+  display: none;
+  margin-bottom: 22px;
 }
 .login-hero-brand-sub {
   font-size: 11.5px;
@@ -384,6 +388,9 @@
   }
   .login-hero {
     display: none;
+  }
+  .login-mobile-logo {
+    display: inline-flex;
   }
   .login-main {
     padding: 32px 20px;

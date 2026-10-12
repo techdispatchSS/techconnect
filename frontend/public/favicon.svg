@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 40 590 520">
+  <style>
+    .ink { fill: #4b5054; }
+    .ink-ring { fill: none; stroke: #4b5054; stroke-width: 20; }
+    @media (prefers-color-scheme: dark) {
+      .ink { fill: #dfe1e4; }
+      .ink-ring { stroke: #dfe1e4; }
+    }
+  </style>
+  <defs>
+    <mask id="m" maskUnits="userSpaceOnUse" x="0" y="0" width="600" height="600">
+      <rect width="600" height="600" fill="#fff"/>
+      <circle cx="48" cy="196" r="6"/><circle cx="33" cy="245" r="9"/><circle cx="80" cy="294" r="9"/><circle cx="108" cy="254" r="6"/><circle cx="141" cy="312" r="6"/><circle cx="28" cy="332" r="7.5"/><circle cx="70" cy="360" r="7.5"/><circle cx="119" cy="357" r="9"/><circle cx="166" cy="390" r="7.5"/><circle cx="70" cy="425" r="6"/><circle cx="117" cy="425" r="9"/><circle cx="185" cy="448" r="9"/><circle cx="131" cy="485" r="9"/>
+    </mask>
+  </defs>
+  <g mask="url(#m)">
+    <path d="M141.6 191.25 A217.5 217.5 0 1 1 163.4 439.8" fill="none" stroke="#EE7611" stroke-width="65"/>
+    <g stroke="#EE7611" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="48" y1="196" x2="33" y2="245"/><line x1="33" y1="245" x2="80" y2="294"/><line x1="80" y1="294" x2="108" y2="254"/><line x1="80" y1="294" x2="119" y2="357"/><line x1="141" y1="312" x2="119" y2="357"/><line x1="28" y1="332" x2="70" y2="360"/><line x1="70" y1="360" x2="119" y2="357"/><line x1="119" y1="357" x2="117" y2="425"/><line x1="117" y1="425" x2="70" y2="425"/><line x1="117" y1="425" x2="185" y2="448"/><line x1="166" y1="390" x2="185" y2="448"/><line x1="185" y1="448" x2="131" y2="485"/>
+      <polyline points="291,402 215,402 166,390"/><polyline points="225,225 140,225 108,254"/>
+    </g>
+  </g>
+  <g stroke="#EE7611" fill="none">
+    <circle cx="48" cy="196" r="8.5" stroke-width="5"/><circle cx="33" cy="245" r="14" stroke-width="10"/><circle cx="80" cy="294" r="14" stroke-width="10"/><circle cx="108" cy="254" r="8.5" stroke-width="5"/><circle cx="141" cy="312" r="8.5" stroke-width="5"/><circle cx="28" cy="332" r="11" stroke-width="7"/><circle cx="70" cy="360" r="11" stroke-width="7"/><circle cx="119" cy="357" r="14" stroke-width="10"/><circle cx="166" cy="390" r="11" stroke-width="7"/><circle cx="70" cy="425" r="8.5" stroke-width="5"/><circle cx="117" cy="425" r="14" stroke-width="10"/><circle cx="185" cy="448" r="14" stroke-width="10"/><circle cx="131" cy="485" r="14" stroke-width="10"/>
+  </g>
+  <circle cx="153" cy="242" r="13" fill="#EE7611"/>
+  <rect class="ink" x="225" y="175" width="210" height="58"/>
+  <rect class="ink" x="301" y="175" width="58" height="195"/>
+  <circle class="ink-ring" cx="330" cy="402" r="29"/>
+</svg>

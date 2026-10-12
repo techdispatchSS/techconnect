@@ -107,25 +107,6 @@ $td-rail-hover-bg: rgb(23 24 28 / 5%);
   padding: 1.25rem 1.25rem 1rem;
 }
 
-.shell-brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  flex: none;
-  border-radius: 0.625rem;
-  background: $td-rail-active-bg;
-  color: $td-rail-active-fg;
-  font: var(--mat-sys-title-small);
-  font-weight: 700;
-}
-
-.shell-brand-name {
-  color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-title-medium);
-}
-
 .shell-nav-list {
   // Without this the list sits flush against the sidenav's top, bottom, left and right
   // edges, so the active item's pill touches the container walls instead of floating

@@ -255,6 +255,8 @@ textarea.controller-input {
 }
 
 .controller-shell-sidebar {
+  // The rail is dark in both themes, so the logo's grey is light here.
+  --tc-logo-ink: #f2f2f3;
   grid-column: 1;
   background: var(--controller-color-sidebar);
   border-right: 1px solid var(--controller-chrome-divider);
@@ -281,33 +283,10 @@ textarea.controller-input {
   align-items: center;
   gap: 11px;
 }
-.controller-shell-brand-mark {
-  width: 30px;
-  height: 30px;
-  flex: none;
-  border: 2px solid var(--controller-color-accent);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-family: var(--controller-font-heading);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--controller-color-accent);
-}
 .controller-shell-brand-text {
   display: flex;
   flex-direction: column;
   line-height: 1.15;
-}
-.controller-shell-brand-name {
-  font-family: var(--controller-font-heading);
-  font-weight: 700;
-  font-size: 17px;
-  letter-spacing: -0.015em;
-}
-.controller-shell-brand-name em {
-  font-style: normal;
-  color: var(--controller-color-accent);
 }
 .controller-shell-brand-sub {
   font-size: 9.5px;

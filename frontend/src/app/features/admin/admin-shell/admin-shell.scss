@@ -478,6 +478,8 @@ textarea.admin-input {
 }
 
 .admin-shell-sidebar {
+  // The rail is dark in both themes, so the logo's grey is light here.
+  --tc-logo-ink: #f2f2f3;
   grid-column: 1;
   background: var(--admin-neutral-900);
   color: #f2f2f3;
@@ -503,13 +505,6 @@ textarea.admin-input {
   display: flex;
   flex-direction: column;
   gap: 3px;
-}
-.admin-shell-brand-name {
-  font-family: var(--admin-font-heading);
-  font-weight: 600;
-  font-size: 20px;
-  letter-spacing: -0.01em;
-  line-height: 1;
 }
 .admin-shell-brand-sub {
   font-size: 11.5px;

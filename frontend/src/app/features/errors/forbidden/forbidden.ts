@@ -4,11 +4,12 @@ import { MatCardModule } from '@angular/material/card';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { Logo } from '../../../shared/logo/logo';
 
 /** Shown when a signed-in user reaches an area their role does not cover (FR-01). */
 @Component({
   selector: 'app-forbidden',
-  imports: [MatButtonModule, MatCardModule],
+  imports: [MatButtonModule, MatCardModule, Logo],
   templateUrl: './forbidden.html',
   styleUrl: '../../auth/auth-page.scss',
 })

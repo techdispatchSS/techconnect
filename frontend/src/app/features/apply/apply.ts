@@ -25,6 +25,7 @@ import {
   isValidSouthAfricanId,
   problemWithFile,
 } from './apply.models';
+import { Logo } from '../../shared/logo/logo';
 
 /**
  * Runs a validator against the trimmed value. Pressing Enter submits without the field ever
@@ -60,7 +61,7 @@ const SA_ID: ValidatorFn = (control) =>
  */
 @Component({
   selector: 'app-apply',
-  imports: [ReactiveFormsModule, RouterLink, TrimOnBlur],
+  imports: [ReactiveFormsModule, RouterLink, TrimOnBlur, Logo],
   templateUrl: './apply.html',
   styleUrls: ['../auth/auth-page.scss', './apply.scss'],
 })

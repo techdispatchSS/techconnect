@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { ControllerApiService } from '../controller-api.service';
@@ -358,6 +358,51 @@ describe('IncidentQueue', () => {
       expect(el.querySelector('.iq-detail .controller-btn-primary')!.textContent).toContain(
         'View dispatch status',
       );
+    });
+  });
+
+  describe('a deep link to an incident that is not on the loaded page', () => {
+    // Logging a Medium incident sorts it behind the urgent ones, so the list's first page does
+    // not contain it; the server still returns it by id.
+    const urgent = incident({
+      id: 'urgent-1',
+      ticketRef: 'INC-4587',
+      priority: 'HIGH',
+      status: 'IN_PROGRESS',
+      hasDispatch: true,
+      dispatch: summary({ status: 'EXPIRED', pending: 0, noResponse: 3 }),
+    });
+    const logged = incident({ id: 'logged-1', ticketRef: 'INC-LOGGED', priority: 'MEDIUM' });
+
+    it('shows that incident in the panel, not the first row', async () => {
+      await setup([urgent], { selected: logged, totalPages: 2 });
+
+      expect(el.querySelector('.iq-detail-ticket')!.textContent).toContain('INC-LOGGED');
+      expect(el.querySelector('.iq-detail-offpage')).not.toBeNull();
+    });
+
+    it('offers the action for that incident, and takes it to that incident', async () => {
+      await setup([urgent], { selected: logged, totalPages: 2 });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      // The first row's expired dispatch would read "Dispatch again"; this one has none.
+      expect(button('Dispatch again')).toBeUndefined();
+      expect(el.querySelector('.iq-detail .controller-btn-primary')!.textContent).toContain(
+        'Create dispatch',
+      );
+
+      button('Create dispatch').click();
+      expect(navigate).toHaveBeenCalledWith(['/incidents', 'dispatch', 'logged-1']);
+    });
+
+    it('gives the panel to a row once one is chosen', async () => {
+      await setup([urgent], { selected: logged, totalPages: 2 });
+
+      el.querySelector<HTMLButtonElement>('.iq-ticket-btn')!.click();
+      await fixture.whenStable();
+
+      expect(el.querySelector('.iq-detail-ticket')!.textContent).toContain('INC-4587');
+      expect(el.querySelector('.iq-detail-offpage')).toBeNull();
     });
   });
 });

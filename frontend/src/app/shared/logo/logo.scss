@@ -1,0 +1,25 @@
+:host {
+  display: inline-flex;
+  flex: none;
+  line-height: 0;
+}
+
+svg {
+  display: block;
+  height: 100%;
+  width: auto;
+  overflow: visible;
+}
+
+// The brand's grey. Not a Material token on purpose: it has to stay legible on surfaces that
+// don't follow the theme (the dark sidebars, the login hero), so those set --tc-logo-ink
+// themselves.
+.logo-ink {
+  fill: var(--tc-logo-ink, #4b5054);
+}
+
+.logo-ink-ring {
+  fill: none;
+  stroke: var(--tc-logo-ink, #4b5054);
+  stroke-width: 20;
+}

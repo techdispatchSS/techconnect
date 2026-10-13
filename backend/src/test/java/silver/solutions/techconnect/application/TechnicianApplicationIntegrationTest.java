@@ -33,6 +33,7 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
 import silver.solutions.techconnect.AbstractPostgresIntegrationTest;
 import silver.solutions.techconnect.entity.AdminAuditAction;
 import silver.solutions.techconnect.entity.ApplicationStatus;
+import silver.solutions.techconnect.entity.DocumentKind;
 import silver.solutions.techconnect.entity.TechnicianApplication;
 import silver.solutions.techconnect.entity.User;
 import silver.solutions.techconnect.entity.UserRole;
@@ -106,9 +107,16 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         assertThat(saved.getAddress().getCity()).isEqualTo("Durban");
 
         var docs = documents.findByApplicationIdOrderByCreatedAtAsc(saved.getId());
-        assertThat(docs).hasSize(2);
-        assertThat(docs).extracting("contentType").containsExactly("application/pdf", "image/png");
-        assertThat(docs).extracting("originalFilename").containsExactly("My CCNA.pdf", "diploma.png");
+        assertThat(docs).hasSize(5);
+        assertThat(docs).extracting("kind").containsExactly(
+                DocumentKind.ID_DOCUMENT, DocumentKind.MATRIC_CERTIFICATE,
+                DocumentKind.PROOF_OF_RESIDENCE, DocumentKind.CERTIFICATE,
+                DocumentKind.QUALIFICATION);
+        assertThat(docs).extracting("contentType").containsExactly(
+                "application/pdf", "application/pdf", "application/pdf", "application/pdf",
+                "image/png");
+        assertThat(docs).extracting("originalFilename").containsExactly(
+                "id.pdf", "matric.pdf", "residence.pdf", "My CCNA.pdf", "diploma.png");
         // Stored under a random key that says nothing about the applicant or the file name.
         assertThat(docs).allSatisfy(d -> {
             assertThat(d.getStorageKey()).matches("applications/[0-9a-f-]{36}");
@@ -134,6 +142,57 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         Applicant a = Applicant.unique("noproof");
         mvc.perform(multipartRequest(a, List.of()))
                 .andExpect(status().isBadRequest());
+        assertThat(exists(a)).isFalse();
+    }
+
+    @Test
+    void acceptsTheThreeRequiredDocumentsWithNoCertifications() throws Exception {
+        Applicant a = Applicant.unique("nocerts");
+
+        mvc.perform(multipartRequest(a, requiredDocuments())).andExpect(status().isAccepted());
+
+        assertThat(documents.findByApplicationIdOrderByCreatedAtAsc(find(a).getId())).hasSize(3);
+    }
+
+    @Test
+    void refusesAnApplicationMissingARequiredDocument() throws Exception {
+        for (DocumentKind missing : DocumentKind.REQUIRED) {
+            Applicant a = Applicant.unique("missing-" + missing.name().toLowerCase());
+            List<Part> parts = requiredDocuments().stream()
+                    .filter(p -> !p.kind.equals(missing.name()))
+                    .toList();
+
+            mvc.perform(multipartRequest(a, parts))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value(
+                            org.hamcrest.Matchers.containsString(missing.label())));
+
+            assertThat(exists(a)).as("nothing is saved without the " + missing.label()).isFalse();
+        }
+        assertThat(storage.objects).as("and nothing was uploaded").isEmpty();
+    }
+
+    @Test
+    void certificationsCannotStandInForTheRequiredDocuments() throws Exception {
+        Applicant a = Applicant.unique("certsonly");
+
+        mvc.perform(multipartRequest(a, List.of(validPdf(), validPdf())))
+                .andExpect(status().isBadRequest());
+
+        assertThat(exists(a)).isFalse();
+    }
+
+    @Test
+    void refusesTwoOfTheSameRequiredDocument() throws Exception {
+        Applicant a = Applicant.unique("twoids");
+        List<Part> parts = new java.util.ArrayList<>(requiredDocuments());
+        parts.add(file("ID again", "ID_DOCUMENT", "id2.pdf", "application/pdf", TestFiles.pdf()));
+
+        mvc.perform(multipartRequest(a, parts))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value(
+                        org.hamcrest.Matchers.containsString("only one")));
+
         assertThat(exists(a)).isFalse();
     }
 
@@ -424,13 +483,14 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].email").value(a.email))
-                .andExpect(jsonPath("$.content[0].documentCount").value(1));
+                .andExpect(jsonPath("$.content[0].documentCount").value(4));
 
         mvc.perform(get("/v1/admin/applications/" + saved.getId()).header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PENDING"))
-                .andExpect(jsonPath("$.documents[0].title").value("CCNA certificate"))
-                .andExpect(jsonPath("$.documents[0].filename").value("cert.pdf"))
+                .andExpect(jsonPath("$.documents[0].kind").value("ID_DOCUMENT"))
+                .andExpect(jsonPath("$.documents[3].title").value("CCNA certificate"))
+                .andExpect(jsonPath("$.documents[3].filename").value("cert.pdf"))
                 // The Manager sees the applicant's ID number under their details.
                 .andExpect(jsonPath("$.idNumber").value(a.idNumber));
 
@@ -512,7 +572,7 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         assertThat(decided.getUserId()).isNull();
         assertThat(users.existsByEmailIgnoreCase(a.email)).isFalse();
         // The record and its proof are kept.
-        assertThat(documents.findByApplicationIdOrderByCreatedAtAsc(id)).hasSize(1);
+        assertThat(documents.findByApplicationIdOrderByCreatedAtAsc(id)).hasSize(4);
         verify(notifications).sendApplicationRejected(a.email, "Nomsa");
     }
 
@@ -554,9 +614,22 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         return file("CCNA certificate", "CERTIFICATE", "cert.pdf", "application/pdf", TestFiles.pdf());
     }
 
+    /** The three documents every application must carry. */
+    private static List<Part> requiredDocuments() {
+        return List.of(
+                file("ID document", "ID_DOCUMENT", "id.pdf", "application/pdf", TestFiles.pdf()),
+                file("Matric certificate", "MATRIC_CERTIFICATE", "matric.pdf", "application/pdf",
+                        TestFiles.pdf()),
+                file("Proof of residence", "PROOF_OF_RESIDENCE", "residence.pdf",
+                        "application/pdf", TestFiles.pdf()));
+    }
+
+    /** Submits the three required documents followed by whatever extra parts the test gives. */
     private org.springframework.test.web.servlet.ResultActions submit(Applicant a, Part... parts)
             throws Exception {
-        return mvc.perform(multipartRequest(a, List.of(parts)));
+        List<Part> all = new java.util.ArrayList<>(requiredDocuments());
+        all.addAll(List.of(parts));
+        return mvc.perform(multipartRequest(a, all));
     }
 
     private MockMultipartHttpServletRequestBuilder multipartRequest(Applicant a, List<Part> parts) {

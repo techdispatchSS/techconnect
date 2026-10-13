@@ -51,14 +51,15 @@ Static artwork in `public/`:
 
 | File | Used for |
 |---|---|
-| `favicon.svg`, `favicon.ico` | Browser tab icon (the SVG lightens its grey in dark tabs) |
+| `favicon.svg`, `favicon.ico` | Browser tab icon. Both have no background; the SVG lightens its grey in dark tabs, the ICO uses a mid-grey that reads on either |
 | `apple-touch-icon.png` | iOS home screen |
 | `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `manifest.webmanifest` | Install icons for Android and desktop |
 | `og-image.png` | Link previews (WhatsApp, Slack, LinkedIn, iMessage); 1200 x 630 |
 | `brand/techconnect-mark.svg`, `brand/techconnect-lockup.svg` | The original artwork |
 | `brand/techconnect-email-logo.png` | Header image in HTML emails (the backend links to it) |
 
-The PNG and ICO files are renders of the mark on the brand's dark ground (`#17181c`). If the
+The home-screen and install PNGs are renders of the mark on the brand's dark tile (`#17181c`),
+because those surfaces need a solid background; the tab icons are transparent. If the
 artwork changes, re-render them rather than editing by hand, and keep `favicon.svg` and
 `<app-logo>` in step.
 

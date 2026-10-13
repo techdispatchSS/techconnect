@@ -1,6 +1,15 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -65,6 +74,10 @@ export class IncidentQueue implements OnInit {
   readonly kpis = signal<IncidentKpis | null>(null);
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
+  /** The detail panel; on a phone it sits below the list and has to be scrolled to. */
+  private readonly detailPanel = viewChild<ElementRef<HTMLElement>>('detail');
+  private readonly queueTop = viewChild<ElementRef<HTMLElement>>('queueTop');
+
   readonly selectedId = signal<string | null>(null);
 
   readonly page = signal(0);
@@ -202,6 +215,28 @@ export class IncidentQueue implements OnInit {
       this.page.update((p) => p + 1);
       this.load();
     }
+  }
+
+  /** A tap or click on a row. Same as `select`, then, where the panel is stacked under the
+   * list instead of beside it, brings the panel into view, or the tap appears to do nothing. */
+  choose(incident: Incident): void {
+    this.select(incident);
+    if (window.matchMedia?.('(max-width: 1100px)').matches) {
+      setTimeout(() => this.scrollTo(this.detailPanel()));
+    }
+  }
+
+  /** Back up to the list from the stacked panel. */
+  backToList(): void {
+    this.scrollTo(this.queueTop());
+  }
+
+  private scrollTo(target: ElementRef<HTMLElement> | undefined): void {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    target?.nativeElement.scrollIntoView?.({
+      behavior: reduce ? 'auto' : 'smooth',
+      block: 'start',
+    });
   }
 
   select(incident: Incident): void {

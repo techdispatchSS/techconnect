@@ -26,16 +26,24 @@
   --controller-color-divider-soft: rgba(255, 255, 255, 0.08);
   --controller-color-divider-strong: rgba(255, 255, 255, 0.25);
 
-  // Chrome tier — the sidebar and header. Deliberately theme-invariant: they stay this
-  // dark "Industry" look in both themes as the product's constant branded rail, the same
-  // way the map's own tile styling (technician-map.ts) doesn't follow the app theme either.
+  // Chrome tier — the sidebar and header. Dark "Industry" by default; the light theme
+  // (below) gives them a light treatment too, so light mode isn't a pale page in a dark frame.
+  // The map's own tile styling (technician-map.ts) deliberately stays dark in both.
   --controller-color-sidebar: #0e1013;
   --controller-chrome-text: #edeff1;
   --controller-chrome-muted: #9aa1a8;
   --controller-chrome-divider: rgba(255, 255, 255, 0.08);
+  --controller-chrome-emphasis: #ffffff;
+  --controller-chrome-border: rgba(255, 255, 255, 0.2);
+  --controller-chrome-hover: rgba(255, 255, 255, 0.04);
 
   --controller-color-accent: #f08221;
   --controller-color-accent-soft: #f0a265;
+  // The accent as a *text* colour. The brand orange is fine as a fill or border but fails
+  // contrast as text on a light surface (about 2.5:1 on white), so the light theme swaps in a
+  // darker orange for these two. Use these, not the plain accent, wherever it is `color:`.
+  --controller-color-accent-text: #f08221;
+  --controller-color-accent-text-soft: #f0a265;
 
   --controller-priority-high-bg: #f08221;
   --controller-priority-high-fg: #12140f;
@@ -73,11 +81,11 @@
 }
 
 .controller-shell a:not(.controller-btn) {
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
   text-decoration: none;
 }
 .controller-shell a:not(.controller-btn):hover {
-  color: var(--controller-color-accent-soft);
+  color: var(--controller-color-accent-text-soft);
   text-decoration: underline;
 }
 
@@ -115,11 +123,11 @@
 }
 .controller-btn-secondary:hover:not(:disabled) {
   border-color: var(--controller-color-accent);
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
   background: rgba(240, 130, 33, 0.08);
 }
 .controller-btn-ghost {
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
   border-color: transparent;
   padding-inline: 4px;
 }
@@ -328,11 +336,11 @@ textarea.controller-input {
 }
 .controller-shell-nav-item:hover {
   background: rgba(240, 130, 33, 0.09);
-  color: #ffffff;
+  color: var(--controller-chrome-emphasis);
 }
 .controller-shell-nav-item--active {
   background: rgba(240, 130, 33, 0.13);
-  color: #ffffff;
+  color: var(--controller-chrome-emphasis);
   border-left-color: var(--controller-color-accent);
 }
 .controller-shell-nav-item--disabled {
@@ -350,7 +358,7 @@ textarea.controller-input {
 }
 .controller-shell-nav-item-count {
   font-size: 11px;
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
 }
 
 .controller-shell-elsewhere {
@@ -380,7 +388,7 @@ textarea.controller-input {
   width: 30px;
   height: 30px;
   flex: none;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--controller-chrome-border);
   display: grid;
   place-items: center;
   font-family: var(--controller-font-heading);
@@ -401,7 +409,7 @@ textarea.controller-input {
 }
 .controller-shell-user-role {
   font-size: 11px;
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
 }
 
 .controller-shell-main {
@@ -440,7 +448,7 @@ textarea.controller-input {
 }
 .controller-shell-title {
   font-size: 22px;
-  color: #ffffff;
+  color: var(--controller-chrome-emphasis);
 }
 .controller-shell-sync-badge {
   display: flex;
@@ -451,7 +459,7 @@ textarea.controller-input {
   border: 1px solid rgba(240, 130, 33, 0.4);
   background: rgba(240, 130, 33, 0.08);
   font-size: 12px;
-  color: var(--controller-color-accent-soft);
+  color: var(--controller-color-accent-text-soft);
 }
 .controller-shell-sync-dot {
   width: 7px;
@@ -489,46 +497,56 @@ textarea.controller-input {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-// Light theme — content tier only. The sidebar/header (`--controller-color-
-// sidebar`, `--controller-chrome-*`) are deliberately left untouched here:
-// they stay the dark "Industry" rail in both themes (see the comment on the
-// chrome tokens above). Only the canvas, cards, tables and detail panels —
-// everything built from the content-tier tokens — actually switches.
+// Light theme. Both tiers switch: the canvas, cards, tables and panels (content tier) and the
+// sidebar and header (chrome tier), so nothing is left as a dark frame around a pale page.
+//
+// Contrast: the brand orange is used as a fill and border everywhere, but as *text* it is far
+// too pale on white. `--controller-color-accent-text*` are the darker oranges for that.
 // ════════════════════════════════════════════════════════════════════════
 :root[data-theme='light'] .controller-shell {
   --controller-color-bg: #f1f1f2;
   --controller-color-surface: #ffffff;
   --controller-color-text: #26282c;
-  --controller-color-muted: #6a6e76;
+  --controller-color-muted: #61656d;
   --controller-color-emphasis: #101114;
-  --controller-color-divider: rgba(16, 17, 20, 0.13);
-  --controller-color-divider-soft: rgba(16, 17, 20, 0.08);
-  --controller-color-divider-strong: rgba(16, 17, 20, 0.24);
+  --controller-color-divider: rgba(16, 17, 20, 0.16);
+  --controller-color-divider-soft: rgba(16, 17, 20, 0.09);
+  --controller-color-divider-strong: rgba(16, 17, 20, 0.3);
+
+  --controller-color-accent-text: #b04e00;
+  --controller-color-accent-text-soft: #8f4300;
+
+  --controller-color-sidebar: #ffffff;
+  --controller-chrome-text: #26282c;
+  --controller-chrome-muted: #61656d;
+  --controller-chrome-divider: rgba(16, 17, 20, 0.12);
+  --controller-chrome-emphasis: #101114;
+  --controller-chrome-border: rgba(16, 17, 20, 0.22);
+  --controller-chrome-hover: rgba(16, 17, 20, 0.05);
+
+  --controller-priority-medium-fg: #8f4300;
   --controller-priority-low-bg: rgba(16, 17, 20, 0.05);
-  --controller-priority-low-border: rgba(16, 17, 20, 0.16);
-  --controller-priority-low-fg: #6a6e76;
+  --controller-priority-low-border: rgba(16, 17, 20, 0.2);
+  --controller-priority-low-fg: #4f535a;
 }
 
-// The header bar is permanent dark chrome (`--controller-color-sidebar`) in both themes, so what
-// sits on it keeps the dark-theme content colours. Otherwise the theme toggle (and any other
-// control using these tokens) picks up the light theme's near-black text and disappears into
-// the bar. `color` is repeated because `.controller-shell` already resolved it to the light
-// value and children inherit that resolved colour rather than the variable.
+// The logo's grey follows the (now light) rail rather than the always-light value it needs on
+// the dark one.
+:root[data-theme='light'] .controller-shell-sidebar {
+  --tc-logo-ink: #4b5054;
+}
+
+// A quiet lift so the white rail and header read as surfaces against the pale canvas.
 :root[data-theme='light'] .controller-shell-header {
-  --controller-color-text: #edeff1;
-  --controller-color-muted: #9aa1a8;
-  --controller-color-emphasis: #ffffff;
-  --controller-color-divider: rgba(255, 255, 255, 0.12);
-  --controller-color-divider-soft: rgba(255, 255, 255, 0.08);
-  --controller-color-divider-strong: rgba(255, 255, 255, 0.25);
-  color: #edeff1;
+  box-shadow:
+    0 1px 0 rgba(16, 17, 20, 0.04),
+    0 4px 14px rgba(16, 17, 20, 0.04);
 }
 
 // ════════════════════════════════════════════════════════════════════════
 // New-incident toasts — a fixed stack over everything else in the shell, so one shows up
 // regardless of which controller screen is currently open. Built from the chrome-tier tokens
-// (`--controller-color-sidebar` etc.), not the switchable content ones, so it reads the same
-// dark "Industry" card in both themes rather than needing its own light-mode override block.
+// (`--controller-color-sidebar` etc.), so it matches the rail and header in either theme.
 // ════════════════════════════════════════════════════════════════════════
 .controller-shell-toasts {
   position: fixed;
@@ -550,13 +568,6 @@ textarea.controller-input {
   border-left: 2px solid var(--controller-color-accent);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
   animation: controller-toast-in 0.22s ease-out;
-
-  // "Low" priority is the one pill variant whose tokens switch with the theme (see the
-  // `[data-theme='light']` block at the top of this file) — pinned back to their dark values
-  // here so it stays legible against this toast's always-dark background in light mode too.
-  --controller-priority-low-bg: rgba(255, 255, 255, 0.05);
-  --controller-priority-low-border: rgba(255, 255, 255, 0.16);
-  --controller-priority-low-fg: #9aa1a8;
 }
 @keyframes controller-toast-in {
   from {
@@ -590,14 +601,14 @@ textarea.controller-input {
   font: inherit;
 }
 .controller-toast-open:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--controller-chrome-hover);
 }
 .controller-toast-badge {
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
 }
 .controller-toast-ticket {
   font-family: var(--controller-font-heading);
@@ -630,4 +641,37 @@ textarea.controller-input {
 }
 .controller-toast-close:hover {
   color: var(--controller-chrome-text);
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Phones. Controls get touch-sized targets, 16px input text (so iOS Safari doesn't zoom the
+// page on focus), and cards a little less padding to give the content its width back.
+// Screen-specific layout (cards instead of tables, etc.) lives with each screen.
+// ════════════════════════════════════════════════════════════════════════
+@media (max-width: 599px) {
+  .controller-btn {
+    min-height: 44px;
+  }
+  .controller-btn-icon {
+    min-height: 0;
+    width: 44px;
+    height: 44px;
+  }
+  .controller-input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  textarea.controller-input {
+    min-height: 88px;
+  }
+  .controller-card {
+    padding: 14px;
+  }
+  .controller-shell-toasts {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: none;
+  }
 }

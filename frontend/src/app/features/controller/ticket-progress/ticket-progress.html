@@ -148,7 +148,7 @@
       <section class="tp-responses">
         <h6 class="tp-section-title">Technician responses</h6>
         <div class="controller-card tp-table-card">
-          <table class="controller-table">
+          <table class="controller-table tp-table">
             <thead>
               <tr>
                 <th>Technician</th>
@@ -159,13 +159,13 @@
             <tbody>
               @for (r of sortedResponses(); track r.technicianId) {
                 <tr [class.tp-row--accepted]="r.response === 'ACCEPTED'">
-                  <td class="tp-tech-name">{{ r.technicianName }}</td>
-                  <td>
+                  <td class="tp-tech-name tp-c-name">{{ r.technicianName }}</td>
+                  <td class="tp-c-response">
                     <span [class]="responsePillClass(r.response)">{{
                       responseLabel(r.response)
                     }}</span>
                   </td>
-                  <td style="text-align: right">
+                  <td class="tp-c-when" style="text-align: right">
                     @if (
                       simulation() && p.dispatchStatus === 'PENDING' && r.response === 'PENDING'
                     ) {
@@ -188,7 +188,8 @@
                         </button>
                       </span>
                     } @else {
-                      {{ r.respondedAt ? (r.respondedAt | date: 'HH:mm') : '—' }}
+                      <span class="tp-when-label">Responded </span
+                      >{{ r.respondedAt ? (r.respondedAt | date: 'HH:mm') : '—' }}
                     }
                   </td>
                 </tr>

@@ -58,7 +58,7 @@
 }
 .iq-sim-error {
   font-size: 12.5px;
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
 }
 
 .iq-ticket-btn {
@@ -124,7 +124,7 @@
   color: var(--controller-color-emphasis);
 }
 .iq-kpi--accent .iq-kpi-value {
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
 }
 
 .iq-body {
@@ -188,7 +188,7 @@
 .iq-ticket {
   font-family: var(--controller-font-heading);
   font-weight: 600;
-  color: var(--controller-color-accent-soft);
+  color: var(--controller-color-accent-text-soft);
 }
 .iq-client {
   color: var(--controller-color-emphasis);
@@ -203,7 +203,7 @@
 .iq-age--overdue {
   font-family: var(--controller-font-heading);
   font-weight: 600;
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
 }
 
 .iq-detail {
@@ -213,6 +213,26 @@
   border-top: 2px solid var(--controller-color-accent);
   position: sticky;
   top: 96px;
+  // Where the panel stacks under the list it is scrolled to, and the sticky header must not
+  // cover its top edge when it lands.
+  scroll-margin-top: 90px;
+}
+@media (max-width: 1100px) {
+  .iq-detail {
+    position: static;
+  }
+}
+
+// Only meaningful when the panel is stacked under the list.
+.iq-detail-back {
+  display: none;
+  align-self: flex-start;
+  margin: -6px 0 -6px -4px;
+}
+@media (max-width: 1100px) {
+  .iq-detail-back {
+    display: inline-flex;
+  }
 }
 .iq-detail-head {
   display: flex;
@@ -266,7 +286,7 @@
   font-size: 11.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
 }
 .iq-sla-value {
   font-family: var(--controller-font-heading);
@@ -275,7 +295,7 @@
   color: var(--controller-color-emphasis);
 }
 .iq-sla-value--overdue {
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
 }
 .iq-sla-bar {
   display: block;
@@ -301,7 +321,7 @@
   font-size: 11.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
 }
 .iq-skills-tags {
   display: flex;
@@ -312,7 +332,7 @@
   font-size: 11.5px;
   padding: 3px 9px;
   border: 1px solid rgba(240, 130, 33, 0.42);
-  color: var(--controller-color-accent-soft);
+  color: var(--controller-color-accent-text-soft);
   background: rgba(240, 130, 33, 0.09);
 }
 .iq-notes-text {
@@ -334,7 +354,7 @@
 .iq-dispatch-chip--waiting {
   border-color: rgba(240, 130, 33, 0.55);
   background: rgba(240, 130, 33, 0.1);
-  color: var(--controller-color-accent-soft);
+  color: var(--controller-color-accent-text-soft);
 }
 .iq-dispatch-chip--accepted {
   border-color: var(--controller-color-divider-strong);
@@ -343,7 +363,7 @@
 .iq-dispatch-chip--expired,
 .iq-dispatch-chip--declined {
   border-style: dashed;
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
 }
 
 .iq-dispatch {
@@ -366,7 +386,7 @@
   font-size: 11.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
 }
 .iq-dispatch-headline {
   font-family: var(--controller-font-heading);
@@ -383,8 +403,203 @@
 }
 .iq-dispatch-feedback {
   font-size: 12.5px;
-  color: var(--controller-color-accent-soft);
+  color: var(--controller-color-accent-text-soft);
 }
 .iq-dispatch-feedback--error {
-  color: var(--controller-color-accent);
+  color: var(--controller-color-accent-text);
+}
+
+// ── Phones ──
+// The table's eight columns cannot fit a 375px screen, and scrolling a wide table sideways
+// hides the columns that matter. Each incident becomes a card instead: ticket and priority on
+// top, who and where beneath, then where the dispatch stands and how long it has been.
+@media (max-width: 599px) {
+  .iq {
+    gap: 16px;
+  }
+
+  .iq-toolbar {
+    gap: 10px;
+  }
+  .iq-search {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+  .iq-filter {
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
+  .iq-filter select {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .iq-toolbar > .controller-btn {
+    flex: 1 1 calc(50% - 5px);
+  }
+
+  .iq-sim .controller-btn {
+    flex: 1 1 100%;
+  }
+
+  .iq-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .iq-kpi {
+    padding: 12px 14px;
+  }
+  .iq-kpi-label {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+  }
+  .iq-kpi-value {
+    font-size: 30px;
+  }
+
+  // One swipeable row instead of tabs wrapping onto a second line.
+  .iq-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: -16px;
+    padding-inline: 16px;
+    scrollbar-width: none;
+  }
+  .iq-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .iq-tab {
+    flex: none;
+    min-height: 40px;
+  }
+
+  .iq-table-card {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    overflow: visible;
+  }
+  .iq-table-card .iq-empty {
+    padding: 20px 14px;
+    background: var(--controller-color-surface);
+    border: 1px solid var(--controller-color-divider-soft);
+  }
+
+  .iq-table,
+  .iq-table tbody {
+    display: block;
+    width: 100%;
+  }
+  // Column headings make no sense above cards; the cells carry their own small labels.
+  .iq-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .iq-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'ticket priority'
+      'client client'
+      'site site'
+      'issue issue'
+      'dispatch dispatch'
+      'sla age';
+    gap: 4px 12px;
+    margin-bottom: 10px;
+    padding: 12px 14px;
+    background: var(--controller-color-surface);
+    border: 1px solid var(--controller-color-divider-soft);
+    border-left: 3px solid var(--controller-color-divider-strong);
+  }
+  .iq-table tbody tr.iq-row--selected {
+    border-left-color: var(--controller-color-accent);
+    background: color-mix(
+      in srgb,
+      var(--controller-color-accent) 9%,
+      var(--controller-color-surface)
+    );
+  }
+  .iq-table td,
+  .iq-table tbody tr:hover td,
+  .iq-row--selected td {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .iq-c-ticket {
+    grid-area: ticket;
+    font-size: 15px;
+  }
+  .iq-c-priority {
+    grid-area: priority;
+    justify-self: end;
+  }
+  .iq-c-client {
+    grid-area: client;
+    font-weight: 600;
+    font-size: 14.5px;
+  }
+  .iq-c-site {
+    grid-area: site;
+    font-size: 12.5px;
+    color: var(--controller-color-muted);
+  }
+  .iq-c-issue {
+    grid-area: issue;
+    font-size: 12.5px;
+    color: var(--controller-color-muted);
+  }
+  .iq-c-dispatch {
+    grid-area: dispatch;
+    margin-top: 6px;
+  }
+  .iq-c-sla {
+    grid-area: sla;
+  }
+  .iq-c-age {
+    grid-area: age;
+    text-align: right !important;
+  }
+  .iq-c-sla,
+  .iq-c-age {
+    font-size: 12.5px;
+    color: var(--controller-color-muted);
+  }
+  .iq-c-sla::before,
+  .iq-c-age::before {
+    content: attr(data-label) ' ';
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--controller-color-muted);
+  }
+  .iq-c-age.iq-age--overdue {
+    color: var(--controller-color-accent-text);
+  }
+
+  .iq-ticket-btn {
+    min-height: 28px;
+  }
+
+  .iq-pager {
+    justify-content: space-between;
+  }
+  .iq-pager-range {
+    flex: 1 1 100%;
+  }
+  .iq-pager .controller-btn {
+    flex: 1 1 auto;
+  }
+  .iq-pager-page {
+    order: 3;
+    flex: 1 1 100%;
+    text-align: center;
+  }
 }

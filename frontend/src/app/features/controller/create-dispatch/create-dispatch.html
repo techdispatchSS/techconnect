@@ -115,7 +115,7 @@
           } @else if (technicians().length === 0) {
             <p class="cd-empty">No active technicians found.</p>
           } @else {
-            <table class="controller-table">
+            <table class="controller-table cd-table">
               <thead>
                 <tr>
                   <th style="width: 34px"></th>
@@ -133,7 +133,7 @@
                     (click)="toggleTechnician(tech.id)"
                     [class.cd-row--selected]="selectedIds().has(tech.id)"
                   >
-                    <td>
+                    <td class="cd-c-check">
                       <span
                         class="cd-checkbox"
                         [class.cd-checkbox--checked]="selectedIds().has(tech.id)"
@@ -143,8 +143,8 @@
                         }
                       </span>
                     </td>
-                    <td class="cd-tech-name">{{ tech.name }}</td>
-                    <td>
+                    <td class="cd-tech-name cd-c-name">{{ tech.name }}</td>
+                    <td class="cd-c-score" data-label="Score">
                       <span class="cd-score">
                         <span class="cd-score-bar"
                           ><span class="cd-score-fill" [style]="scoreBarStyle(tech.score)"></span
@@ -152,13 +152,17 @@
                         <span class="cd-score-value">{{ tech.score }}</span>
                       </span>
                     </td>
-                    <td>{{ tech.distanceKm !== null ? tech.distanceKm + ' km' : '—' }}</td>
-                    <td>
+                    <td class="cd-c-dist" data-label="Distance">
+                      {{ tech.distanceKm !== null ? tech.distanceKm + ' km' : '—' }}
+                    </td>
+                    <td class="cd-c-skills" data-label="Skills">
                       {{ tech.matchedSkills }} /
                       {{ tech.totalRequiredSkills || tech.matchedSkills }}
                     </td>
-                    <td>{{ tech.completedJobCount }}</td>
-                    <td style="text-align: right">
+                    <td class="cd-c-closed" data-label="Closed jobs">
+                      {{ tech.completedJobCount }}
+                    </td>
+                    <td class="cd-c-status" style="text-align: right">
                       <span
                         class="controller-pill"
                         [class.controller-pill--medium]="tech.status === 'AVAILABLE'"

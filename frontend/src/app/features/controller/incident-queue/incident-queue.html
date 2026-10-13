@@ -81,7 +81,7 @@
   }
 
   <div class="iq-body">
-    <section class="iq-queue">
+    <section #queueTop class="iq-queue">
       <div class="iq-tabs">
         @for (tab of tabs; track tab) {
           <button
@@ -106,7 +106,7 @@
         } @else if (incidents().length === 0) {
           <p class="iq-empty">No incidents in this view.</p>
         } @else {
-          <table class="controller-table">
+          <table class="controller-table iq-table">
             <thead>
               <tr>
                 <th>Ticket</th>
@@ -121,34 +121,39 @@
             </thead>
             <tbody>
               @for (row of incidents(); track row.id) {
-                <tr (click)="select(row)" [class.iq-row--selected]="selected()?.id === row.id">
-                  <td class="iq-ticket">
+                <tr (click)="choose(row)" [class.iq-row--selected]="selected()?.id === row.id">
+                  <td class="iq-ticket iq-c-ticket">
                     <!-- The row is clickable for a mouse; this is how the keyboard gets in. -->
                     <button
                       type="button"
                       class="iq-ticket-btn"
                       [attr.aria-current]="selected()?.id === row.id ? 'true' : null"
                       [attr.aria-label]="'Select ' + row.ticketRef + ', ' + row.clientName"
-                      (click)="select(row); $event.stopPropagation()"
+                      (click)="choose(row); $event.stopPropagation()"
                     >
                       {{ row.ticketRef }}
                     </button>
                   </td>
-                  <td class="iq-client">{{ row.clientName }}</td>
-                  <td>{{ row.siteAddress ?? '—' }}</td>
-                  <td>{{ row.issueType ?? '—' }}</td>
-                  <td>
+                  <td class="iq-client iq-c-client">{{ row.clientName }}</td>
+                  <td class="iq-c-site">{{ row.siteAddress ?? '—' }}</td>
+                  <td class="iq-c-issue">{{ row.issueType ?? '—' }}</td>
+                  <td class="iq-c-dispatch">
                     <span [class]="chipClass(row)" [attr.title]="stateOf(row).detail">{{
                       stateOf(row).chip
                     }}</span>
                   </td>
-                  <td>
+                  <td class="iq-c-priority">
                     @if (row.priority) {
                       <span [class]="priorityClass(row)">{{ priorityLabels[row.priority] }}</span>
                     }
                   </td>
-                  <td>{{ row.sla ?? '—' }}</td>
-                  <td style="text-align: right" [class.iq-age--overdue]="row.overdue">
+                  <td class="iq-c-sla" data-label="SLA">{{ row.sla ?? '—' }}</td>
+                  <td
+                    class="iq-c-age"
+                    data-label="Age"
+                    style="text-align: right"
+                    [class.iq-age--overdue]="row.overdue"
+                  >
                     {{ ageLabel(row) }}
                   </td>
                 </tr>
@@ -183,7 +188,14 @@
     </section>
 
     @if (selected(); as sel) {
-      <aside class="controller-card iq-detail">
+      <aside #detail class="controller-card iq-detail">
+        <button
+          type="button"
+          class="controller-btn controller-btn-ghost iq-detail-back"
+          (click)="backToList()"
+        >
+          ↑ Back to list
+        </button>
         <div class="iq-detail-head">
           <span class="iq-detail-ticket">{{ sel.ticketRef }}</span>
           <span class="iq-detail-meta"

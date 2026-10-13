@@ -328,3 +328,9 @@
     font-size: 13.5px;
   }
 }
+
+.tp-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

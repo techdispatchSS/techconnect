@@ -24,6 +24,8 @@
   --login-accent-400: #f0a265;
   --login-accent-600: #ff9540;
   --login-accent-700: #ffa254;
+  // The accent as TEXT (links, hints). Kept apart from -700, which is also a button fill.
+  --login-accent-text: #ffa254;
   --login-accent-800: #f0a265;
   --login-accent-900: #0e1013;
   // Accent colour for TEXT on the page surface (link hover, error message). Deliberately not
@@ -57,7 +59,7 @@
 }
 
 .login-page a {
-  color: var(--login-accent-700);
+  color: var(--login-accent-text);
   text-decoration: none;
 }
 .login-page a:hover {
@@ -77,28 +79,6 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  // The watermark below overflows on purpose; keep it inside the panel.
-  overflow: hidden;
-}
-
-.login-hero > :not(.login-hero-watermark) {
-  position: relative;
-  z-index: 1;
-}
-
-.login-hero-watermark {
-  position: absolute;
-  right: -200px;
-  bottom: -160px;
-  opacity: 0.06;
-  pointer-events: none;
-}
-
-// On a narrower window the panel is too small for the mark to sit clear of the copy.
-@media (max-width: 1199px) {
-  .login-hero-watermark {
-    display: none;
-  }
 }
 
 .login-hero-brand {
@@ -219,7 +199,7 @@
 .login-subtitle {
   margin: 0;
   font-size: 13.5px;
-  color: color-mix(in srgb, var(--login-color-text) 60%, transparent);
+  color: color-mix(in srgb, var(--login-color-text) 78%, transparent);
 }
 
 .login-error {
@@ -287,7 +267,7 @@
   border-color: var(--login-color-accent);
 }
 .login-input::placeholder {
-  color: color-mix(in srgb, var(--login-color-text) 45%, transparent);
+  color: color-mix(in srgb, var(--login-color-text) 63%, transparent);
 }
 
 .login-field-error {
@@ -315,7 +295,7 @@
   background: transparent;
   border: 0;
   cursor: pointer;
-  color: color-mix(in srgb, var(--login-color-text) 55%, transparent);
+  color: color-mix(in srgb, var(--login-color-text) 73%, transparent);
 }
 .login-password-toggle:hover {
   color: var(--login-accent-800);
@@ -330,7 +310,7 @@
   gap: 9px;
   font-size: 13px;
   cursor: pointer;
-  color: color-mix(in srgb, var(--login-color-text) 75%, transparent);
+  color: color-mix(in srgb, var(--login-color-text) 88%, transparent);
 }
 .login-remember input {
   width: 15px;
@@ -400,13 +380,24 @@
   border-top: 1px solid var(--login-color-divider);
   font-size: 12.5px;
   line-height: 1.55;
-  color: color-mix(in srgb, var(--login-color-text) 58%, transparent);
+  color: color-mix(in srgb, var(--login-color-text) 76%, transparent);
 }
 
 // Sits directly under the footnote above, so it needs no second divider.
 .login-footnote--apply {
   border-top: 0;
   padding-top: 10px;
+}
+
+// "Install the app": the one prominent way to put TechConnect on a phone from the sign-in page.
+.login-install {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--login-color-divider);
+  color: var(--login-color-text);
+}
+.login-install app-install-button {
+  display: block;
 }
 
 @media (max-width: 899px) {
@@ -434,13 +425,14 @@
 // then can never match anything since `<html>` never receives that attribute.
 // `:host-context()` is the encapsulation-aware way to test an ancestor condition instead.
 :host-context([data-theme='light']) .login-page {
-  --login-color-bg: #f1f1f2;
-  --login-color-surface: #ffffff;
-  --login-color-text: #1a1b1e;
-  --login-color-divider: color-mix(in srgb, #1a1b1e 14%, transparent);
-  --login-accent-800: #c65e0a;
+  --login-color-bg: #e2e4e8;
+  --login-color-surface: #eff0f3;
+  --login-color-text: #0b0c0f;
+  --login-color-divider: color-mix(in srgb, #0b0c0f 24%, transparent);
+  --login-accent-800: #a64a00;
+  --login-accent-text: #a64a00;
   // On the white surface the near-black reads well (this is what these used before).
-  --login-accent-ink: #0e1013;
+  --login-accent-ink: #0b0c0f;
 }
 
 // Phone-sized screens: thumb-sized tap targets, and 16px input text so iOS Safari doesn't

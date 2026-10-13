@@ -91,18 +91,79 @@
       <span>Integrations</span>
     </div>
 
-    <div class="controller-shell-user" [matMenuTriggerFor]="userMenu">
+    <button
+      type="button"
+      class="controller-shell-user"
+      [matMenuTriggerFor]="userMenu"
+      aria-haspopup="menu"
+      [attr.aria-label]="'Account menu for ' + displayName()"
+    >
       <span class="controller-shell-user-avatar">{{ initials() }}</span>
       <span class="controller-shell-user-meta">
         <span class="controller-shell-user-name">{{ displayName() }}</span>
         <span class="controller-shell-user-role">Controller</span>
       </span>
-    </div>
+      <svg
+        class="controller-shell-user-chevron"
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        aria-hidden="true"
+      >
+        <path d="m7 15 5-5 5 5" />
+      </svg>
+    </button>
 
-    <mat-menu #userMenu="matMenu">
-      <button mat-menu-item type="button" (click)="editProfile()">My profile</button>
-      <button mat-menu-item type="button" (click)="changePassword()">Change password</button>
-      <button mat-menu-item type="button" (click)="logout()">Sign out</button>
+    <mat-menu #userMenu="matMenu" class="tc-menu" xPosition="before" yPosition="above">
+      <div class="tc-menu-header" aria-hidden="true">
+        <span class="tc-menu-avatar">{{ initials() }}</span>
+        <span class="tc-menu-id">
+          <strong>{{ displayName() }}</strong>
+          <span>{{ 'Controller' }}</span>
+        </span>
+      </div>
+      <button mat-menu-item type="button" (click)="editProfile()">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="8.5" r="3.6" />
+          <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
+        </svg>
+        <span>My profile</span>
+      </button>
+      <button mat-menu-item type="button" (click)="changePassword()">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          aria-hidden="true"
+        >
+          <circle cx="8" cy="12" r="3.5" />
+          <path d="M11.5 12H21M17 12v3M20 12v2" />
+        </svg>
+        <span>Change password</span>
+      </button>
+      <div class="tc-menu-divider" role="separator"></div>
+      <button mat-menu-item type="button" (click)="logout()">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          aria-hidden="true"
+        >
+          <path d="M9 4H5v16h4M15 8l4 4-4 4M19 12H9" />
+        </svg>
+        <span>Sign out</span>
+      </button>
     </mat-menu>
   </aside>
 
@@ -130,6 +191,7 @@
         <span class="controller-shell-sync-dot"></span>
         {{ freshdeskLabel() }}
       </span>
+      <app-install-button [compact]="true" />
       <button
         type="button"
         class="controller-btn controller-btn-secondary controller-btn-icon"

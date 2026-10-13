@@ -8,6 +8,7 @@ import { ControllerApiService } from '../controller-api.service';
 import { needsNewDispatch } from '../dispatch-state';
 import { DispatchType, Incident, PRIORITY_LABELS, TechnicianCandidate } from '../controller.models';
 import { TechnicianMap } from '../technician-map/technician-map';
+import { Skeleton } from '../../../shared/skeleton/skeleton';
 
 function splitList(raw: string): string[] {
   return raw
@@ -18,7 +19,7 @@ function splitList(raw: string): string[] {
 
 @Component({
   selector: 'app-create-dispatch',
-  imports: [ReactiveFormsModule, RouterLink, TechnicianMap],
+  imports: [ReactiveFormsModule, RouterLink, TechnicianMap, Skeleton],
   templateUrl: './create-dispatch.html',
   styleUrl: './create-dispatch.scss',
 })
@@ -37,6 +38,7 @@ export class CreateDispatch implements OnInit {
 
   readonly technicians = signal<TechnicianCandidate[]>([]);
   readonly loadingTechnicians = signal(true);
+  readonly skeletonRows = [1, 2, 3, 4, 5];
   readonly selectedIds = signal<ReadonlySet<string>>(new Set());
   readonly method = signal<DispatchType>('BROADCAST');
   readonly submitting = signal(false);

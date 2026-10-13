@@ -6,6 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ThemeService } from '../../../core/theme/theme.service';
 import { TrimOnBlur } from '../../../shared/trim-on-blur';
+import { InstallButton } from '../../../shared/install-button/install-button';
 import { Logo } from '../../../shared/logo/logo';
 
 interface HeroStat {
@@ -20,7 +21,7 @@ const SUPPORT_EMAIL = 'support@tech-connect.app';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, TrimOnBlur, Logo],
+  imports: [ReactiveFormsModule, RouterLink, TrimOnBlur, Logo, InstallButton],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

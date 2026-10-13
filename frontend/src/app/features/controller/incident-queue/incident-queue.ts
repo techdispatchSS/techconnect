@@ -34,6 +34,7 @@ import {
 } from '../dispatch-state';
 import { FreshdeskStatusService } from '../freshdesk-status.service';
 import { NewIncidentNotifierService } from '../new-incident-notifier.service';
+import { Skeleton } from '../../../shared/skeleton/skeleton';
 
 /** Matches the design mockup's auto-refresh cadence for the incident queue. */
 const REFRESH_INTERVAL_MS = 30_000;
@@ -41,7 +42,7 @@ const PAGE_SIZE = 20;
 
 @Component({
   selector: 'app-incident-queue',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, Skeleton],
   templateUrl: './incident-queue.html',
   styleUrl: './incident-queue.scss',
 })
@@ -73,6 +74,7 @@ export class IncidentQueue implements OnInit {
   readonly incidents = signal<Incident[]>([]);
   readonly kpis = signal<IncidentKpis | null>(null);
   readonly loading = signal(true);
+  readonly skeletonRows = [1, 2, 3, 4, 5, 6, 7, 8];
   readonly loadFailed = signal(false);
   /** The detail panel; on a phone it sits below the list and has to be scrolled to. */
   private readonly detailPanel = viewChild<ElementRef<HTMLElement>>('detail');

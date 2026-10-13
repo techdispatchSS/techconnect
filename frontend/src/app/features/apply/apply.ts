@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import { PROVINCES, PROVINCE_LABELS, Province } from '../../core/address.models';
 import { GooglePlacesService } from '../../core/google/google-places.service';
 import { requiredTrimmed, trimStrings } from '../../shared/form-text';
+import { MAX_SKILLS, joinSkills, parseSkills } from '../../shared/skill-list';
 import { TrimOnBlur } from '../../shared/trim-on-blur';
 import { ApplyApiService } from './apply-api.service';
 import {
@@ -87,6 +88,13 @@ export class Apply {
   readonly errorMessage = signal<string | null>(null);
 
   readonly documents = signal<PickedDocument[]>([]);
+
+  // --- skills: one per row ---------------------------------------------------------------
+  readonly maxSkills = MAX_SKILLS;
+  readonly skills = signal<string[]>([]);
+  /** What has been typed in the box but not yet added to the list. */
+  readonly skillDraft = signal('');
+  readonly skillsFull = computed(() => this.skills().length >= MAX_SKILLS);
   readonly fileProblems = signal<string[]>([]);
   /** Which upload area a file is being dragged over: a required kind, or 'CERTIFICATION'. */
   readonly dragging = signal<string | null>(null);
@@ -154,11 +162,45 @@ export class Apply {
       '',
       [requiredTrimmed, Validators.minLength(20), Validators.maxLength(4000)],
     ],
-    skills: ['', [Validators.maxLength(1000)]],
     consent: [false, [Validators.requiredTrue]],
     // Honeypot: hidden from people, tempting to bots.
     website: [''],
   });
+
+  /** Enter or a comma adds the skill typed so far; Enter must not submit the whole form. */
+  onSkillKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault();
+      this.addSkill();
+    }
+  }
+
+  /** Moves what is in the box onto the list. A pasted "CCTV, fibre, cabling" becomes three rows. */
+  addSkill(): void {
+    const additions = parseSkills(this.skillDraft());
+    this.skillDraft.set('');
+    if (additions.length === 0) {
+      return;
+    }
+    this.skills.update((current) => {
+      const known = new Set(current.map((s) => s.toLowerCase()));
+      const merged = [...current];
+      for (const skill of additions) {
+        if (merged.length >= MAX_SKILLS) {
+          break;
+        }
+        if (!known.has(skill.toLowerCase())) {
+          known.add(skill.toLowerCase());
+          merged.push(skill);
+        }
+      }
+      return merged;
+    });
+  }
+
+  removeSkill(index: number): void {
+    this.skills.update((current) => current.filter((_, i) => i !== index));
+  }
 
   // --- documents -------------------------------------------------------------------------
 
@@ -257,6 +299,8 @@ export class Apply {
   // --- submit ----------------------------------------------------------------------------
 
   submit(): void {
+    // Whatever is still in the skill box counts: it would be a shame to lose a typed skill.
+    this.addSkill();
     this.triedToSubmit.set(true);
     if (this.submitting()) {
       return;
@@ -286,7 +330,7 @@ export class Apply {
           idNumber: value.idNumber.replace(/\s+/g, ''),
           address: { ...value.address, province: value.address.province as Province },
           experienceSummary: value.experienceSummary,
-          skills: value.skills.trim() || null,
+          skills: joinSkills(this.skills()),
           documents: docs.map((d) => ({ kind: d.kind, title: d.title })),
           consent: value.consent,
           website: value.website,

@@ -485,3 +485,103 @@ describe('Apply: address search', () => {
     expect(el.textContent).not.toContain('fill in the rest');
   });
 });
+
+describe('Apply: skills', () => {
+  let fixture: ComponentFixture<Apply>;
+  let el: HTMLElement;
+
+  async function setup(): Promise<void> {
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        { provide: ApplyApiService, useValue: { submit: vi.fn() } },
+      ],
+    });
+    fixture = TestBed.createComponent(Apply);
+    el = fixture.nativeElement;
+    await fixture.whenStable();
+  }
+
+  async function typeSkill(text: string): Promise<void> {
+    const box = el.querySelector<HTMLInputElement>('#ap-skill-draft')!;
+    box.value = text;
+    box.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+  }
+
+  async function press(key: string): Promise<KeyboardEvent> {
+    const box = el.querySelector<HTMLInputElement>('#ap-skill-draft')!;
+    const event = new KeyboardEvent('keydown', { key, cancelable: true, bubbles: true });
+    box.dispatchEvent(event);
+    await fixture.whenStable();
+    return event;
+  }
+
+  const rows = (): string[] =>
+    [...el.querySelectorAll('.ap-skill-name')].map((e) => e.textContent!.trim());
+
+  it('puts each skill on its own row when it is added', async () => {
+    await setup();
+
+    await typeSkill('CCTV installation');
+    el.querySelector<HTMLButtonElement>('.ap-skill-add-btn')!.click();
+    await fixture.whenStable();
+    await typeSkill('Fibre splicing');
+    el.querySelector<HTMLButtonElement>('.ap-skill-add-btn')!.click();
+    await fixture.whenStable();
+
+    expect(rows()).toEqual(['CCTV installation', 'Fibre splicing']);
+    expect(el.querySelector<HTMLInputElement>('#ap-skill-draft')!.value).toBe('');
+  });
+
+  it('adds on Enter without submitting the application', async () => {
+    await setup();
+    await typeSkill('Structured cabling');
+
+    const event = await press('Enter');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(rows()).toEqual(['Structured cabling']);
+  });
+
+  it('splits a pasted comma-separated list into rows and ignores repeats', async () => {
+    await setup();
+
+    await typeSkill('CCTV, fibre, cabling, cctv');
+    await press('Enter');
+
+    expect(rows()).toEqual(['CCTV', 'fibre', 'cabling']);
+  });
+
+  it('removes a skill', async () => {
+    await setup();
+    await typeSkill('CCTV, fibre');
+    await press('Enter');
+
+    el.querySelector<HTMLButtonElement>('.ap-skill .ap-file-remove')!.click();
+    await fixture.whenStable();
+
+    expect(rows()).toEqual(['fibre']);
+  });
+
+  it('stops at the limit', async () => {
+    await setup();
+    await typeSkill(Array.from({ length: 25 }, (_, i) => `Skill ${i}`).join(', '));
+    await press('Enter');
+
+    expect(rows()).toHaveLength(20);
+    expect(el.textContent).toContain('That is the most we can take');
+  });
+
+  it('sends one skill per line, including one still in the box', async () => {
+    await setup();
+    await typeSkill('CCTV');
+    await press('Enter');
+    await typeSkill('Fibre splicing');
+
+    fixture.componentInstance.addSkill();
+
+    expect(fixture.componentInstance.skills()).toEqual(['CCTV', 'Fibre splicing']);
+  });
+});

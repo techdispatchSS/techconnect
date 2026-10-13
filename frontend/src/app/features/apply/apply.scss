@@ -58,6 +58,59 @@
   line-height: 1.45;
 }
 
+// Skills: a box with an Add button, then one skill per row.
+.ap-skill-add {
+  display: flex;
+  gap: 8px;
+}
+.ap-skill-add .input {
+  flex: 1;
+  min-width: 0;
+}
+.ap-skill-add-btn {
+  flex: none;
+  padding: 0 18px;
+  cursor: pointer;
+  font:
+    600 14px 'Barlow',
+    system-ui,
+    sans-serif;
+  color: var(--auth-color-text);
+  background: transparent;
+  border: 1px solid var(--auth-color-divider);
+  border-radius: 0;
+}
+.ap-skill-add-btn:hover:not(:disabled) {
+  border-color: var(--auth-color-accent);
+  background: var(--auth-accent-100);
+}
+.ap-skill-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ap-skills {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 1px solid var(--auth-color-divider);
+  background: var(--auth-color-surface);
+}
+.ap-skill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 6px 12px;
+}
+.ap-skill + .ap-skill {
+  border-top: 1px solid var(--auth-color-divider);
+}
+.ap-skill-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
 // Off-screen rather than display:none — some bots skip fields that are display:none.
 .ap-hp {
   position: absolute;

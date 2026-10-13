@@ -25,6 +25,7 @@ import {
   isValidSouthAfricanId,
   problemWithFile,
 } from './apply.models';
+import { InstallButton } from '../../shared/install-button/install-button';
 import { Logo } from '../../shared/logo/logo';
 import { PickedPlace, StreetInput } from '../../shared/street-input/street-input';
 
@@ -62,7 +63,7 @@ const SA_ID: ValidatorFn = (control) =>
  */
 @Component({
   selector: 'app-apply',
-  imports: [ReactiveFormsModule, RouterLink, TrimOnBlur, Logo, StreetInput],
+  imports: [ReactiveFormsModule, RouterLink, TrimOnBlur, Logo, StreetInput, InstallButton],
   templateUrl: './apply.html',
   styleUrls: ['../auth/auth-page.scss', './apply.scss'],
 })

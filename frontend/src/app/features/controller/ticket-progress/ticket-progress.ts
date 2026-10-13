@@ -9,6 +9,7 @@ import { ControllerApiService } from '../controller-api.service';
 import { DispatchResponseEntry, IncidentProgress, PRIORITY_LABELS } from '../controller.models';
 import { canResend, dispatchState } from '../dispatch-state';
 import { FreshdeskStatusService } from '../freshdesk-status.service';
+import { Skeleton } from '../../../shared/skeleton/skeleton';
 
 /** How often a still-open dispatch is re-read. Short: an accept is what the Controller is
  * waiting on, and the queue's own 30s would feel dead here. */
@@ -26,7 +27,7 @@ const REFRESH_INTERVAL_MS = 10_000;
  */
 @Component({
   selector: 'app-ticket-progress',
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, Skeleton],
   templateUrl: './ticket-progress.html',
   styleUrl: './ticket-progress.scss',
 })

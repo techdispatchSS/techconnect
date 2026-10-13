@@ -14,6 +14,7 @@ import { PROVINCES, PROVINCE_LABELS, Province } from '../../core/address.models'
 import { AccountService, Profile } from '../../core/auth/account.service';
 import { trimStrings } from '../../shared/form-text';
 import { Skeleton } from '../../shared/skeleton/skeleton';
+import { PickedAddress, StreetInput } from '../../shared/street-input/street-input';
 import { TrimOnBlur } from '../../shared/trim-on-blur';
 
 /**
@@ -36,7 +37,7 @@ function completeOrEmptyAddress(group: AbstractControl): ValidationErrors | null
 
 @Component({
   selector: 'app-profile-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, Skeleton, TrimOnBlur],
+  imports: [ReactiveFormsModule, MatDialogModule, Skeleton, TrimOnBlur, StreetInput],
   templateUrl: './profile-dialog.html',
   styleUrl: './profile-dialog.scss',
   // Matches admin-shell.ts / login's approach: the "Industry" design system's tokens are
@@ -97,6 +98,19 @@ export class ProfileDialog implements OnInit {
         this.errorMessage.set('Could not load your profile. Please try again.');
       },
     });
+  }
+
+  /** Fills the rest of the address from a Google suggestion; anything it didn't return is left
+   * as it was so it can be completed by hand. */
+  applyPlace(place: PickedAddress): void {
+    const group = this.form.controls.address;
+    for (const [key, value] of Object.entries(place)) {
+      if (value) {
+        group.get(key)?.setValue(value);
+        group.get(key)?.markAsTouched();
+      }
+    }
+    this.form.markAsDirty();
   }
 
   save(): void {

@@ -1,0 +1,53 @@
+:host {
+  display: inline-flex;
+}
+
+// Borrows its colours from whatever it sits on, so it reads on the dark rails and the light
+// pages alike; only the hover is the brand orange.
+.ib {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  cursor: pointer;
+  font:
+    600 13.5px/1.2 'Barlow',
+    system-ui,
+    sans-serif;
+  color: inherit;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: 0;
+  white-space: nowrap;
+}
+.ib:hover {
+  color: var(--tc-accent-text, #b04e00);
+  border-color: var(--tc-accent, #f08221);
+  background: var(--tc-accent-tint, rgba(240, 130, 33, 0.16));
+}
+.ib:focus-visible {
+  outline: 2px solid var(--tc-accent, #f08221);
+  outline-offset: 2px;
+}
+
+.ib--block {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+}
+
+@media (max-width: 599px) {
+  .ib--compact {
+    width: 36px;
+    padding: 0;
+  }
+  .ib--compact .ib-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}

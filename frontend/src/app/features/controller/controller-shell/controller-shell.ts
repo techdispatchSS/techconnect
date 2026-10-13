@@ -30,6 +30,7 @@ import { ProfileDialog } from '../../../layout/profile-dialog/profile-dialog';
 import { PRIORITY_LABELS } from '../controller.models';
 import { FreshdeskStatusService } from '../freshdesk-status.service';
 import { IncidentAlert, NewIncidentNotifierService } from '../new-incident-notifier.service';
+import { InstallButton } from '../../../shared/install-button/install-button';
 import { Logo } from '../../../shared/logo/logo';
 
 /** "synced just now" / "synced 4 min ago" — coarse on purpose; the status is re-read every 30s. */
@@ -51,7 +52,15 @@ function ago(iso: string): string {
 @Component({
   selector: 'app-controller-shell',
   encapsulation: ViewEncapsulation.None,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatDialogModule, MatMenuModule, Logo],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MatDialogModule,
+    MatMenuModule,
+    Logo,
+    InstallButton,
+  ],
   templateUrl: './controller-shell.html',
   styleUrl: './controller-shell.scss',
 })
@@ -199,11 +208,19 @@ export class ControllerShell implements OnInit {
   }
 
   editProfile(): void {
-    this.dialog.open(ProfileDialog, { width: '28rem', panelClass: 'pd-dialog-panel' });
+    this.dialog.open(ProfileDialog, {
+      width: '30rem',
+      maxWidth: '94vw',
+      panelClass: ['tc-dialog-panel', 'pd-dialog-panel'],
+    });
   }
 
   changePassword(): void {
-    this.dialog.open(ChangePasswordDialog, { width: '26rem', panelClass: 'cpd-dialog-panel' });
+    this.dialog.open(ChangePasswordDialog, {
+      width: '26rem',
+      maxWidth: '94vw',
+      panelClass: ['tc-dialog-panel', 'cpd-dialog-panel'],
+    });
   }
 
   logout(): void {

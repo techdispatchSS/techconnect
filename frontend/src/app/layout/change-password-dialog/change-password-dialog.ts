@@ -35,7 +35,12 @@ export class ChangePasswordDialog {
   readonly maxLength = PASSWORD_MAX_LENGTH;
 
   readonly submitting = signal(false);
+  readonly showPasswords = signal(false);
   readonly errorMessage = signal<string | null>(null);
+
+  toggleShow(): void {
+    this.showPasswords.update((shown) => !shown);
+  }
 
   readonly form = this.fb.nonNullable.group(
     {

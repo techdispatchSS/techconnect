@@ -116,6 +116,7 @@ export class UserList implements OnInit {
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(() => {
+        this.resetSelection();
         this.pageIndex.set(0);
         this.load();
       });
@@ -173,16 +174,42 @@ export class UserList implements OnInit {
 
     if (!this.selected() && rows.length > 0) {
       this.select(rows[0]);
+    } else if (rows.length === 0 && !this.selected()) {
+      // Nothing matches, so there is nobody to show; drop the stale `?selected=` too.
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { selected: null },
+        replaceUrl: true,
+      });
     }
   }
 
+  /** A filter or search changes who is in the list, so whoever was open in the details below
+   * may no longer be in it. Clear them; the results' first person is shown once they load. */
+  private resetSelection(): void {
+    this.selected.set(null);
+    this.selectedLoading.set(false);
+    this.newInviteUrl.set(null);
+  }
+
+  clearFilters(): void {
+    this.resetSelection();
+    this.roleFilter.set(null);
+    this.statusFilter.set(null);
+    this.searchControl.setValue('');
+    this.pageIndex.set(0);
+    this.load();
+  }
+
   onRoleTab(role: UserRole | null): void {
+    this.resetSelection();
     this.roleFilter.set(role);
     this.pageIndex.set(0);
     this.load();
   }
 
   onStatusFilter(value: string): void {
+    this.resetSelection();
     this.statusFilter.set((value || null) as UserStatus | null);
     this.pageIndex.set(0);
     this.load();

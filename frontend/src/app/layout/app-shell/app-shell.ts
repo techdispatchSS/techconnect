@@ -17,6 +17,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { ChangePasswordDialog } from '../change-password-dialog/change-password-dialog';
 import { ProfileDialog } from '../profile-dialog/profile-dialog';
+import { InstallButton } from '../../shared/install-button/install-button';
 import { Logo } from '../../shared/logo/logo';
 
 interface NavItem {
@@ -50,6 +51,7 @@ const NAV_ITEMS: readonly NavItem[] = [
     MatSidenavModule,
     MatToolbarModule,
     Logo,
+    InstallButton,
   ],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
@@ -161,11 +163,19 @@ export class AppShell implements OnInit {
     // Same dialog the admin portal opens — its content now follows that design system
     // regardless of which shell opens it (see profile-dialog.ts), so the panel class keeps
     // the outer frame square to match rather than clashing with the squared-off content.
-    this.dialog.open(ProfileDialog, { width: '28rem', panelClass: 'pd-dialog-panel' });
+    this.dialog.open(ProfileDialog, {
+      width: '30rem',
+      maxWidth: '94vw',
+      panelClass: ['tc-dialog-panel', 'pd-dialog-panel'],
+    });
   }
 
   changePassword(): void {
-    this.dialog.open(ChangePasswordDialog, { width: '26rem', panelClass: 'cpd-dialog-panel' });
+    this.dialog.open(ChangePasswordDialog, {
+      width: '26rem',
+      maxWidth: '94vw',
+      panelClass: ['tc-dialog-panel', 'cpd-dialog-panel'],
+    });
   }
 
   logout(): void {

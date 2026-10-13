@@ -13,6 +13,8 @@
 
   <span class="shell-spacer"></span>
 
+  <app-install-button [compact]="true" />
+
   <button
     matIconButton
     type="button"
@@ -32,21 +34,51 @@
     <span class="shell-user-avatar">{{ initials() }}</span>
   </button>
 
-  <mat-menu #userMenu="matMenu">
-    <div class="shell-menu-header" aria-hidden="true">
-      <strong>{{ displayName() }}</strong>
-      <span>{{ role() }}</span>
+  <mat-menu #userMenu="matMenu" class="tc-menu" xPosition="before" yPosition="above">
+    <div class="tc-menu-header" aria-hidden="true">
+      <span class="tc-menu-avatar">{{ initials() }}</span>
+      <span class="tc-menu-id">
+        <strong>{{ displayName() }}</strong>
+        <span>{{ role() }}</span>
+      </span>
     </div>
     <button mat-menu-item type="button" (click)="editProfile()">
-      <mat-icon>badge</mat-icon>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="8.5" r="3.6" />
+        <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
+      </svg>
       <span>My profile</span>
     </button>
     <button mat-menu-item type="button" (click)="changePassword()">
-      <mat-icon>lock_reset</mat-icon>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        aria-hidden="true"
+      >
+        <circle cx="8" cy="12" r="3.5" />
+        <path d="M11.5 12H21M17 12v3M20 12v2" />
+      </svg>
       <span>Change password</span>
     </button>
+    <div class="tc-menu-divider" role="separator"></div>
     <button mat-menu-item type="button" (click)="logout()">
-      <mat-icon>logout</mat-icon>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        aria-hidden="true"
+      >
+        <path d="M9 4H5v16h4M15 8l4 4-4 4M19 12H9" />
+      </svg>
       <span>Sign out</span>
     </button>
   </mat-menu>

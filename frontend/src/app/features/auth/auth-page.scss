@@ -16,6 +16,7 @@
   --auth-accent-100: color-mix(in srgb, #f08221 14%, transparent);
   --auth-accent-600: #ff9540;
   --auth-accent-700: #ffa254;
+  --auth-accent-text: #ffa254;
   --auth-accent-900: #f0a265;
   --auth-status-disabled-fg: #ff6b6b;
 
@@ -58,7 +59,7 @@
 .auth-subtitle {
   margin: 0 0 0.75rem;
   font-size: 13.5px;
-  color: color-mix(in srgb, var(--auth-color-text) 60%, transparent);
+  color: color-mix(in srgb, var(--auth-color-text) 78%, transparent);
 }
 
 .auth-heading {
@@ -80,7 +81,7 @@ form {
 }
 .field label {
   font-size: 12px;
-  color: color-mix(in srgb, var(--auth-color-text) 70%, transparent);
+  color: color-mix(in srgb, var(--auth-color-text) 88%, transparent);
 }
 
 .full-width {
@@ -134,10 +135,10 @@ form {
   background: transparent;
   border: 0;
   cursor: pointer;
-  color: color-mix(in srgb, var(--auth-color-text) 55%, transparent);
+  color: color-mix(in srgb, var(--auth-color-text) 73%, transparent);
 }
 .password-toggle:hover {
-  color: var(--auth-accent-700);
+  color: var(--auth-accent-text);
 }
 .password-toggle svg {
   display: block;
@@ -146,7 +147,7 @@ form {
 .field-hint {
   margin: 0;
   font-size: 12px;
-  color: color-mix(in srgb, var(--auth-color-text) 58%, transparent);
+  color: color-mix(in srgb, var(--auth-color-text) 76%, transparent);
 }
 .field-error {
   margin: 0;
@@ -169,7 +170,7 @@ form {
   font-size: 12.5px;
 }
 .auth-links a {
-  color: var(--auth-accent-700);
+  color: var(--auth-accent-text);
   text-decoration: none;
 }
 .auth-links a:hover {
@@ -257,11 +258,12 @@ form {
 // Light theme. Every rule above reads color exclusively through `--auth-*`, so overriding
 // the definitions here is enough — nothing else in this file needs to change.
 :host-context([data-theme='light']) {
-  --auth-color-bg: #f1f1f2;
-  --auth-color-surface: #ffffff;
-  --auth-color-text: #1a1b1e;
-  --auth-color-divider: color-mix(in srgb, #1a1b1e 14%, transparent);
-  --auth-accent-900: #c65e0a;
+  --auth-color-bg: #e2e4e8;
+  --auth-color-surface: #eff0f3;
+  --auth-color-text: #0b0c0f;
+  --auth-color-divider: color-mix(in srgb, #0b0c0f 24%, transparent);
+  --auth-accent-900: #a64a00;
+  --auth-accent-text: #a64a00;
 }
 
 // Phone-sized screens (technicians activate their account on mobile, PRD §9.4): thumb-sized

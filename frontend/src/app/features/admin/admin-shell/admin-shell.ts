@@ -29,6 +29,7 @@ import { ProfileDialog } from '../../../layout/profile-dialog/profile-dialog';
 import { AdminNavCountsService } from '../admin-nav-counts.service';
 import { Skeleton } from '../../../shared/skeleton/skeleton';
 import { AdminIcon } from '../ui/admin-icon/admin-icon';
+import { InstallButton } from '../../../shared/install-button/install-button';
 import { Logo } from '../../../shared/logo/logo';
 
 interface NavItem {
@@ -58,6 +59,7 @@ interface NavItem {
     AdminIcon,
     Skeleton,
     Logo,
+    InstallButton,
   ],
   templateUrl: './admin-shell.html',
   styleUrl: './admin-shell.scss',
@@ -187,11 +189,19 @@ export class AdminShell implements OnInit {
   }
 
   editProfile(): void {
-    this.dialog.open(ProfileDialog, { width: '28rem', panelClass: 'pd-dialog-panel' });
+    this.dialog.open(ProfileDialog, {
+      width: '30rem',
+      maxWidth: '94vw',
+      panelClass: ['tc-dialog-panel', 'pd-dialog-panel'],
+    });
   }
 
   changePassword(): void {
-    this.dialog.open(ChangePasswordDialog, { width: '26rem', panelClass: 'cpd-dialog-panel' });
+    this.dialog.open(ChangePasswordDialog, {
+      width: '26rem',
+      maxWidth: '94vw',
+      panelClass: ['tc-dialog-panel', 'cpd-dialog-panel'],
+    });
   }
 
   logout(): void {

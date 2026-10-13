@@ -2,9 +2,13 @@
   "name": "TechConnect",
   "short_name": "TechConnect",
   "description": "Field service dispatch: log incidents, send the right technician and follow every job to sign-off.",
+  "id": "/",
+  "lang": "en-ZA",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "orientation": "any",
+  "categories": ["business", "productivity"],
   "background_color": "#17181c",
   "theme_color": "#17181c",
   "icons": [

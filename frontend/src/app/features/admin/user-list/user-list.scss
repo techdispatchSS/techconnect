@@ -1,7 +1,9 @@
+// The directory on top and the selected person beneath it, full width, so neither leaves a
+// column of empty space beside it.
 .ul-layout {
   display: grid;
-  grid-template-columns: minmax(560px, 1fr) 372px;
-  gap: 28px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
   padding: 28px 32px 40px;
   align-items: start;
 }
@@ -45,7 +47,7 @@
 
 .ul-result-line {
   font-size: 12px;
-  color: color-mix(in srgb, var(--admin-color-text) 55%, transparent);
+  color: color-mix(in srgb, var(--admin-color-text) 73%, transparent);
 }
 
 .ul-table-wrap {
@@ -73,7 +75,7 @@
 
 .ul-email {
   font-size: 11px;
-  color: color-mix(in srgb, var(--admin-color-text) 52%, transparent);
+  color: color-mix(in srgb, var(--admin-color-text) 70%, transparent);
 }
 
 .ul-pager {
@@ -81,7 +83,7 @@
   align-items: center;
   gap: 12px;
   font-size: 12px;
-  color: color-mix(in srgb, var(--admin-color-text) 55%, transparent);
+  color: color-mix(in srgb, var(--admin-color-text) 73%, transparent);
 }
 
 .ul-pager-buttons {
@@ -97,12 +99,10 @@
 
 .ul-panel {
   background: var(--admin-color-surface);
-  padding: 20px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  position: sticky;
-  top: 96px;
+  gap: 20px;
 }
 
 .ul-panel-skeleton {
@@ -135,7 +135,22 @@
 .ul-form {
   display: flex;
   flex-direction: column;
+  gap: 20px;
+}
+
+// Identity, role and location, and account access sit side by side under the table.
+.ul-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.ul-section {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+  min-width: 0;
 }
 
 .ul-fact-row {
@@ -145,9 +160,15 @@
 }
 
 .ul-address-fields {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+
+  // The hint and the street run the full width; suburb/city and province/postcode pair up.
+  > .admin-hint,
+  > .admin-field:first-of-type {
+    grid-column: 1 / -1;
+  }
 }
 
 .ul-locked-note {
@@ -172,20 +193,40 @@
 
 .ul-form-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--admin-color-divider);
 
   .admin-btn {
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 9rem;
   }
 }
 
-@media (max-width: 1023px) {
-  .ul-layout {
-    grid-template-columns: 1fr;
+@media (max-width: 1199px) {
+  .ul-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .ul-section--wide {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+}
 
-  .ul-panel {
-    position: static;
+@media (max-width: 767px) {
+  .ul-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ul-section--wide {
+    order: 0;
+  }
+  .ul-address-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ul-form-actions .admin-btn {
+    flex: 1 1 0;
+    min-width: 0;
   }
 }
 

@@ -44,23 +44,78 @@
       <span>Integrations</span>
     </div>
 
-    <div class="admin-shell-user" [matMenuTriggerFor]="userMenu">
+    <button
+      type="button"
+      class="admin-shell-user"
+      [matMenuTriggerFor]="userMenu"
+      aria-haspopup="menu"
+      [attr.aria-label]="'Account menu for ' + displayName()"
+    >
       <span class="admin-shell-user-avatar">{{ initials() }}</span>
       <span class="admin-shell-user-meta">
         <span class="admin-shell-user-name">{{ displayName() }}</span>
         <span class="admin-shell-user-role">{{ role() }}</span>
       </span>
-    </div>
+      <svg
+        class="admin-shell-user-chevron"
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        aria-hidden="true"
+      >
+        <path d="m7 15 5-5 5 5" />
+      </svg>
+    </button>
 
-    <mat-menu #userMenu="matMenu">
+    <mat-menu #userMenu="matMenu" class="tc-menu" xPosition="before" yPosition="above">
+      <div class="tc-menu-header" aria-hidden="true">
+        <span class="tc-menu-avatar">{{ initials() }}</span>
+        <span class="tc-menu-id">
+          <strong>{{ displayName() }}</strong>
+          <span>{{ role() }}</span>
+        </span>
+      </div>
       <button mat-menu-item type="button" (click)="editProfile()">
-        <app-admin-icon name="badge" /> My profile
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="8.5" r="3.6" />
+          <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
+        </svg>
+        <span>My profile</span>
       </button>
       <button mat-menu-item type="button" (click)="changePassword()">
-        <app-admin-icon name="key" /> Change password
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          aria-hidden="true"
+        >
+          <circle cx="8" cy="12" r="3.5" />
+          <path d="M11.5 12H21M17 12v3M20 12v2" />
+        </svg>
+        <span>Change password</span>
       </button>
+      <div class="tc-menu-divider" role="separator"></div>
       <button mat-menu-item type="button" (click)="logout()">
-        <app-admin-icon name="log-out" /> Sign out
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          aria-hidden="true"
+        >
+          <path d="M9 4H5v16h4M15 8l4 4-4 4M19 12H9" />
+        </svg>
+        <span>Sign out</span>
       </button>
     </mat-menu>
   </aside>
@@ -81,6 +136,7 @@
         <div class="admin-shell-breadcrumb">Admin / User management</div>
         <h1 class="admin-shell-title">{{ heading() }}</h1>
       </div>
+      <app-install-button [compact]="true" />
       <button
         type="button"
         class="admin-btn admin-btn-secondary admin-btn-icon"

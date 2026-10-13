@@ -73,6 +73,14 @@
         }
       })();
     </script>
+    <script>
+      // Chromium fires `beforeinstallprompt` early, often before Angular has started. Hold on to
+      // it here so the "Install app" button (core/pwa/install.service.ts) can use it later.
+      window.addEventListener('beforeinstallprompt', function (event) {
+        event.preventDefault();
+        window.__tcInstallPrompt = event;
+      });
+    </script>
   </head>
   <body>
     <app-root></app-root>

@@ -436,3 +436,13 @@
     flex: 1 1 calc(50% - 5px);
   }
 }
+
+.cd-table--loading tbody tr {
+  pointer-events: none;
+}
+
+.cd-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

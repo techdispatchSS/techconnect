@@ -39,40 +39,40 @@ html {
   // Grey of the TechConnect logo (shared/logo); its orange is fixed.
   --tc-logo-ink: #4b5054;
 
-  --mat-sys-primary: #17181c;
+  --mat-sys-primary: #0b0c0f;
   --mat-sys-on-primary: #ffffff;
-  --mat-sys-primary-container: #e9e9ec;
-  --mat-sys-on-primary-container: #17181c;
-  --mat-sys-secondary: #5b5e66;
+  --mat-sys-primary-container: #dcdfe3;
+  --mat-sys-on-primary-container: #0b0c0f;
+  --mat-sys-secondary: #3f434b;
   --mat-sys-on-secondary: #ffffff;
-  --mat-sys-secondary-container: #eef0f2;
-  --mat-sys-on-secondary-container: #17181c;
-  --mat-sys-tertiary: #17181c;
+  --mat-sys-secondary-container: #dcdfe3;
+  --mat-sys-on-secondary-container: #0b0c0f;
+  --mat-sys-tertiary: #0b0c0f;
   --mat-sys-on-tertiary: #ffffff;
-  --mat-sys-tertiary-container: #e9e9ec;
-  --mat-sys-on-tertiary-container: #17181c;
+  --mat-sys-tertiary-container: #dcdfe3;
+  --mat-sys-on-tertiary-container: #0b0c0f;
 
-  --mat-sys-surface: #ffffff;
-  --mat-sys-surface-dim: #e7e8ea;
-  --mat-sys-surface-bright: #ffffff;
-  --mat-sys-surface-container-lowest: #ffffff;
-  --mat-sys-surface-container-low: #f7f7f8;
-  --mat-sys-surface-container: #f1f2f4;
-  --mat-sys-surface-container-high: #ebebee;
-  --mat-sys-surface-container-highest: #e2e3e6;
-  --mat-sys-background: #f2f3f5;
-  --mat-sys-on-background: #17181c;
-  --mat-sys-on-surface: #17181c;
-  --mat-sys-on-surface-variant: #5b5e66;
-  --mat-sys-outline: #cdced3;
-  --mat-sys-outline-variant: #e3e4e8;
-  --mat-sys-inverse-surface: #17181c;
+  --mat-sys-surface: #eff0f3;
+  --mat-sys-surface-dim: #d4d7dc;
+  --mat-sys-surface-bright: #eff0f3;
+  --mat-sys-surface-container-lowest: #f4f5f7;
+  --mat-sys-surface-container-low: #eaecef;
+  --mat-sys-surface-container: #e6e8ec;
+  --mat-sys-surface-container-high: #e0e3e7;
+  --mat-sys-surface-container-highest: #d9dce1;
+  --mat-sys-background: #e2e4e8;
+  --mat-sys-on-background: #0b0c0f;
+  --mat-sys-on-surface: #0b0c0f;
+  --mat-sys-on-surface-variant: #3f434b;
+  --mat-sys-outline: #a9adb5;
+  --mat-sys-outline-variant: #cbced5;
+  --mat-sys-inverse-surface: #0b0c0f;
   --mat-sys-inverse-on-surface: #ffffff;
   --mat-sys-inverse-primary: #d6d7db;
 
   // The remaining `mat-card` usage (the "forbidden" page). Kept rounded/white rather than
   // the monochrome default so it still reads as a raised surface on the gray canvas.
-  --mat-card-elevated-container-color: #ffffff;
+  --mat-card-elevated-container-color: #eff0f3;
   --mat-card-elevated-container-shape: 1rem;
   --mat-card-elevated-container-elevation:
     0 1px 2px rgba(15, 15, 18, 0.04), 0 6px 20px rgba(15, 15, 18, 0.05);
@@ -152,4 +152,259 @@ mat-dialog-content form {
   flex-direction: column;
   gap: 0.25rem;
   padding-top: 0.5rem;
+}
+
+/* --- Brand accent for everything the browser would otherwise colour itself ---
+ *
+ * Form controls, text selection, the tap flash on phones and the open <select> list all fall
+ * back to the operating system's blue unless told otherwise. The product's accent is orange, so
+ * they are set once here instead of per feature.
+ */
+html {
+  --tc-accent: #f08221;
+  --tc-accent-text: #b04e00;
+  --tc-accent-tint: rgba(240, 130, 33, 0.16);
+  --tc-accent-tint-strong: rgba(240, 130, 33, 0.28);
+
+  // Floating surfaces (menus, the open <select> list). They render outside any shell, so they
+  // read these rather than a feature's own tokens.
+  --tc-pop-bg: #eff0f3;
+  --tc-pop-text: #0b0c0f;
+  --tc-pop-muted: #3f434b;
+  --tc-pop-border: rgba(11, 12, 15, 0.26);
+  --tc-pop-shadow: 0 10px 30px rgba(11, 12, 15, 0.18);
+  --tc-field-bg: #e2e4e8;
+  --tc-field-border: rgba(11, 12, 15, 0.38);
+  --tc-danger: #b3261e;
+
+  accent-color: var(--tc-accent);
+  -webkit-tap-highlight-color: var(--tc-accent-tint);
+}
+
+html[data-theme='dark'] {
+  --tc-accent-text: #f0a265;
+  --tc-pop-bg: #1b1f24;
+  --tc-pop-text: #edeff1;
+  --tc-pop-muted: #aeb4bb;
+  --tc-pop-border: rgba(255, 255, 255, 0.18);
+  --tc-pop-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --tc-field-bg: #14171b;
+  --tc-field-border: rgba(255, 255, 255, 0.24);
+  --tc-danger: #ff6b6b;
+}
+
+::selection {
+  background: var(--tc-accent-tint-strong);
+  color: inherit;
+}
+
+input,
+textarea,
+select {
+  caret-color: var(--tc-accent);
+}
+
+// Browser autofill paints inputs pale blue/yellow; keep them on the surface they sit on.
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: currentColor;
+  caret-color: var(--tc-accent);
+  transition: background-color 600000s 0s;
+}
+
+/* The open <select> list. Chromium 135+ lets the list and its options be styled
+ * (`appearance: base-select`), so the highlighted option is the brand's light orange rather
+ * than the system blue. Browsers without it keep their native list, which is still usable. */
+@supports (appearance: base-select) {
+  select,
+  ::picker(select) {
+    appearance: base-select;
+  }
+
+  select::picker-icon {
+    color: currentColor;
+    transition: rotate 0.15s ease;
+  }
+  select:open::picker-icon {
+    rotate: 180deg;
+  }
+
+  ::picker(select) {
+    margin-block: 2px;
+    padding: 4px 0;
+    border: 1px solid var(--tc-pop-border);
+    border-radius: 0;
+    background: var(--tc-pop-bg);
+    color: var(--tc-pop-text);
+    box-shadow: var(--tc-pop-shadow);
+  }
+
+  select option {
+    padding: 9px 12px;
+    font: inherit;
+    color: var(--tc-pop-text);
+    background: transparent;
+    cursor: pointer;
+  }
+  select option:hover,
+  select option:focus-visible {
+    background: var(--tc-accent-tint);
+    outline: none;
+  }
+  select option:checked {
+    background: var(--tc-accent-tint-strong);
+    font-weight: 600;
+  }
+  select option::checkmark {
+    color: var(--tc-accent-text);
+  }
+  select option:disabled {
+    color: var(--tc-pop-muted);
+    cursor: default;
+  }
+}
+
+/* --- Account menu (all three shells) ---
+ *
+ * `<mat-menu class="tc-menu">`. The panel is portaled to <body>, so it can't read a shell's
+ * tokens; it uses the `--tc-pop-*` ones above and follows the theme.
+ */
+.tc-menu.mat-mdc-menu-panel {
+  --mat-menu-container-color: var(--tc-pop-bg);
+  --mat-menu-container-shape: 0;
+  --mat-menu-item-label-text-color: var(--tc-pop-text);
+  --mat-menu-item-icon-color: var(--tc-pop-muted);
+  --mat-menu-divider-color: var(--tc-pop-border);
+  --mat-menu-item-hover-state-layer-color: transparent;
+  --mat-menu-item-focus-state-layer-color: transparent;
+
+  min-width: 248px;
+  max-width: 320px;
+  border: 1px solid var(--tc-pop-border);
+  border-radius: 0;
+  background: var(--tc-pop-bg);
+  box-shadow: var(--tc-pop-shadow);
+  font-family: 'Barlow', system-ui, sans-serif;
+
+  .mat-mdc-menu-content {
+    padding: 0;
+  }
+
+  .tc-menu-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--tc-pop-border);
+    color: var(--tc-pop-text);
+  }
+  .tc-menu-avatar {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--tc-pop-border);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .tc-menu-id {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+
+    strong {
+      font-weight: 600;
+      font-size: 14.5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    span {
+      font-size: 12px;
+      color: var(--tc-accent-text);
+      text-transform: lowercase;
+    }
+    span::first-letter {
+      text-transform: uppercase;
+    }
+  }
+
+  .mat-mdc-menu-item {
+    min-height: 46px;
+    padding: 0 16px;
+    gap: 12px;
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0;
+    color: var(--tc-pop-text);
+    border-left: 3px solid transparent;
+
+    .mat-mdc-menu-item-text {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font: inherit;
+      color: inherit;
+    }
+    svg {
+      flex: none;
+      width: 18px;
+      height: 18px;
+      color: var(--tc-pop-muted);
+    }
+    // Material's own icon font (the technician shell) and the admin shell's icon component
+    // sit in the same column as the inline SVGs above.
+    .mat-icon,
+    app-admin-icon {
+      flex: none;
+      margin: 0;
+      color: var(--tc-pop-muted);
+    }
+
+    &:hover,
+    &.cdk-program-focused,
+    &.cdk-keyboard-focused {
+      background: var(--tc-accent-tint);
+      border-left-color: var(--tc-accent);
+      svg,
+      .mat-icon,
+      app-admin-icon {
+        color: var(--tc-accent-text);
+      }
+    }
+  }
+
+  .tc-menu-divider {
+    height: 1px;
+    margin: 4px 0;
+    background: var(--tc-pop-border);
+  }
+}
+
+/* --- Dialogs ---
+ *
+ * Every dialog (profile, change password, install help, confirmations) is drawn as a square,
+ * hairline-bordered panel on the same surface as the menus, in either theme.
+ */
+.tc-dialog-panel {
+  --mat-dialog-container-color: var(--tc-pop-bg);
+  --mat-dialog-container-shape: 0;
+  --mat-dialog-supporting-text-color: var(--tc-pop-text);
+  --mat-dialog-subhead-color: var(--tc-pop-text);
+
+  .mat-mdc-dialog-container {
+    --mdc-dialog-container-color: var(--tc-pop-bg);
+    --mdc-dialog-container-shape: 0;
+  }
+  .mat-mdc-dialog-surface {
+    border: 1px solid var(--tc-pop-border);
+    border-radius: 0 !important;
+    background: var(--tc-pop-bg);
+    color: var(--tc-pop-text);
+    box-shadow: var(--tc-pop-shadow);
+  }
 }

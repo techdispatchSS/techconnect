@@ -603,3 +603,9 @@
     text-align: center;
   }
 }
+
+// Placeholder rows while the first page of the queue loads: not clickable, not hoverable.
+.iq-table--loading tbody tr {
+  cursor: default;
+  pointer-events: none;
+}

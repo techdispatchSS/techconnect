@@ -1,8 +1,5 @@
 <div class="login-page">
   <aside class="login-hero">
-    <!-- A large, faint mark: gives the otherwise empty panel a visual anchor. Purely decorative. -->
-    <app-logo class="login-hero-watermark" variant="mark" height="480px" [decorative]="true" />
-
     <div class="login-hero-brand">
       <app-logo class="login-hero-brand-logo" variant="lockup" height="64px" />
       <span class="login-hero-brand-sub">Field operations platform</span>
@@ -204,6 +201,10 @@
         Not part of the team yet?
         <a routerLink="/apply" class="login-forgot-link">Apply to be a technician</a>.
       </p>
+
+      <div class="login-install">
+        <app-install-button [block]="true" label="Install the TechConnect app" />
+      </div>
     </div>
   </main>
 </div>

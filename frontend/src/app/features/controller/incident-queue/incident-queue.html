@@ -59,6 +59,17 @@
     </div>
   }
 
+  @if (!kpis() && loading()) {
+    <div class="iq-kpis" aria-busy="true" aria-label="Loading totals">
+      @for (tile of [1, 2, 3, 4]; track tile) {
+        <div class="controller-card iq-kpi">
+          <app-skeleton width="6.5rem" height="12px" />
+          <app-skeleton width="3rem" height="30px" />
+        </div>
+      }
+    </div>
+  }
+
   @if (kpis(); as k) {
     <div class="iq-kpis">
       <div class="controller-card iq-kpi">
@@ -100,7 +111,40 @@
 
       <div class="controller-card iq-table-card">
         @if (loading()) {
-          <p class="iq-empty">Loading…</p>
+          <table
+            class="controller-table iq-table iq-table--loading"
+            aria-busy="true"
+            aria-label="Loading incidents"
+          >
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Client</th>
+                <th>Site</th>
+                <th>Issue</th>
+                <th>Dispatch</th>
+                <th>Priority</th>
+                <th>SLA</th>
+                <th style="text-align: right">Age</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of skeletonRows; track row) {
+                <tr aria-hidden="true">
+                  <td class="iq-c-ticket"><app-skeleton width="5.5rem" height="14px" /></td>
+                  <td class="iq-c-client"><app-skeleton width="9rem" height="14px" /></td>
+                  <td class="iq-c-site"><app-skeleton width="13rem" height="14px" /></td>
+                  <td class="iq-c-issue"><app-skeleton width="6rem" height="14px" /></td>
+                  <td class="iq-c-dispatch"><app-skeleton width="7rem" height="22px" /></td>
+                  <td class="iq-c-priority"><app-skeleton width="4.5rem" height="22px" /></td>
+                  <td class="iq-c-sla"><app-skeleton width="3.5rem" height="14px" /></td>
+                  <td class="iq-c-age" style="text-align: right">
+                    <app-skeleton width="3rem" height="14px" />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         } @else if (loadFailed()) {
           <p class="iq-empty">Couldn't load the incident queue. Try again shortly.</p>
         } @else if (incidents().length === 0) {

@@ -262,15 +262,51 @@
         </div>
 
         <div class="field">
-          <label for="ap-skills">Skills (optional)</label>
-          <input
-            appTrimOnBlur
-            id="ap-skills"
-            class="input"
-            formControlName="skills"
-            placeholder="e.g. CCTV, structured cabling, fibre splicing"
-            maxlength="1000"
-          />
+          <label for="ap-skill-draft">Skills (optional)</label>
+          <p class="field-hint">
+            Add one skill at a time, for example CCTV, structured cabling or fibre splicing.
+          </p>
+          <div class="ap-skill-add">
+            <input
+              id="ap-skill-draft"
+              class="input"
+              autocomplete="off"
+              maxlength="400"
+              placeholder="e.g. CCTV installation"
+              [value]="skillDraft()"
+              [disabled]="skillsFull()"
+              (input)="skillDraft.set($any($event.target).value)"
+              (keydown)="onSkillKeydown($event)"
+            />
+            <button
+              type="button"
+              class="ap-skill-add-btn"
+              [disabled]="skillsFull() || skillDraft().trim() === ''"
+              (click)="addSkill()"
+            >
+              Add
+            </button>
+          </div>
+          @if (skills().length > 0) {
+            <ul class="ap-skills" aria-label="Your skills">
+              @for (skill of skills(); track skill; let i = $index) {
+                <li class="ap-skill">
+                  <span class="ap-skill-name">{{ skill }}</span>
+                  <button
+                    type="button"
+                    class="ap-file-remove"
+                    (click)="removeSkill(i)"
+                    [attr.aria-label]="'Remove ' + skill"
+                  >
+                    Remove
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+          @if (skillsFull()) {
+            <p class="field-hint">That is the most we can take ({{ maxSkills }}).</p>
+          }
         </div>
       </fieldset>
 

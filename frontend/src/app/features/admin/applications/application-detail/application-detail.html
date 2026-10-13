@@ -56,10 +56,17 @@
             </dd>
           </div>
         }
-        @if (app.skills) {
+        @let skills = skillsOf(app.skills);
+        @if (skills.length > 0) {
           <div class="ad-fact-wide">
             <dt>Skills</dt>
-            <dd>{{ app.skills }}</dd>
+            <dd>
+              <ul class="ad-skills">
+                @for (skill of skills; track skill) {
+                  <li>{{ skill }}</li>
+                }
+              </ul>
+            </dd>
           </div>
         }
       </dl>

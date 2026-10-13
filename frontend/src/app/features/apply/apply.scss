@@ -206,6 +206,101 @@
   --admin-color-accent: var(--auth-color-accent);
 }
 
+// ── Documents ──
+
+.ap-optional {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--auth-color-text) 70%, transparent);
+}
+
+.ap-required {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ap-req {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0.8rem 0.85rem;
+  border: 1px solid var(--auth-color-divider);
+  background: var(--auth-color-surface);
+}
+.ap-req--done {
+  border-left: 3px solid var(--auth-color-accent);
+}
+.ap-req--error {
+  border-color: var(--auth-status-disabled-fg);
+}
+.ap-req-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ap-req-label {
+  font-weight: 600;
+  font-size: 14.5px;
+}
+.ap-req-hint {
+  font-size: 12.5px;
+  color: color-mix(in srgb, var(--auth-color-text) 72%, transparent);
+}
+.ap-req-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.ap-req-tick {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #12140f;
+  background: var(--auth-color-accent);
+}
+.ap-req-replace {
+  position: relative;
+  cursor: pointer;
+}
+.ap-req-replace:focus-within {
+  outline: 2px solid var(--auth-color-accent);
+}
+
+// The upload tile reads as a button: a solid accent edge and a clear label.
+.ap-drop--cert,
+.ap-req .ap-drop {
+  position: relative;
+  min-height: 84px;
+  justify-content: center;
+}
+.ap-req .ap-drop-title,
+.ap-drop--cert .ap-drop-title {
+  color: var(--auth-accent-text, var(--auth-accent-700));
+  font-size: 15px;
+}
+
+.ap-file--unnamed {
+  border-left: 3px solid var(--auth-color-accent);
+}
+.ap-name-prompt {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--auth-accent-text, var(--auth-accent-700));
+}
+.ap-name-prompt--error {
+  color: var(--auth-status-disabled-fg);
+}
+
 .ap-install {
   margin: 0 0 12px;
   color: var(--auth-color-text);

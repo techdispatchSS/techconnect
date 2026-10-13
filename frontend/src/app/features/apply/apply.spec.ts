@@ -68,11 +68,30 @@ describe('Apply', () => {
     (el.querySelector('input[type="checkbox"]') as HTMLInputElement).click();
   }
 
-  async function attach(...files: File[]): Promise<void> {
-    const input = el.querySelector<HTMLInputElement>('input[type="file"]')!;
+  async function chooseIn(input: HTMLInputElement, files: File[]): Promise<void> {
     Object.defineProperty(input, 'files', { value: files, configurable: true });
     input.dispatchEvent(new Event('change'));
     await fixture.whenStable();
+  }
+
+  /** The upload area for a required document, by position: ID, matric, proof of residence. */
+  function requiredInput(index: number): HTMLInputElement {
+    return el
+      .querySelectorAll<HTMLInputElement>('.ap-req')
+      [index].querySelector('input[type="file"]')!;
+  }
+
+  async function attachRequired(): Promise<void> {
+    for (const name of ['id.pdf', 'matric.pdf', 'residence.pdf']) {
+      // Each upload area is replaced by the file's row once filled, so the next one is always
+      // the first area still empty.
+      const empty = el.querySelector<HTMLInputElement>('.ap-req .ap-drop input[type="file"]')!;
+      await chooseIn(empty, [pdf(name)]);
+    }
+  }
+
+  async function attach(...files: File[]): Promise<void> {
+    await chooseIn(el.querySelector<HTMLInputElement>('.ap-drop--cert input[type="file"]')!, files);
   }
 
   async function send(): Promise<void> {
@@ -80,29 +99,54 @@ describe('Apply', () => {
     await fixture.whenStable();
   }
 
-  it('sends nothing for an empty form and says proof is required', async () => {
+  it('sends nothing for an empty form and says which documents are required', async () => {
     await setup();
     await send();
 
     expect(submit).not.toHaveBeenCalled();
-    expect(el.textContent).toContain('Attach at least one certificate or qualification');
+    expect(el.textContent).toContain('Upload your ID document');
+    expect(el.textContent).toContain('Upload your matric certificate');
+    expect(el.textContent).toContain('Upload your proof of residence');
     expect(el.textContent).toContain('First name is required');
   });
 
-  it('will not send without any proof attached, even if every field is valid', async () => {
+  it('will not send without the three required documents, even if every field is valid', async () => {
     await setup();
     fillValidForm();
     await send();
 
     expect(submit).not.toHaveBeenCalled();
-    expect(el.textContent).toContain('Attach at least one certificate or qualification');
+    expect(el.textContent).toContain('Upload your ID document');
+  });
+
+  it('names the one document still missing', async () => {
+    await setup();
+    fillValidForm();
+    await chooseIn(requiredInput(0), [pdf('id.pdf')]);
+    await chooseIn(requiredInput(1), [pdf('matric.pdf')]);
+    await send();
+
+    expect(submit).not.toHaveBeenCalled();
+    expect(el.textContent).toContain('Upload your proof of residence');
+    expect(el.textContent).not.toContain('Upload your ID document');
+  });
+
+  it('does not let a certification stand in for a required document', async () => {
+    await setup();
+    fillValidForm();
+    await attach(pdf('ccna.pdf'));
+    type('input[id^="ap-doc-title-"]', 'CCNA');
+    await send();
+
+    expect(submit).not.toHaveBeenCalled();
+    expect(el.textContent).toContain('Upload your ID document');
   });
 
   it('will not send an ID number with a bad checksum, and says why', async () => {
     await setup();
     fillValidForm();
     type('#ap-id', '9001015000084');
-    await attach(pdf());
+    await attachRequired();
     await send();
 
     expect(submit).not.toHaveBeenCalled();
@@ -113,7 +157,7 @@ describe('Apply', () => {
     await setup();
     fillValidForm();
     type('#ap-id', '');
-    await attach(pdf());
+    await attachRequired();
     await send();
 
     expect(submit).not.toHaveBeenCalled();
@@ -124,7 +168,7 @@ describe('Apply', () => {
     await setup();
     fillValidForm();
     type('#ap-id', '900101 5000 085');
-    await attach(pdf());
+    await attachRequired();
     await send();
 
     expect(submit).toHaveBeenCalledTimes(1);
@@ -136,7 +180,7 @@ describe('Apply', () => {
     await setup();
     fillValidForm();
     (el.querySelector('input[type="checkbox"]') as HTMLInputElement).click(); // untick
-    await attach(pdf());
+    await attachRequired();
     await send();
 
     expect(submit).not.toHaveBeenCalled();
@@ -156,6 +200,15 @@ describe('Apply', () => {
     expect(el.textContent).toContain('the limit is');
     expect(el.querySelectorAll('.ap-file')).toHaveLength(1);
     expect(el.querySelector('.ap-file-name')!.textContent).toContain('good.pdf');
+  });
+
+  it('refuses a disallowed file in a required slot and leaves the slot empty', async () => {
+    await setup();
+
+    await chooseIn(requiredInput(0), [new File(['MZ'], 'virus.exe')]);
+
+    expect(el.textContent).toContain("isn't a PDF, JPG or PNG");
+    expect(el.querySelectorAll('.ap-req--done')).toHaveLength(0);
   });
 
   it('caps the number of attachments', async () => {
@@ -182,8 +235,8 @@ describe('Apply', () => {
     await setup();
     fillValidForm();
     type('#ap-first', '  Nomsa  ');
+    await attachRequired();
     await attach(pdf('ccna.pdf'));
-    choose('select[id^="ap-doc-kind-"]', 'QUALIFICATION');
     type('input[id^="ap-doc-title-"]', '  CCNA Routing  ');
     await send();
 
@@ -197,16 +250,101 @@ describe('Apply', () => {
       province: 'KWAZULU_NATAL',
       postalCode: '4001',
     });
-    expect(request.documents).toEqual([{ kind: 'QUALIFICATION', title: 'CCNA Routing' }]);
+    expect(request.documents).toEqual([
+      { kind: 'ID_DOCUMENT', title: 'ID document' },
+      { kind: 'MATRIC_CERTIFICATE', title: 'Matric certificate' },
+      { kind: 'PROOF_OF_RESIDENCE', title: 'Proof of residence' },
+      { kind: 'CERTIFICATE', title: 'CCNA Routing' },
+    ]);
     expect(request.consent).toBe(true);
     expect(request.website).toBe('');
-    expect(files.map((f) => f.name)).toEqual(['ccna.pdf']);
+    expect(files.map((f) => f.name)).toEqual(['id.pdf', 'matric.pdf', 'residence.pdf', 'ccna.pdf']);
+  });
+
+  it('invites a click to upload each required document, then shows the file chosen', async () => {
+    await setup();
+
+    const tiles = [...el.querySelectorAll('.ap-req .ap-drop-title')].map((t) =>
+      t.textContent!.trim(),
+    );
+    expect(tiles).toEqual([
+      'Click here to upload your ID document',
+      'Click here to upload your matric certificate',
+      'Click here to upload your proof of residence',
+    ]);
+
+    await chooseIn(requiredInput(0), [pdf('my-id.pdf')]);
+
+    const first = el.querySelectorAll('.ap-req')[0];
+    expect(first.classList.contains('ap-req--done')).toBe(true);
+    expect(first.textContent).toContain('my-id.pdf');
+    expect(first.querySelector('.ap-drop')).toBeNull();
+  });
+
+  it('replaces a required document rather than adding a second one', async () => {
+    await setup();
+    await chooseIn(requiredInput(0), [pdf('first.pdf')]);
+
+    await chooseIn(requiredInput(0), [pdf('second.pdf')]);
+
+    const first = el.querySelectorAll('.ap-req')[0];
+    expect(first.textContent).toContain('second.pdf');
+    expect(first.textContent).not.toContain('first.pdf');
+  });
+
+  it('puts a certification on the page unnamed, prompts for its name and focuses it', async () => {
+    await setup();
+    document.body.appendChild(el);
+
+    expect(el.querySelector('.ap-drop--cert .ap-drop-title')!.textContent).toContain(
+      'Click here to upload a certification',
+    );
+
+    await attach(pdf('scan0042.pdf'));
+
+    const name = el.querySelector<HTMLInputElement>('input[id^="ap-doc-title-"]')!;
+    expect(name.value).toBe('');
+    expect(el.textContent).toContain('What is this certification called?');
+    expect(el.textContent).toContain('Give this certification a name before you submit.');
+    expect(document.activeElement).toBe(name);
+    el.remove();
+  });
+
+  it('will not send while an uploaded certification has no name', async () => {
+    await setup();
+    fillValidForm();
+    await attachRequired();
+    await attach(pdf('scan0042.pdf'));
+
+    await send();
+
+    expect(submit).not.toHaveBeenCalled();
+
+    type('input[id^="ap-doc-title-"]', 'Hikvision installer');
+    await send();
+
+    expect(submit).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends with no certifications at all: they are optional', async () => {
+    await setup();
+    fillValidForm();
+    await attachRequired();
+    await send();
+
+    expect(submit).toHaveBeenCalledTimes(1);
+    const [request] = submit.mock.calls[0] as [SubmitApplicationRequest, File[]];
+    expect(request.documents.map((d) => d.kind)).toEqual([
+      'ID_DOCUMENT',
+      'MATRIC_CERTIFICATE',
+      'PROOF_OF_RESIDENCE',
+    ]);
   });
 
   it('shows the confirmation instead of the form once accepted', async () => {
     await setup();
     fillValidForm();
-    await attach(pdf());
+    await attachRequired();
     await send();
 
     expect(el.querySelector('form')).toBeNull();
@@ -224,7 +362,7 @@ describe('Apply', () => {
       ),
     );
     fillValidForm();
-    await attach(pdf());
+    await attachRequired();
     await send();
 
     expect(el.querySelector('[role="alert"].auth-error')!.textContent).toContain(
@@ -236,7 +374,7 @@ describe('Apply', () => {
   it('explains a rate limit rather than failing silently', async () => {
     await setup(() => throwError(() => new HttpErrorResponse({ status: 429, error: {} })));
     fillValidForm();
-    await attach(pdf());
+    await attachRequired();
     await send();
 
     expect(el.textContent).toContain('Too many applications');
@@ -247,7 +385,7 @@ describe('Apply', () => {
     const pending = new Subject<ApplicationReceivedResponse>();
     await setup(() => pending);
     fillValidForm();
-    await attach(pdf());
+    await attachRequired();
 
     await send();
     await send();

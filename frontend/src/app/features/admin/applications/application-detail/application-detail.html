@@ -84,8 +84,7 @@
             <span class="ad-doc-meta">
               <span class="ad-doc-title">{{ doc.title }}</span>
               <span class="ad-doc-file">
-                {{ doc.kind === 'CERTIFICATE' ? 'Certificate' : 'Qualification' }} ·
-                {{ doc.filename }} · {{ formatBytes(doc.sizeBytes) }}
+                {{ kindLabels[doc.kind] }} · {{ doc.filename }} · {{ formatBytes(doc.sizeBytes) }}
               </span>
             </span>
             <button

@@ -42,6 +42,8 @@ export class ApplicationDetailPage implements OnInit {
   readonly statusLabels = APPLICATION_STATUS_LABELS;
   readonly skillsOf = parseSkills;
   readonly kindLabels = DOCUMENT_KIND_LABELS;
+  readonly kindLabels = DOCUMENT_KIND_LABELS;
+  readonly skillsOf = parseSkills;
   readonly provinceLabels = PROVINCE_LABELS;
 
   readonly application = signal<ApplicationDetail | null>(null);

@@ -278,46 +278,113 @@
       </fieldset>
 
       <fieldset class="ap-section">
-        <legend>Proof of certificates and qualifications</legend>
+        <legend>Your documents</legend>
         <p class="field-hint">
-          Attach at least one. PDF, JPG or PNG, up to {{ maxFileSize }} each, {{ maxFiles }} files
-          at most. Scanned or photographed copies are fine.
+          All three are required. PDF, JPG or PNG, up to {{ maxFileSize }} each. A clear scan or
+          photo is fine.
+        </p>
+
+        <ul class="ap-required">
+          @for (item of required; track item.kind) {
+            @let doc = requiredDocs().get(item.kind);
+            @let missing = missingKinds().includes(item.kind);
+            <li class="ap-req" [class.ap-req--done]="doc" [class.ap-req--error]="missing">
+              <div class="ap-req-text">
+                <span class="ap-req-label">{{ item.label }}</span>
+                <span class="ap-req-hint">{{ item.hint }}</span>
+              </div>
+
+              @if (doc) {
+                <div class="ap-req-file">
+                  <span class="ap-req-tick" aria-hidden="true">✓</span>
+                  <span class="ap-file-name">{{ doc.file.name }}</span>
+                  <span class="ap-file-size">{{ formatBytes(doc.file.size) }}</span>
+                  <label class="ap-file-remove ap-req-replace">
+                    Replace
+                    <input
+                      type="file"
+                      class="ap-drop-input"
+                      [accept]="accept"
+                      [attr.aria-label]="'Replace your ' + item.short"
+                      (change)="onRequiredChosen(item.kind, $event)"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    class="ap-file-remove"
+                    (click)="removeDocument(doc.key)"
+                    [attr.aria-label]="'Remove ' + doc.file.name"
+                  >
+                    Remove
+                  </button>
+                </div>
+              } @else {
+                <label
+                  class="ap-drop"
+                  [class.ap-drop--active]="dragging() === item.kind"
+                  [class.ap-drop--error]="missing"
+                  (dragover)="onDragOver($event, item.kind)"
+                  (dragleave)="dragging.set(null)"
+                  (drop)="onDropRequired($event, item.kind)"
+                >
+                  <input
+                    type="file"
+                    class="ap-drop-input"
+                    [accept]="accept"
+                    [attr.aria-label]="'Upload your ' + item.short"
+                    (change)="onRequiredChosen(item.kind, $event)"
+                  />
+                  <span class="ap-drop-title">Click here to upload your {{ item.short }}</span>
+                  <span class="ap-drop-sub">PDF, JPG or PNG, or drop it here</span>
+                </label>
+              }
+
+              @if (missing) {
+                <p class="field-error" role="alert">Upload your {{ item.short }}</p>
+              }
+            </li>
+          }
+        </ul>
+      </fieldset>
+
+      <fieldset class="ap-section">
+        <legend>Certifications <span class="ap-optional">optional</span></legend>
+        <p class="field-hint">
+          Trade or vendor certificates, such as a CCNA, CompTIA or Hikvision course. Upload each
+          one, then tell us what it is called so the reviewer knows what they are looking at.
         </p>
 
         <label
-          class="ap-drop"
-          [class.ap-drop--active]="dragging()"
-          [class.ap-drop--error]="proofMissing()"
-          (dragover)="onDragOver($event)"
-          (dragleave)="dragging.set(false)"
-          (drop)="onDrop($event)"
+          class="ap-drop ap-drop--cert"
+          [class.ap-drop--active]="dragging() === 'CERTIFICATION'"
+          (dragover)="onDragOver($event, 'CERTIFICATION')"
+          (dragleave)="dragging.set(null)"
+          (drop)="onDropCertification($event)"
         >
           <input
             type="file"
             class="ap-drop-input"
-            multiple
             [accept]="accept"
             [disabled]="!canAddMore()"
-            (change)="onFilesChosen($event)"
+            aria-label="Upload a certification"
+            (change)="onCertificationChosen($event)"
           />
           <span class="ap-drop-title">
-            {{ canAddMore() ? 'Choose files, or drop them here' : 'File limit reached' }}
+            {{ canAddMore() ? 'Click here to upload a certification' : 'File limit reached' }}
           </span>
-          <span class="ap-drop-sub">PDF, JPG or PNG</span>
+          <span class="ap-drop-sub">PDF preferred, JPG or PNG also fine, or drop it here</span>
         </label>
 
-        @if (proofMissing()) {
-          <p class="field-error" role="alert">Attach at least one certificate or qualification</p>
-        }
         @for (problem of fileProblems(); track problem) {
           <p class="field-error" role="alert">{{ problem }}</p>
         }
 
-        @if (documents().length > 0) {
+        @if (certifications().length > 0) {
           <ul class="ap-files">
-            @for (doc of documents(); track doc.key) {
-              <li class="ap-file">
+            @for (doc of certifications(); track doc.key) {
+              <li class="ap-file" [class.ap-file--unnamed]="doc.title.trim() === ''">
                 <div class="ap-file-head">
+                  <span class="ap-req-tick" aria-hidden="true">✓</span>
                   <span class="ap-file-name">{{ doc.file.name }}</span>
                   <span class="ap-file-size">{{ formatBytes(doc.file.size) }}</span>
                   <button
@@ -329,36 +396,27 @@
                     Remove
                   </button>
                 </div>
-                <div class="ap-grid">
-                  <div class="field">
-                    <label [for]="'ap-doc-title-' + doc.key">What is this?</label>
-                    <input
-                      class="input"
-                      [id]="'ap-doc-title-' + doc.key"
-                      [value]="doc.title"
-                      maxlength="200"
-                      placeholder="e.g. CCNA certificate"
-                      (input)="setTitle(doc.key, $any($event.target).value)"
-                    />
-                    @if (triedToSubmit() && doc.title.trim() === '') {
-                      <p class="field-error">Give this file a name</p>
-                    }
-                  </div>
-                  <div class="field">
-                    <label [for]="'ap-doc-kind-' + doc.key">Type</label>
-                    <select
-                      class="input"
-                      [id]="'ap-doc-kind-' + doc.key"
-                      [value]="doc.kind"
-                      (change)="setKind(doc.key, $any($event.target).value)"
+                <div class="field">
+                  <label [for]="'ap-doc-title-' + doc.key"
+                    >What is this certification called?</label
+                  >
+                  <input
+                    class="input"
+                    [id]="'ap-doc-title-' + doc.key"
+                    [value]="doc.title"
+                    maxlength="200"
+                    placeholder="e.g. CCNA, CompTIA A+, Hikvision installer"
+                    (input)="setTitle(doc.key, $any($event.target).value)"
+                  />
+                  @if (doc.title.trim() === '') {
+                    <p
+                      class="ap-name-prompt"
+                      [class.ap-name-prompt--error]="triedToSubmit()"
+                      [attr.role]="triedToSubmit() ? 'alert' : null"
                     >
-                      @for (kind of kinds; track kind) {
-                        <option [value]="kind" [selected]="kind === doc.kind">
-                          {{ kindLabels[kind] }}
-                        </option>
-                      }
-                    </select>
-                  </div>
+                      Give this certification a name before you submit.
+                    </p>
+                  }
                 </div>
               </li>
             }

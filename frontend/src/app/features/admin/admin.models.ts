@@ -141,7 +141,16 @@ export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
   REJECTED: 'Rejected',
 };
 
-export type ApplicationDocumentKind = 'CERTIFICATE' | 'QUALIFICATION';
+export type ApplicationDocumentKind =
+  'ID_DOCUMENT' | 'MATRIC_CERTIFICATE' | 'PROOF_OF_RESIDENCE' | 'CERTIFICATE' | 'QUALIFICATION';
+
+export const DOCUMENT_KIND_LABELS: Record<ApplicationDocumentKind, string> = {
+  ID_DOCUMENT: 'ID document',
+  MATRIC_CERTIFICATE: 'Matric certificate',
+  PROOF_OF_RESIDENCE: 'Proof of residence',
+  CERTIFICATE: 'Certification',
+  QUALIFICATION: 'Qualification',
+};
 
 export interface ApplicationSummary {
   id: string;

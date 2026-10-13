@@ -12,6 +12,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import silver.solutions.techconnect.config.TechConnectProperties;
 import silver.solutions.techconnect.entity.User;
+import silver.solutions.techconnect.entity.UserRole;
 import silver.solutions.techconnect.service.NotificationService;
 
 /**
@@ -38,6 +39,16 @@ public class SmtpNotificationService implements NotificationService {
 
     @Override
     public void sendActivationInvite(User user, String activationUrl) {
+        // A technician works from their phone, so the email that welcomes them also says how to
+        // put the app on it. (The application form itself deliberately doesn't offer install.)
+        String install = user.getRole() == UserRole.TECHNICIAN
+                ? """
+
+                Install the TechConnect app on your phone, so jobs are one tap away:
+                %s
+                """.formatted(BrandedEmail.pageUrl(properties.appBaseUrl(), "/install"))
+                : "";
+
         send(user, "Activate your TechConnect account", """
                 Hi %s,
 
@@ -45,9 +56,10 @@ public class SmtpNotificationService implements NotificationService {
 
                 Set your password here (the link is single-use and expires in 72 hours):
                 %s
-
+                %s
                 If you were not expecting this, you can ignore this email.
-                """.formatted(user.getName(), user.getRole().name().toLowerCase(), activationUrl));
+                """.formatted(
+                        user.getName(), user.getRole().name().toLowerCase(), activationUrl, install));
     }
 
     @Override

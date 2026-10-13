@@ -1,0 +1,33 @@
+// The shell, card and links come from the shared sign-in styles (../auth/auth-page.scss).
+:host {
+  color: var(--auth-color-text);
+}
+
+.ip-lede {
+  margin: 0 0 4px;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.ip-install {
+  margin: 14px 0 6px;
+  color: var(--auth-color-text);
+}
+
+.ip-steps-title {
+  margin: 14px 0 0;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--auth-accent-text, var(--auth-accent-700));
+}
+
+.ip-steps {
+  margin: 0 0 6px;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}

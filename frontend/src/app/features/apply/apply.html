@@ -1,9 +1,6 @@
 <div class="auth-card ap-card">
   <h1 class="auth-brand"><app-logo variant="lockup" height="38px" /></h1>
   <p class="auth-subtitle">Apply to join as a technician</p>
-  <div class="ap-install">
-    <app-install-button label="Install the TechConnect app" />
-  </div>
 
   @if (submitted(); as message) {
     <p class="auth-notice" role="status">{{ message }}</p>

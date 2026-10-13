@@ -30,6 +30,14 @@ export const routes: Routes = [
     title: 'Forgot your password · TechConnect',
   },
 
+  // --- Public: how to put the app on a phone. Linked from the welcome email a technician gets
+  // once they are accepted; deliberately not offered on the application form itself. ---
+  {
+    path: 'install',
+    loadComponent: () => import('./features/install/install-page').then((m) => m.InstallPage),
+    title: 'Install the app · TechConnect',
+  },
+
   // --- Public, but not a way in: a prospective technician applies here with no account. It
   // issues no token and sits entirely outside the sign-in feature. A Manager reviews it. ---
   {

@@ -1,6 +1,7 @@
 package silver.solutions.techconnect.config;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import java.util.Set;
 import javax.crypto.SecretKey;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,8 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import silver.solutions.techconnect.security.TechConnectJwtAuthenticationConverter;
 import silver.solutions.techconnect.service.JwtService;
@@ -55,9 +58,37 @@ public class SecurityConfig {
                 .build();
     }
 
+    /** POST endpoints anyone may call, so a token sent to one of them is of no interest. */
+    private static final Set<String> PUBLIC_POSTS = Set.of(
+            "/v1/auth/login",
+            "/v1/auth/activate",
+            "/v1/auth/forgot-password",
+            "/v1/auth/reset-password",
+            "/v1/applications");
+
+    /**
+     * Ignores an {@code Authorization} header on the public endpoints above instead of judging it.
+     *
+     * <p>Left to itself the resource server validates any bearer token it is given before the
+     * {@code permitAll} rules are consulted, so a visitor whose browser still holds an expired
+     * or revoked session token got a 401 from a form that needs no sign-in at all. Everything
+     * else still requires, and validates, its token exactly as before.
+     */
+    @Bean
+    BearerTokenResolver bearerTokenResolver() {
+        DefaultBearerTokenResolver delegate = new DefaultBearerTokenResolver();
+        return request -> {
+            String path = request.getRequestURI().substring(request.getContextPath().length());
+            boolean publicPost = "POST".equals(request.getMethod()) && PUBLIC_POSTS.contains(path);
+            return publicPost ? null : delegate.resolve(request);
+        };
+    }
+
     @Bean
     SecurityFilterChain filterChain(
-            HttpSecurity http, TechConnectJwtAuthenticationConverter jwtConverter)
+            HttpSecurity http,
+            TechConnectJwtAuthenticationConverter jwtConverter,
+            BearerTokenResolver bearerTokenResolver)
             throws Exception {
 
         return http
@@ -96,6 +127,7 @@ public class SecurityConfig {
                         .requestMatchers("/v1/technician/**").hasRole("TECHNICIAN")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth
+                        .bearerTokenResolver(bearerTokenResolver)
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter)))
                 .build();
     }

@@ -47,6 +47,32 @@ describe('authInterceptor', () => {
     request.flush({});
   });
 
+  it('does not send a session token with a technician application', () => {
+    http.post('/api/v1/applications', {}).subscribe();
+
+    const request = controller.expectOne('/api/v1/applications');
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    request.flush({});
+  });
+
+  it('still sends the token to the manager review screens for applications', () => {
+    http.get('/api/v1/admin/applications').subscribe();
+
+    const request = controller.expectOne('/api/v1/admin/applications');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
+    request.flush({});
+  });
+
+  it('does not sign the person out when a public submission is refused with a 401', () => {
+    http.post('/api/v1/applications', {}).subscribe({ error: () => undefined });
+
+    controller
+      .expectOne('/api/v1/applications')
+      .flush({ error: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(logout).not.toHaveBeenCalled();
+  });
+
   it('ends the session when a protected request comes back 401', () => {
     // The backend revokes tokens on offboarding rather than waiting for expiry, so this can
     // happen at any time on a token the client still believes is valid.

@@ -264,6 +264,24 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         assertThat(storage.objects).as("the first, successfully stored file is removed again").isEmpty();
     }
 
+    @Test
+    void aStaleSessionTokenDoesNotStopAPublicSubmission() throws Exception {
+        Applicant a = Applicant.unique("stale");
+
+        // A browser that still holds an expired or revoked session token sends it along.
+        int status = mvc.perform(multipartRequest(a, List.of(validPdf()))
+                        .header("Authorization", "Bearer not.a.valid.token"))
+                .andReturn().getResponse().getStatus();
+
+        assertThat(status).as("the public form never asks who you are")
+                .isNotIn(401, 403);
+
+        // ...while the same token is still refused where a session really is required.
+        mvc.perform(get("/v1/admin/applications")
+                        .header("Authorization", "Bearer not.a.valid.token"))
+                .andExpect(status().isUnauthorized());
+    }
+
     // --- one application per person, forever -----------------------------------------------
 
     @Test

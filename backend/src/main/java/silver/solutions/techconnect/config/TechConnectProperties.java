@@ -62,7 +62,14 @@ public record TechConnectProperties(
      */
     public record BootstrapAdmin(String email, String name) {}
 
-    public record Mail(String from) {}
+    /**
+     * Who the notification emails come from. {@code from} must be an address on a domain verified
+     * with the mail provider; {@code fromName} is the display name people see in their inbox
+     * ("TechConnect" rather than a bare no-reply address); {@code replyTo} is where a person's
+     * reply goes, so a question about an invite reaches somebody instead of a dead mailbox.
+     * Either of the last two may be blank to leave it out.
+     */
+    public record Mail(String from, String fromName, String replyTo) {}
 
     /**
      * Phase 2 (photo/document storage, PRD §7) AWS wiring. {@code endpointOverride} is blank in

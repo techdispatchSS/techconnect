@@ -4,7 +4,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { Address, PROVINCES, PROVINCE_LABELS, Province } from '../../../core/address.models';
@@ -14,9 +14,18 @@ import { requiredTrimmed, trimStrings } from '../../../shared/form-text';
 import { Skeleton } from '../../../shared/skeleton/skeleton';
 import { PickedAddress, StreetInput } from '../../../shared/street-input/street-input';
 import { TrimOnBlur } from '../../../shared/trim-on-blur';
+import { AdminApplicationService } from '../admin-application.service';
 import { AdminNavCountsService } from '../admin-nav-counts.service';
 import { AdminUserService } from '../admin-user.service';
-import { AdminUser, ROLE_LABELS, STATUS_LABELS, UserListFilters } from '../admin.models';
+import {
+  AdminUser,
+  ApplicationDetail,
+  ApplicationDocument,
+  DOCUMENT_KIND_LABELS,
+  ROLE_LABELS,
+  STATUS_LABELS,
+  UserListFilters,
+} from '../admin.models';
 import { AdminIcon } from '../ui/admin-icon/admin-icon';
 
 interface RoleTab {
@@ -44,6 +53,7 @@ const ROLE_TABS: readonly RoleTab[] = [
     ReactiveFormsModule,
     MatDialogModule,
     MatSnackBarModule,
+    RouterLink,
     AdminIcon,
     Skeleton,
     StreetInput,
@@ -60,8 +70,10 @@ export class UserList implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly counts = inject(AdminNavCountsService);
+  private readonly applicationsApi = inject(AdminApplicationService);
 
   readonly roleLabels = ROLE_LABELS;
+  readonly kindLabels = DOCUMENT_KIND_LABELS;
   readonly statusLabels = STATUS_LABELS;
   readonly roleTabs = ROLE_TABS;
   readonly provinces = PROVINCES;
@@ -86,6 +98,12 @@ export class UserList implements OnInit {
   readonly selectedLoading = signal(false);
   readonly panelSaving = signal(false);
   readonly newInviteUrl = signal<string | null>(null);
+
+  // --- a technician's application and documents --------------------------------------------
+  /** `none` = they were added directly by a manager, so there is no application behind them. */
+  readonly applicationState = signal<'idle' | 'loading' | 'ready' | 'none' | 'failed'>('idle');
+  readonly application = signal<ApplicationDetail | null>(null);
+  readonly downloadingId = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [requiredTrimmed, Validators.maxLength(255)]],
@@ -243,6 +261,7 @@ export class UserList implements OnInit {
     this.selectedLoading.set(false);
     this.selected.set(user);
     this.newInviteUrl.set(null);
+    this.loadApplication(user);
     this.form.reset({
       name: user.name,
       phone: user.phone ?? '',
@@ -255,6 +274,56 @@ export class UserList implements OnInit {
       queryParams: { selected: user.id },
       replaceUrl: true,
     });
+  }
+
+  /** Fetches the application (and its documents) behind a technician's account, if any. */
+  loadApplication(user: AdminUser | null = this.selected()): void {
+    this.application.set(null);
+    this.downloadingId.set(null);
+    if (!user || user.role !== 'TECHNICIAN') {
+      this.applicationState.set('idle');
+      return;
+    }
+    this.applicationState.set('loading');
+    this.applicationsApi.forUser(user.id).subscribe({
+      next: (application) => {
+        // The person shown may have changed while this was in flight.
+        if (this.selected()?.id !== user.id) {
+          return;
+        }
+        this.application.set(application);
+        this.applicationState.set('ready');
+      },
+      error: (error: unknown) => {
+        if (this.selected()?.id !== user.id) {
+          return;
+        }
+        this.applicationState.set(
+          error instanceof HttpErrorResponse && error.status === 404 ? 'none' : 'failed',
+        );
+      },
+    });
+  }
+
+  downloadDocument(document: ApplicationDocument): void {
+    const application = this.application();
+    if (!application) {
+      return;
+    }
+    this.downloadingId.set(document.id);
+    this.applicationsApi.download(application.id, document).subscribe({
+      next: () => this.downloadingId.set(null),
+      error: () => {
+        this.downloadingId.set(null);
+        this.snackBar.open('Could not download that document.', 'Dismiss', { duration: 6000 });
+      },
+    });
+  }
+
+  formatBytes(bytes: number): string {
+    return bytes < 1024 * 1024
+      ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+      : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   /** Fills the rest of the address from a Google suggestion; see UserCreate.applyPlace. */

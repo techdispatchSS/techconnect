@@ -235,3 +235,50 @@
     padding: 16px;
   }
 }
+
+// A technician's application documents, under their details.
+.ul-docs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid var(--admin-color-divider);
+}
+.ul-docs-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ul-doc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ul-doc {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--admin-color-divider);
+}
+.ul-doc-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ul-doc-title {
+  font-weight: 600;
+}
+.ul-doc-file {
+  font-size: 12.5px;
+  color: color-mix(in srgb, var(--admin-color-text) 73%, transparent);
+  overflow-wrap: anywhere;
+}
+.ul-docs-link {
+  align-self: flex-start;
+  color: var(--admin-accent-text, var(--admin-accent-700));
+}

@@ -2,6 +2,7 @@ package silver.solutions.techconnect.service.implementation;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -167,12 +168,20 @@ public class SmtpNotificationService implements NotificationService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper =
                     new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
-            helper.setFrom(properties.mail().from());
+            TechConnectProperties.Mail mail = properties.mail();
+            if (mail.fromName() == null || mail.fromName().isBlank()) {
+                helper.setFrom(mail.from());
+            } else {
+                helper.setFrom(mail.from(), mail.fromName());
+            }
+            if (mail.replyTo() != null && !mail.replyTo().isBlank()) {
+                helper.setReplyTo(mail.replyTo());
+            }
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(body, BrandedEmail.html(body, properties.appBaseUrl()));
             mailSender.send(message);
-        } catch (MailException | MessagingException e) {
+        } catch (MailException | MessagingException | UnsupportedEncodingException e) {
             log.warn("Could not deliver '{}' to {} — the action itself still succeeded. "
                     + "Use the activation URL from the API response or the log above.",
                     subject, to, e);

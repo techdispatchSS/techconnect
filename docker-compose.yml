@@ -63,6 +63,8 @@ services:
       TECHCONNECT_JWT_SECRET: ${TECHCONNECT_JWT_SECRET:?Set TECHCONNECT_JWT_SECRET in .env — see .env.example (openssl rand -base64 48)}
       TECHCONNECT_APP_BASE_URL: ${TECHCONNECT_APP_BASE_URL:-http://localhost:4200}
       TECHCONNECT_MAIL_FROM: ${TECHCONNECT_MAIL_FROM:-no-reply@tech-connect.app}
+      TECHCONNECT_MAIL_FROM_NAME: ${TECHCONNECT_MAIL_FROM_NAME:-TechConnect}
+      TECHCONNECT_MAIL_REPLY_TO: ${TECHCONNECT_MAIL_REPLY_TO:-support@tech-connect.app}
       TECHCONNECT_BOOTSTRAP_ADMIN_EMAIL: ${TECHCONNECT_BOOTSTRAP_ADMIN_EMAIL:-}
       TECHCONNECT_BOOTSTRAP_ADMIN_NAME: ${TECHCONNECT_BOOTSTRAP_ADMIN_NAME:-TechConnect Admin}
       # S3 client wiring (#4, Phase 2 photo/document storage) — the internal service name and

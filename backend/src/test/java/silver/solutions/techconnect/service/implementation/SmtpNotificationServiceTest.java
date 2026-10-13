@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;
 import jakarta.mail.Session;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,8 @@ class SmtpNotificationServiceTest {
                 .thenAnswer(inv -> new MimeMessage(Session.getInstance(new Properties())));
         var properties = new TechConnectProperties(
                 null, "https://www.tech-connect.app", null, null, null,
-                new TechConnectProperties.Mail("no-reply@tech-connect.app"),
+                new TechConnectProperties.Mail(
+                        "no-reply@tech-connect.app", "TechConnect", "support@tech-connect.app"),
                 null, null, null, null);
         service = new SmtpNotificationService(mailSender, properties);
     }
@@ -73,7 +75,11 @@ class SmtpNotificationServiceTest {
 
         MimeMessage message = sent();
         assertThat(message.getSubject()).isEqualTo("Reset your TechConnect password");
-        assertThat(message.getFrom()[0].toString()).isEqualTo("no-reply@tech-connect.app");
+        InternetAddress from = (InternetAddress) message.getFrom()[0];
+        assertThat(from.getAddress()).isEqualTo("no-reply@tech-connect.app");
+        assertThat(from.getPersonal()).isEqualTo("TechConnect");
+        assertThat(((InternetAddress) message.getReplyTo()[0]).getAddress())
+                .isEqualTo("support@tech-connect.app");
         assertThat(message.getAllRecipients()[0].toString()).isEqualTo("thabo@example.com");
 
         List<String[]> parts = new ArrayList<>();
@@ -88,6 +94,23 @@ class SmtpNotificationServiceTest {
                 .contains("techconnect-email-logo.png")
                 .contains("Hi Thabo,")
                 .contains("<a href=\"https://www.tech-connect.app/reset-password?token=abc\"");
+    }
+
+    @Test
+    void leavesOutTheNameAndReplyToWhenTheyAreBlank() throws Exception {
+        var plain = new TechConnectProperties(
+                null, "https://www.tech-connect.app", null, null, null,
+                new TechConnectProperties.Mail("no-reply@tech-connect.app", "", null),
+                null, null, null, null);
+
+        new SmtpNotificationService(mailSender, plain).sendAccountDeactivated(user());
+
+        MimeMessage message = sent();
+        InternetAddress from = (InternetAddress) message.getFrom()[0];
+        assertThat(from.getAddress()).isEqualTo("no-reply@tech-connect.app");
+        assertThat(from.getPersonal()).isNull();
+        // With no Reply-To header, mail clients reply to the From address.
+        assertThat(message.getHeader("Reply-To")).isNull();
     }
 
     @Test

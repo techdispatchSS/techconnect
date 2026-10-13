@@ -87,7 +87,10 @@ form {
   width: 100%;
 }
 
-.input {
+// The street field (shared/street-input) renders its <input> inside its own template, which this
+// page's encapsulated styles cannot reach, so it is styled through ::ng-deep here.
+.input,
+:host ::ng-deep app-street-input .input {
   width: 100%;
   min-height: 36px;
   padding: 6px 10px;
@@ -100,10 +103,12 @@ form {
   border-radius: 0;
   box-sizing: border-box;
 }
-.input:hover {
+.input:hover,
+:host ::ng-deep app-street-input .input:hover {
   border-color: color-mix(in srgb, var(--auth-color-text) 45%, transparent);
 }
-.input:focus-visible {
+.input:focus-visible,
+:host ::ng-deep app-street-input .input:focus-visible {
   outline: 2px solid var(--auth-color-accent);
   outline-offset: 0;
   border-color: var(--auth-color-accent);
@@ -262,7 +267,8 @@ form {
 // Phone-sized screens (technicians activate their account on mobile, PRD §9.4): thumb-sized
 // tap targets, and 16px input text so iOS Safari doesn't zoom the page in on focus.
 @media (max-width: 599px) {
-  .input {
+  .input,
+  :host ::ng-deep app-street-input .input {
     min-height: 44px;
     font-size: 16px;
   }

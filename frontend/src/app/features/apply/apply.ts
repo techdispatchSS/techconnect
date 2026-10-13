@@ -10,6 +10,7 @@ import {
 import { RouterLink } from '@angular/router';
 
 import { PROVINCES, PROVINCE_LABELS, Province } from '../../core/address.models';
+import { GooglePlacesService } from '../../core/google/google-places.service';
 import { requiredTrimmed, trimStrings } from '../../shared/form-text';
 import { TrimOnBlur } from '../../shared/trim-on-blur';
 import { ApplyApiService } from './apply-api.service';
@@ -26,6 +27,7 @@ import {
   problemWithFile,
 } from './apply.models';
 import { Logo } from '../../shared/logo/logo';
+import { PickedPlace, StreetInput } from '../../shared/street-input/street-input';
 
 /**
  * Runs a validator against the trimmed value. Pressing Enter submits without the field ever
@@ -61,13 +63,15 @@ const SA_ID: ValidatorFn = (control) =>
  */
 @Component({
   selector: 'app-apply',
-  imports: [ReactiveFormsModule, RouterLink, TrimOnBlur, Logo],
+  imports: [ReactiveFormsModule, RouterLink, TrimOnBlur, Logo, StreetInput],
   templateUrl: './apply.html',
   styleUrls: ['../auth/auth-page.scss', './apply.scss'],
 })
 export class Apply {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApplyApiService);
+  /** Whether Google address search is configured; without it the street is plain text. */
+  readonly placesEnabled = inject(GooglePlacesService).enabled;
 
   readonly provinces = PROVINCES;
   readonly provinceLabels = PROVINCE_LABELS;
@@ -88,6 +92,19 @@ export class Apply {
   /** Only nag about missing proof once they've tried to submit. */
   readonly triedToSubmit = signal(false);
   private nextKey = 1;
+
+  /** Fills the rest of the address from a Google suggestion. Anything Google didn't return is
+   * left as it was, so a person can complete it by hand. */
+  applyPlace(place: PickedPlace): void {
+    const group = this.form.controls.address;
+    for (const [key, value] of Object.entries(place)) {
+      const control = group.get(key);
+      if (value && control) {
+        control.setValue(value);
+        control.markAsTouched();
+      }
+    }
+  }
 
   readonly canAddMore = computed(() => this.documents().length < MAX_FILES);
   readonly proofMissing = computed(() => this.triedToSubmit() && this.documents().length === 0);

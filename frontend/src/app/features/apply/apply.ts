@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, Injector, afterNextRender, computed, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -17,12 +17,11 @@ import { TrimOnBlur } from '../../shared/trim-on-blur';
 import { ApplyApiService } from './apply-api.service';
 import {
   ACCEPT_ATTRIBUTE,
-  DOCUMENT_KIND_LABELS,
   DocumentKind,
   MAX_FILES,
   MAX_FILE_BYTES,
   PickedDocument,
-  extensionOf,
+  REQUIRED_DOCUMENTS,
   formatBytes,
   isValidSouthAfricanId,
   problemWithFile,
@@ -72,13 +71,13 @@ const SA_ID: ValidatorFn = (control) =>
 export class Apply {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApplyApiService);
+  private readonly injector = inject(Injector);
   /** Whether Google address search is configured; without it the street is plain text. */
   readonly placesEnabled = inject(GooglePlacesService).enabled;
 
   readonly provinces = PROVINCES;
   readonly provinceLabels = PROVINCE_LABELS;
-  readonly kindLabels = DOCUMENT_KIND_LABELS;
-  readonly kinds = Object.keys(DOCUMENT_KIND_LABELS) as DocumentKind[];
+  readonly required = REQUIRED_DOCUMENTS;
   readonly accept = ACCEPT_ATTRIBUTE;
   readonly maxFiles = MAX_FILES;
   readonly maxFileSize = formatBytes(MAX_FILE_BYTES);
@@ -97,8 +96,9 @@ export class Apply {
   readonly skillDraft = signal('');
   readonly skillsFull = computed(() => this.skills().length >= MAX_SKILLS);
   readonly fileProblems = signal<string[]>([]);
-  readonly dragging = signal(false);
-  /** Only nag about missing proof once they've tried to submit. */
+  /** Which upload area a file is being dragged over: a required kind, or 'CERTIFICATION'. */
+  readonly dragging = signal<string | null>(null);
+  /** Only nag about missing documents once they've tried to submit. */
   readonly triedToSubmit = signal(false);
   private nextKey = 1;
 
@@ -116,9 +116,30 @@ export class Apply {
   }
 
   readonly canAddMore = computed(() => this.documents().length < MAX_FILES);
-  readonly proofMissing = computed(() => this.triedToSubmit() && this.documents().length === 0);
-  readonly untitledDocuments = computed(
-    () => this.triedToSubmit() && this.documents().some((d) => d.title.trim() === ''),
+
+  /** The ID, matric and proof-of-residence files the applicant has picked, by kind. */
+  readonly requiredDocs = computed(() => {
+    const byKind = new Map<DocumentKind, PickedDocument>();
+    for (const doc of this.documents()) {
+      if (REQUIRED_DOCUMENTS.some((r) => r.kind === doc.kind)) {
+        byKind.set(doc.kind, doc);
+      }
+    }
+    return byKind;
+  });
+  /** The optional, applicant-named certifications, in the order they were added. */
+  readonly certifications = computed(() =>
+    this.documents().filter((d) => d.kind === 'CERTIFICATE'),
+  );
+
+  private readonly missingRequired = computed(() =>
+    REQUIRED_DOCUMENTS.filter((r) => !this.requiredDocs().has(r.kind)).map((r) => r.kind),
+  );
+  /** Required documents still to upload; only reported after a submit attempt. */
+  readonly missingKinds = computed(() => (this.triedToSubmit() ? this.missingRequired() : []));
+  /** A certification that has been uploaded but not yet given a name. */
+  readonly untitledCertifications = computed(() =>
+    this.certifications().filter((d) => d.title.trim() === ''),
   );
 
   readonly form = this.fb.nonNullable.group({
@@ -183,25 +204,56 @@ export class Apply {
 
   // --- documents -------------------------------------------------------------------------
 
-  onFilesChosen(event: Event): void {
+  /** One of the three required documents: choosing again replaces the earlier file. */
+  onRequiredChosen(kind: DocumentKind, event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.addFiles(Array.from(input.files ?? []));
+    this.setRequired(kind, Array.from(input.files ?? [])[0]);
     // So choosing the same file again after removing it still fires `change`.
     input.value = '';
   }
 
-  onDragOver(event: DragEvent): void {
-    event.preventDefault();
-    this.dragging.set(true);
+  /** A certification: each file picked becomes its own entry, waiting to be named. */
+  onCertificationChosen(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.addCertifications(Array.from(input.files ?? []));
+    input.value = '';
   }
 
-  onDrop(event: DragEvent): void {
+  onDragOver(event: DragEvent, target: string): void {
     event.preventDefault();
-    this.dragging.set(false);
-    this.addFiles(Array.from(event.dataTransfer?.files ?? []));
+    this.dragging.set(target);
   }
 
-  private addFiles(files: File[]): void {
+  onDropRequired(event: DragEvent, kind: DocumentKind): void {
+    event.preventDefault();
+    this.dragging.set(null);
+    this.setRequired(kind, Array.from(event.dataTransfer?.files ?? [])[0]);
+  }
+
+  onDropCertification(event: DragEvent): void {
+    event.preventDefault();
+    this.dragging.set(null);
+    this.addCertifications(Array.from(event.dataTransfer?.files ?? []));
+  }
+
+  private setRequired(kind: DocumentKind, file: File | undefined): void {
+    if (!file) {
+      return;
+    }
+    const problem = problemWithFile(file);
+    if (problem) {
+      this.fileProblems.set([problem]);
+      return;
+    }
+    this.fileProblems.set([]);
+    const label = REQUIRED_DOCUMENTS.find((r) => r.kind === kind)!.label;
+    this.documents.update((current) => [
+      ...current.filter((d) => d.kind !== kind),
+      { key: this.nextKey++, file, kind, title: label },
+    ]);
+  }
+
+  private addCertifications(files: File[]): void {
     const problems: string[] = [];
     const accepted: PickedDocument[] = [];
 
@@ -215,19 +267,22 @@ export class Apply {
         problems.push(problem);
         continue;
       }
-      const ext = extensionOf(file.name);
-      accepted.push({
-        key: this.nextKey++,
-        file,
-        kind: 'CERTIFICATE',
-        title: file.name.slice(0, file.name.length - ext.length - 1).slice(0, 200),
-      });
+      // Left unnamed on purpose: the applicant is asked what it is, rather than being handed a
+      // file name like "scan0042" to accept.
+      accepted.push({ key: this.nextKey++, file, kind: 'CERTIFICATE', title: '' });
     }
 
     this.fileProblems.set(problems);
-    if (accepted.length > 0) {
-      this.documents.update((current) => [...current, ...accepted]);
+    if (accepted.length === 0) {
+      return;
     }
+    this.documents.update((current) => [...current, ...accepted]);
+
+    // Move the cursor to the name, so the next thing typed is what the certification is called.
+    const first = accepted[0].key;
+    afterNextRender(() => document.getElementById('ap-doc-title-' + first)?.focus(), {
+      injector: this.injector,
+    });
   }
 
   removeDocument(key: number): void {
@@ -241,12 +296,6 @@ export class Apply {
     );
   }
 
-  setKind(key: number, value: string): void {
-    this.documents.update((current) =>
-      current.map((d) => (d.key === key ? { ...d, kind: value as DocumentKind } : d)),
-    );
-  }
-
   // --- submit ----------------------------------------------------------------------------
 
   submit(): void {
@@ -256,7 +305,11 @@ export class Apply {
     if (this.submitting()) {
       return;
     }
-    if (this.form.invalid || this.documents().length === 0 || this.untitledDocuments()) {
+    if (
+      this.form.invalid ||
+      this.missingRequired().length > 0 ||
+      this.untitledCertifications().length > 0
+    ) {
       this.form.markAllAsTouched();
       return;
     }

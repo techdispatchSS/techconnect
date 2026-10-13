@@ -15,6 +15,7 @@ import {
   APPLICATION_STATUS_LABELS,
   ApplicationDetail,
   ApplicationDocument,
+  DOCUMENT_KIND_LABELS,
 } from '../../admin.models';
 import { AdminIcon } from '../../ui/admin-icon/admin-icon';
 import { RejectApplicationDialog } from '../reject-application-dialog/reject-application-dialog';
@@ -39,6 +40,7 @@ export class ApplicationDetailPage implements OnInit {
   private readonly counts = inject(AdminNavCountsService);
 
   readonly statusLabels = APPLICATION_STATUS_LABELS;
+  readonly kindLabels = DOCUMENT_KIND_LABELS;
   readonly skillsOf = parseSkills;
   readonly provinceLabels = PROVINCE_LABELS;
 

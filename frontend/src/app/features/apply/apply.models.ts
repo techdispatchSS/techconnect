@@ -1,11 +1,45 @@
 import { AddressRequest } from '../../core/address.models';
 
-export type DocumentKind = 'CERTIFICATE' | 'QUALIFICATION';
+export type DocumentKind =
+  'ID_DOCUMENT' | 'MATRIC_CERTIFICATE' | 'PROOF_OF_RESIDENCE' | 'CERTIFICATE' | 'QUALIFICATION';
 
 export const DOCUMENT_KIND_LABELS: Record<DocumentKind, string> = {
-  CERTIFICATE: 'Certificate',
+  ID_DOCUMENT: 'ID document',
+  MATRIC_CERTIFICATE: 'Matric certificate',
+  PROOF_OF_RESIDENCE: 'Proof of residence',
+  CERTIFICATE: 'Certification',
   QUALIFICATION: 'Qualification',
 };
+
+/** The three documents every application must carry, one of each. */
+export interface RequiredDocument {
+  readonly kind: DocumentKind;
+  readonly label: string;
+  /** How it reads in a sentence: "Click here to upload your ID document". */
+  readonly short: string;
+  readonly hint: string;
+}
+
+export const REQUIRED_DOCUMENTS: readonly RequiredDocument[] = [
+  {
+    kind: 'ID_DOCUMENT',
+    label: 'ID document',
+    short: 'ID document',
+    hint: 'A clear copy of your South African ID card or ID book.',
+  },
+  {
+    kind: 'MATRIC_CERTIFICATE',
+    label: 'Matric certificate',
+    short: 'matric certificate',
+    hint: 'Your National Senior Certificate, or an equivalent.',
+  },
+  {
+    kind: 'PROOF_OF_RESIDENCE',
+    label: 'Proof of residence',
+    short: 'proof of residence',
+    hint: 'A utility bill, bank statement or lease, no more than three months old.',
+  },
+];
 
 /**
  * Client-side limits. These are for a fast, friendly error only: the server re-checks every one

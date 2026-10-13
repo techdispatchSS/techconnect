@@ -17,6 +17,80 @@ function splitList(raw: string): string[] {
     .filter((s) => s.length > 0);
 }
 
+export type TechnicianSortKey = 'name' | 'score' | 'distance' | 'skills' | 'closed' | 'status';
+
+interface SortOption {
+  readonly key: TechnicianSortKey;
+  readonly label: string;
+  /** Which way round the column goes the first time it is chosen. */
+  readonly firstDir: 'asc' | 'desc';
+  /** Wording for the phone's sort menu, per direction. */
+  readonly asc: string;
+  readonly desc: string;
+}
+
+const SORT_OPTIONS: readonly SortOption[] = [
+  { key: 'name', label: 'Technician', firstDir: 'asc', asc: 'Name, A to Z', desc: 'Name, Z to A' },
+  {
+    key: 'score',
+    label: 'Score',
+    firstDir: 'desc',
+    asc: 'Score, lowest first',
+    desc: 'Score, highest first',
+  },
+  {
+    key: 'distance',
+    label: 'Distance',
+    firstDir: 'asc',
+    asc: 'Distance, nearest first',
+    desc: 'Distance, furthest first',
+  },
+  {
+    key: 'skills',
+    label: 'Skills',
+    firstDir: 'desc',
+    asc: 'Skills matched, fewest first',
+    desc: 'Skills matched, most first',
+  },
+  {
+    key: 'closed',
+    label: 'Closed jobs',
+    firstDir: 'desc',
+    asc: 'Closed jobs, fewest first',
+    desc: 'Closed jobs, most first',
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    firstDir: 'asc',
+    asc: 'Available first',
+    desc: 'Offline first',
+  },
+];
+
+const STATUS_RANK: Record<TechnicianCandidate['status'], number> = {
+  AVAILABLE: 0,
+  ON_JOB: 1,
+  OFFLINE: 2,
+};
+
+function compareBy(key: TechnicianSortKey, a: TechnicianCandidate, b: TechnicianCandidate): number {
+  switch (key) {
+    case 'name':
+      return a.name.localeCompare(b.name);
+    case 'score':
+      return a.score - b.score;
+    case 'distance':
+      return (a.distanceKm ?? 0) - (b.distanceKm ?? 0);
+    case 'skills':
+      return a.matchedSkills - b.matchedSkills;
+    case 'closed':
+      return a.completedJobCount - b.completedJobCount;
+    case 'status':
+      return STATUS_RANK[a.status] - STATUS_RANK[b.status];
+  }
+}
+
 @Component({
   selector: 'app-create-dispatch',
   imports: [ReactiveFormsModule, RouterLink, TechnicianMap, Skeleton],
@@ -53,6 +127,72 @@ export class CreateDispatch implements OnInit {
     siteContact: [''],
     notesForTechnician: [''],
   });
+
+  // --- sorting ---------------------------------------------------------------------------
+  // Until a column is chosen the table keeps the server's own ranking (skill match, then
+  // availability, then distance), which is what "recommended" means.
+  readonly sortKey = signal<TechnicianSortKey | null>(null);
+  readonly sortDir = signal<'asc' | 'desc'>('desc');
+  readonly sortOptions = SORT_OPTIONS;
+
+  readonly sortedTechnicians = computed(() => {
+    const key = this.sortKey();
+    const rows = this.technicians();
+    if (!key) {
+      return rows;
+    }
+    const direction = this.sortDir() === 'asc' ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      // A distance nobody knows goes to the bottom whichever way round the column is sorted.
+      if (key === 'distance') {
+        if (a.distanceKm === null || b.distanceKm === null) {
+          return a.distanceKm === b.distanceKm ? 0 : a.distanceKm === null ? 1 : -1;
+        }
+      }
+      const result = compareBy(key, a, b) * direction;
+      return result !== 0 ? result : b.score - a.score || a.name.localeCompare(b.name);
+    });
+  });
+
+  /** Clicking the active column flips it; a new column starts in its natural direction. */
+  sortBy(key: TechnicianSortKey): void {
+    if (this.sortKey() === key) {
+      this.sortDir.update((d) => (d === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    this.sortKey.set(key);
+    this.sortDir.set(SORT_OPTIONS.find((o) => o.key === key)!.firstDir);
+  }
+
+  ariaSort(key: TechnicianSortKey): 'ascending' | 'descending' | 'none' {
+    if (this.sortKey() !== key) {
+      return 'none';
+    }
+    return this.sortDir() === 'asc' ? 'ascending' : 'descending';
+  }
+
+  sortIcon(key: TechnicianSortKey): string {
+    if (this.sortKey() !== key) {
+      return '↕';
+    }
+    return this.sortDir() === 'asc' ? '▲' : '▼';
+  }
+
+  /** The phone's sort menu: a single choice that already says which way round. */
+  readonly sortChoice = computed(() => {
+    const key = this.sortKey();
+    return key ? `${key}:${this.sortDir()}` : '';
+  });
+
+  chooseSort(value: string): void {
+    if (!value) {
+      this.sortKey.set(null);
+      return;
+    }
+    const [key, dir] = value.split(':') as [TechnicianSortKey, 'asc' | 'desc'];
+    this.sortKey.set(key);
+    this.sortDir.set(dir);
+  }
 
   readonly selectedTechnicians = computed(() =>
     this.technicians().filter((t) => this.selectedIds().has(t.id)),

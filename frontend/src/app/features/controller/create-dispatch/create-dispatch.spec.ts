@@ -54,7 +54,10 @@ describe('CreateDispatch', () => {
   let navigate: ReturnType<typeof vi.spyOn>;
   let createDispatch: ReturnType<typeof vi.fn>;
 
-  async function setup(dispatch: DispatchSummary | null): Promise<void> {
+  async function setup(
+    dispatch: DispatchSummary | null,
+    technicians: TechnicianCandidate[] = [TECH],
+  ): Promise<void> {
     const incident = {
       id: 'inc-1',
       ticketRef: 'INC-0001',
@@ -86,7 +89,7 @@ describe('CreateDispatch', () => {
           provide: ControllerApiService,
           useValue: {
             getIncident: () => of(incident),
-            recommendTechnicians: () => of([TECH]),
+            recommendTechnicians: () => of(technicians),
             createDispatch,
           },
         },
@@ -143,5 +146,113 @@ describe('CreateDispatch', () => {
 
     expect(createDispatch).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith(['/incidents/progress', 'inc-1'], { replaceUrl: true });
+  });
+
+  describe('sorting the recommended technicians', () => {
+    const THABO = {
+      ...TECH,
+      id: 't1',
+      name: 'Thabo M',
+      score: 90,
+      distanceKm: 3,
+      completedJobCount: 4,
+    };
+    const ZANELE = {
+      ...TECH,
+      id: 't2',
+      name: 'Zanele K',
+      score: 70,
+      distanceKm: 12,
+      completedJobCount: 20,
+      status: 'OFFLINE' as const,
+    };
+    const AMAN = {
+      ...TECH,
+      id: 't3',
+      name: 'Aman P',
+      score: 80,
+      distanceKm: null,
+      completedJobCount: 9,
+      status: 'ON_JOB' as const,
+    };
+
+    const names = (): string[] =>
+      [...el.querySelectorAll('.cd-table-card tbody .cd-tech-name')].map((c) =>
+        c.textContent!.trim(),
+      );
+
+    async function click(label: string): Promise<void> {
+      const button = [...el.querySelectorAll<HTMLButtonElement>('.cd-sort')].find((b) =>
+        b.textContent!.includes(label),
+      )!;
+      button.click();
+      await fixture.whenStable();
+    }
+
+    it('keeps the recommended order until a column is chosen', async () => {
+      await setup(null, [ZANELE, THABO, AMAN]);
+
+      expect(names()).toEqual(['Zanele K', 'Thabo M', 'Aman P']);
+    });
+
+    it('sorts by a column, and flips it when the same column is clicked again', async () => {
+      await setup(null, [ZANELE, THABO, AMAN]);
+
+      await click('Score');
+      expect(names()).toEqual(['Thabo M', 'Aman P', 'Zanele K']);
+      expect(el.querySelector('th[aria-sort="descending"]')).not.toBeNull();
+
+      await click('Score');
+      expect(names()).toEqual(['Zanele K', 'Aman P', 'Thabo M']);
+      expect(el.querySelector('th[aria-sort="ascending"]')).not.toBeNull();
+    });
+
+    it('starts names A to Z and distances nearest first, with unknown distances last', async () => {
+      await setup(null, [ZANELE, THABO, AMAN]);
+
+      await click('Technician');
+      expect(names()).toEqual(['Aman P', 'Thabo M', 'Zanele K']);
+
+      await click('Distance');
+      expect(names()).toEqual(['Thabo M', 'Zanele K', 'Aman P']);
+
+      // Reversed, the unknown distance still goes to the bottom.
+      await click('Distance');
+      expect(names()).toEqual(['Zanele K', 'Thabo M', 'Aman P']);
+    });
+
+    it('puts available technicians first when sorting by status', async () => {
+      await setup(null, [ZANELE, THABO, AMAN]);
+
+      await click('Status');
+
+      expect(names()).toEqual(['Thabo M', 'Aman P', 'Zanele K']);
+    });
+
+    it('keeps the selection when the order changes', async () => {
+      await setup(null, [ZANELE, THABO, AMAN]);
+      (el.querySelectorAll('.cd-table-card tbody tr')[1] as HTMLElement).click();
+      await fixture.whenStable();
+
+      await click('Technician');
+
+      const selected = el.querySelector('.cd-row--selected .cd-tech-name')!;
+      expect(selected.textContent!.trim()).toBe('Thabo M');
+    });
+
+    it('offers the same choices as a menu for phones, and can return to the default', async () => {
+      await setup(null, [ZANELE, THABO, AMAN]);
+      const menu = el.querySelector<HTMLSelectElement>('#cd-sort-choice')!;
+
+      menu.value = 'closed:desc';
+      menu.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+      expect(names()).toEqual(['Zanele K', 'Aman P', 'Thabo M']);
+
+      menu.value = '';
+      menu.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+      expect(names()).toEqual(['Zanele K', 'Thabo M', 'Aman P']);
+    });
   });
 });

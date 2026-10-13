@@ -27,6 +27,11 @@ final class BrandedEmail {
      * image in every message.
      */
     static String logoUrl(String appBaseUrl) {
+        return pageUrl(appBaseUrl, LOGO_PATH);
+    }
+
+    /** A link to a page of the app (or one of its files), given the configured base address. */
+    static String pageUrl(String appBaseUrl, String path) {
         String base = appBaseUrl == null ? "" : appBaseUrl.trim();
         while (base.endsWith("/")) {
             base = base.substring(0, base.length() - 1);
@@ -34,7 +39,7 @@ final class BrandedEmail {
         if (!base.contains("://")) {
             base = "https://" + base;
         }
-        return base + LOGO_PATH;
+        return base + path;
     }
 
     static String html(String plainText, String appBaseUrl) {

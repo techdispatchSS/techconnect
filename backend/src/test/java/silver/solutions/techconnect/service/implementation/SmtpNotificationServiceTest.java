@@ -23,6 +23,7 @@ import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import silver.solutions.techconnect.config.TechConnectProperties;
 import silver.solutions.techconnect.entity.User;
+import silver.solutions.techconnect.entity.UserRole;
 
 class SmtpNotificationServiceTest {
 
@@ -94,6 +95,41 @@ class SmtpNotificationServiceTest {
                 .contains("techconnect-email-logo.png")
                 .contains("Hi Thabo,")
                 .contains("<a href=\"https://www.tech-connect.app/reset-password?token=abc\"");
+    }
+
+    private static User userWithRole(UserRole role) {
+        User user = user();
+        when(user.getRole()).thenReturn(role);
+        return user;
+    }
+
+    private String everythingSaid(MimeMessage message) throws Exception {
+        List<String[]> parts = new ArrayList<>();
+        leaves(message, parts);
+        StringBuilder all = new StringBuilder();
+        parts.forEach(p -> all.append(p[1]).append(System.lineSeparator()));
+        return all.toString();
+    }
+
+    @Test
+    void aTechniciansWelcomeEmailLinksToInstallingTheApp() throws Exception {
+        service.sendActivationInvite(
+                userWithRole(UserRole.TECHNICIAN),
+                "https://www.tech-connect.app/activate?token=abc");
+
+        String said = everythingSaid(sent());
+        assertThat(said).contains("https://www.tech-connect.app/activate?token=abc");
+        assertThat(said).contains("Install the TechConnect app");
+        assertThat(said).contains("https://www.tech-connect.app/install");
+    }
+
+    @Test
+    void otherRolesAreNotToldToInstallTheApp() throws Exception {
+        service.sendActivationInvite(
+                userWithRole(UserRole.CONTROLLER),
+                "https://www.tech-connect.app/activate?token=abc");
+
+        assertThat(everythingSaid(sent())).doesNotContain("/install");
     }
 
     @Test

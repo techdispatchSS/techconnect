@@ -446,3 +446,59 @@
   flex-direction: column;
   gap: 16px;
 }
+
+// ── Sorting ──
+.cd-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+}
+.cd-sort:hover,
+.cd-sort--active {
+  color: var(--controller-color-accent-text);
+}
+.cd-sort:focus-visible {
+  outline: 2px solid var(--controller-color-accent);
+  outline-offset: 3px;
+}
+.cd-sort-icon {
+  font-size: 10px;
+  opacity: 0.55;
+}
+.cd-sort--active .cd-sort-icon {
+  opacity: 1;
+}
+
+// Shown on phones only, where the column headings are not.
+.cd-sort-menu {
+  display: none;
+}
+
+@media (max-width: 599px) {
+  .cd-sort-menu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 0 10px;
+  }
+  .cd-sort-menu label {
+    flex: none;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--controller-color-muted);
+  }
+  .cd-sort-menu select {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+  }
+}

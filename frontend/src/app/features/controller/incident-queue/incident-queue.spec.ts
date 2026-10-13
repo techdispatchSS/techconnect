@@ -405,4 +405,51 @@ describe('IncidentQueue', () => {
       expect(el.querySelector('.iq-detail-offpage')).toBeNull();
     });
   });
+  describe('on a phone, where the panel is stacked under the list', () => {
+    function matchMedia(stacked: boolean): void {
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches: stacked && query.includes('1100px'),
+        media: query,
+      }));
+    }
+
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('scrolls the panel into view when a row is tapped, and back to the list on request', async () => {
+      matchMedia(true);
+      const scrollIntoView = vi.fn();
+      Element.prototype.scrollIntoView = scrollIntoView;
+      await setup([
+        incident({ id: 'a', ticketRef: 'INC-A' }),
+        incident({ id: 'b', ticketRef: 'INC-B' }),
+      ]);
+
+      Array.from(el.querySelectorAll<HTMLElement>('tbody tr'))[1].click();
+      await fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(el.querySelector('.iq-detail-ticket')!.textContent).toContain('INC-B');
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+      expect(scrollIntoView.mock.contexts[0]).toBe(el.querySelector('.iq-detail'));
+
+      button('↑ Back to list').click();
+      await fixture.whenStable();
+
+      expect(scrollIntoView).toHaveBeenCalledTimes(2);
+      expect(scrollIntoView.mock.contexts[1]).toBe(el.querySelector('.iq-queue'));
+    });
+
+    it('does not move the page when the panel sits beside the list', async () => {
+      matchMedia(false);
+      const scrollIntoView = vi.fn();
+      Element.prototype.scrollIntoView = scrollIntoView;
+      await setup([incident({ id: 'a' }), incident({ id: 'b', ticketRef: 'INC-B' })]);
+
+      Array.from(el.querySelectorAll<HTMLElement>('tbody tr'))[1].click();
+      await fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    });
+  });
 });

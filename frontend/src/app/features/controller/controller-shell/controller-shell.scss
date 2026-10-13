@@ -520,8 +520,8 @@ textarea.controller-input {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-// Light theme. Both tiers switch: the canvas, cards, tables and panels (content tier) and the
-// sidebar and header (chrome tier), so nothing is left as a dark frame around a pale page.
+// Light theme: the canvas, cards, tables and panels (content tier) go light. The sidebar and
+// header (chrome tier) stay dark, the same as the admin portal's.
 //
 // Contrast: the brand orange is used as a fill and border everywhere, but as *text* it is far
 // too pale on white. `--controller-color-accent-text*` are the darker oranges for that.
@@ -539,31 +539,29 @@ textarea.controller-input {
   --controller-color-accent-text: #b04e00;
   --controller-color-accent-text-soft: #8f4300;
 
-  --controller-color-sidebar: #eff0f3;
-  --controller-chrome-text: #0b0c0f;
-  --controller-chrome-muted: #3f434b;
-  --controller-chrome-divider: rgba(11, 12, 15, 0.18);
-  --controller-chrome-emphasis: #050608;
-  --controller-chrome-border: rgba(11, 12, 15, 0.3);
-  --controller-chrome-hover: rgba(11, 12, 15, 0.07);
-
   --controller-priority-medium-fg: #8f4300;
   --controller-priority-low-bg: rgba(16, 17, 20, 0.05);
   --controller-priority-low-border: rgba(16, 17, 20, 0.2);
   --controller-priority-low-fg: #343840;
 }
 
-// The logo's grey follows the (now light) rail rather than the always-light value it needs on
-// the dark one.
-:root[data-theme='light'] .controller-shell-sidebar {
-  --tc-logo-ink: #4b5054;
-}
-
-// A quiet lift so the white rail and header read as surfaces against the pale canvas.
-:root[data-theme='light'] .controller-shell-header {
-  box-shadow:
-    0 1px 0 rgba(16, 17, 20, 0.04),
-    0 4px 14px rgba(16, 17, 20, 0.04);
+// The rail and the header are constant dark chrome in both themes, exactly as in the admin
+// portal: only the page between them goes light. So whatever sits on them (and on the toasts,
+// which are drawn from the same tokens) reads the dark-theme values, and the logo uses its
+// light grey, even while the page around them is light.
+:root[data-theme='light'] .controller-shell-sidebar,
+:root[data-theme='light'] .controller-shell-header,
+:root[data-theme='light'] .controller-shell-toasts {
+  --controller-color-text: #edeff1;
+  --controller-color-muted: #aeb4bb;
+  --controller-color-emphasis: #ffffff;
+  --controller-color-divider: rgba(255, 255, 255, 0.12);
+  --controller-color-divider-soft: rgba(255, 255, 255, 0.08);
+  --controller-color-divider-strong: rgba(255, 255, 255, 0.25);
+  --controller-color-accent-text: #f08221;
+  --controller-color-accent-text-soft: #f0a265;
+  --tc-logo-ink: #f2f2f3;
+  color: #edeff1;
 }
 
 // ════════════════════════════════════════════════════════════════════════

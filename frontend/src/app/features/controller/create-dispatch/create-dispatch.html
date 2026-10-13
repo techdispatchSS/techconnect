@@ -148,20 +148,53 @@
           } @else if (technicians().length === 0) {
             <p class="cd-empty">No active technicians found.</p>
           } @else {
+            <!-- Phones have no column headings (the table becomes cards), so sorting is a menu. -->
+            <div class="cd-sort-menu">
+              <label for="cd-sort-choice">Sort by</label>
+              <select
+                id="cd-sort-choice"
+                class="controller-input"
+                [value]="sortChoice()"
+                (change)="chooseSort($any($event.target).value)"
+              >
+                <option value="">Recommended order</option>
+                @for (option of sortOptions; track option.key) {
+                  <option [value]="option.key + ':' + option.firstDir">
+                    {{ option.firstDir === 'asc' ? option.asc : option.desc }}
+                  </option>
+                  <option [value]="option.key + ':' + (option.firstDir === 'asc' ? 'desc' : 'asc')">
+                    {{ option.firstDir === 'asc' ? option.desc : option.asc }}
+                  </option>
+                }
+              </select>
+            </div>
+
             <table class="controller-table cd-table">
               <thead>
                 <tr>
                   <th style="width: 34px"></th>
-                  <th>Technician</th>
-                  <th>Score</th>
-                  <th>Distance</th>
-                  <th>Skills</th>
-                  <th>Closed jobs</th>
-                  <th style="text-align: right">Status</th>
+                  @for (option of sortOptions; track option.key) {
+                    <th
+                      [attr.aria-sort]="ariaSort(option.key)"
+                      [style.text-align]="option.key === 'status' ? 'right' : null"
+                    >
+                      <button
+                        type="button"
+                        class="cd-sort"
+                        [class.cd-sort--active]="sortKey() === option.key"
+                        (click)="sortBy(option.key)"
+                      >
+                        {{ option.label }}
+                        <span class="cd-sort-icon" aria-hidden="true">{{
+                          sortIcon(option.key)
+                        }}</span>
+                      </button>
+                    </th>
+                  }
                 </tr>
               </thead>
               <tbody>
-                @for (tech of technicians(); track tech.id) {
+                @for (tech of sortedTechnicians(); track tech.id) {
                   <tr
                     (click)="toggleTechnician(tech.id)"
                     [class.cd-row--selected]="selectedIds().has(tech.id)"

@@ -40,6 +40,7 @@ export class ApplicationDetailPage implements OnInit {
   private readonly counts = inject(AdminNavCountsService);
 
   readonly statusLabels = APPLICATION_STATUS_LABELS;
+  readonly kindLabels = DOCUMENT_KIND_LABELS;
   readonly skillsOf = parseSkills;
   readonly kindLabels = DOCUMENT_KIND_LABELS;
   readonly provinceLabels = PROVINCE_LABELS;

@@ -144,21 +144,24 @@
         </p>
 
         <div class="ap-grid">
-          <div class="field ap-span2">
+          <div class="field ap-span2 ap-street">
             <label for="ap-street">Street</label>
-            <input
-              appTrimOnBlur
-              id="ap-street"
-              class="input"
-              formControlName="street"
-              autocomplete="address-line1"
-              maxlength="255"
+            <app-street-input
+              inputId="ap-street"
+              inputClass="input"
+              placeholder="Start typing your street address"
+              [control]="form.controls.address.controls.street"
+              (picked)="applyPlace($event)"
             />
             @if (
               form.controls.address.controls.street.touched &&
               form.controls.address.controls.street.invalid
             ) {
               <p class="field-error">Street is required</p>
+            } @else if (placesEnabled) {
+              <p class="field-hint">
+                Choose your address from the list and we'll fill in the rest.
+              </p>
             }
           </div>
 

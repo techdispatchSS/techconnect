@@ -355,6 +355,72 @@
           </button>
         </div>
       </form>
+
+      @if (sel.role === 'TECHNICIAN') {
+        <section class="ul-docs" aria-label="Application and documents">
+          <h6 class="admin-section-title">Application and documents</h6>
+
+          @switch (applicationState()) {
+            @case ('loading') {
+              <div class="ul-docs-loading" aria-busy="true">
+                <app-skeleton width="100%" height="48px" radius="0" />
+                <app-skeleton width="100%" height="48px" radius="0" />
+              </div>
+            }
+            @case ('ready') {
+              @if (application(); as app) {
+                <p class="admin-hint">
+                  Applied {{ app.submittedAt | date: 'mediumDate' }}.
+                  @if (app.decidedAt) {
+                    Accepted {{ app.decidedAt | date: 'mediumDate' }} by
+                    {{ app.decidedByName ?? 'a manager' }}.
+                  }
+                  Files are downloaded, not opened in the browser, because they came from an
+                  applicant.
+                </p>
+                <ul class="ul-doc-list">
+                  @for (doc of app.documents; track doc.id) {
+                    <li class="ul-doc">
+                      <span class="ul-doc-meta">
+                        <span class="ul-doc-title">{{ doc.title }}</span>
+                        <span class="ul-doc-file">
+                          {{ kindLabels[doc.kind] }} · {{ doc.filename }} ·
+                          {{ formatBytes(doc.sizeBytes) }}
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        class="admin-btn admin-btn-secondary"
+                        [disabled]="downloadingId() === doc.id"
+                        (click)="downloadDocument(doc)"
+                      >
+                        {{ downloadingId() === doc.id ? 'Downloading…' : 'Download' }}
+                      </button>
+                    </li>
+                  }
+                </ul>
+                <a class="ul-docs-link" [routerLink]="['/admin/applications', app.id]">
+                  Open the full application
+                </a>
+              }
+            }
+            @case ('none') {
+              <p class="admin-hint">
+                No application on file. This person was added directly by a manager, so there are no
+                uploaded documents.
+              </p>
+            }
+            @case ('failed') {
+              <p class="admin-hint">
+                Could not load their documents.
+                <button type="button" class="admin-btn admin-btn-ghost" (click)="loadApplication()">
+                  Try again
+                </button>
+              </p>
+            }
+          }
+        </section>
+      }
     } @else {
       <p class="admin-empty">Select someone from the directory to view and edit their details.</p>
     }

@@ -7,13 +7,13 @@ import org.springframework.stereotype.Service;
 import silver.solutions.techconnect.config.TechConnectProperties;
 import silver.solutions.techconnect.exception.ApiException;
 import silver.solutions.techconnect.service.DocumentStorage;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.ServerSideEncryption;
 
 /**
@@ -48,8 +48,12 @@ public class S3DocumentStorage implements DocumentStorage {
                             .serverSideEncryption(ServerSideEncryption.AES256)
                             .build(),
                     RequestBody.fromBytes(content));
-        } catch (S3Exception e) {
-            log.error("Could not store document {}", key, e);
+        } catch (SdkException e) {
+            // S3Exception (the bucket refused or is missing) and SdkClientException (no
+            // credentials, no route to AWS, a timeout) are both SdkException. Only the first was
+            // caught, so a service with no task role or a wrong region answered 500 instead of
+            // this message, and the real cause was buried in a stack trace.
+            log.error("Could not store document {} in bucket {}: {}", key, bucket, e.toString(), e);
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE,
                     "We couldn't store your documents right now. Please try again shortly.");
         }
@@ -62,8 +66,8 @@ public class S3DocumentStorage implements DocumentStorage {
                     .asByteArray();
         } catch (NoSuchKeyException e) {
             throw ApiException.notFound("That document is no longer available.");
-        } catch (S3Exception e) {
-            log.error("Could not read document {}", key, e);
+        } catch (SdkException e) {
+            log.error("Could not read document {} from bucket {}: {}", key, bucket, e.toString(), e);
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE,
                     "The document store is unavailable. Please try again shortly.");
         }

@@ -527,6 +527,56 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
     }
 
     @Test
+    void anAcceptedTechniciansDocumentsAreReachableFromTheirAccount() throws Exception {
+        String token = managerToken();
+        Applicant a = Applicant.unique("fromuser");
+        submit(a, validPdf()).andExpect(status().isAccepted());
+        UUID applicationId = find(a).getId();
+        mvc.perform(post("/v1/admin/applications/" + applicationId + "/approve")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+        UUID userId = find(a).getUserId();
+
+        var result = mvc.perform(get("/v1/admin/applications/by-user/" + userId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(applicationId.toString()))
+                .andExpect(jsonPath("$.status").value("APPROVED"))
+                .andExpect(jsonPath("$.documents.length()").value(
+                        org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
+                .andReturn();
+
+        // ...and a document found that way can be opened with the existing, audited download.
+        UUID docId = documents.findByApplicationIdOrderByCreatedAtAsc(applicationId)
+                .getFirst().getId();
+        mvc.perform(get("/v1/admin/applications/" + applicationId + "/documents/" + docId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+        assertThat(result.getResponse().getContentAsString()).contains(docId.toString());
+    }
+
+    @Test
+    void aPersonAddedDirectlyHasNoApplicationOnFile() throws Exception {
+        String token = managerToken();
+        User technician = user("direct-" + UUID.randomUUID() + "@techconnect.test", UserRole.TECHNICIAN);
+
+        mvc.perform(get("/v1/admin/applications/by-user/" + technician.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void onlyAManagerCanLookUpAnApplicationByAccount() throws Exception {
+        User controller = user("ctrl-" + UUID.randomUUID() + "@techconnect.test", UserRole.CONTROLLER);
+
+        mvc.perform(get("/v1/admin/applications/by-user/" + UUID.randomUUID())
+                        .header("Authorization", "Bearer " + tokenFor(controller)))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/v1/admin/applications/by-user/" + UUID.randomUUID()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void approvingProvisionsATechnicianAccountLikeAddUser() throws Exception {
         String token = managerToken();
         Applicant a = Applicant.unique("approve");

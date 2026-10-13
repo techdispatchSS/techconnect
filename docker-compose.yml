@@ -104,7 +104,9 @@ services:
     ports:
       - "${FRONTEND_PORT:-4200}:80"
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      # 127.0.0.1, not localhost: BusyBox's wget tries ::1 first and nginx listens on IPv4 only,
+      # which made a healthy container report "unhealthy".
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/"]
       interval: 5s
       timeout: 5s
       retries: 10

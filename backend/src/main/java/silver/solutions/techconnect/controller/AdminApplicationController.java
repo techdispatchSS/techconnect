@@ -70,6 +70,12 @@ public class AdminApplicationController {
         return applications.get(id);
     }
 
+    /** The application behind a technician's account, for their record in People. */
+    @GetMapping("/by-user/{userId}")
+    public ApplicationDetailResponse forUser(@PathVariable UUID userId) {
+        return applications.getForUser(userId);
+    }
+
     /**
      * Serves an applicant's uploaded document. These are untrusted files from an anonymous
      * source, so they are never rendered in the page: always a download ({@code attachment}), the

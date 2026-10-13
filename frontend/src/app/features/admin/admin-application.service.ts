@@ -31,6 +31,14 @@ export class AdminApplicationService {
     return this.http.get<ApplicationDetail>(`v1/admin/applications/${id}`);
   }
 
+  /**
+   * The application a technician's account was created from, so their documents can be reached
+   * from their record. A 404 means they were added directly rather than through an application.
+   */
+  forUser(userId: string): Observable<ApplicationDetail> {
+    return this.http.get<ApplicationDetail>(`v1/admin/applications/by-user/${userId}`);
+  }
+
   pendingCount(): Observable<number> {
     return this.http
       .get<{ pending: number }>('v1/admin/applications/pending-count')

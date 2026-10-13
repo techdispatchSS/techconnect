@@ -25,6 +25,9 @@ public interface TechnicianApplicationRepository
 
     long countByStatus(ApplicationStatus status);
 
+    /** The application an account was created from, if it was created from one. */
+    Optional<TechnicianApplication> findByUserId(UUID userId);
+
     /**
      * Row-locked read for approve/reject, so two Managers deciding the same application at the
      * same moment serialise instead of both succeeding (which would provision two accounts or

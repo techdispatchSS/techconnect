@@ -90,6 +90,17 @@ public class AdminApplicationService {
         return detail(require(id));
     }
 
+    /**
+     * The application a technician's account was created from, with its documents. This is how a
+     * Manager reaches someone's proof of ID, matric and residence from their record in People
+     * once they have been accepted. A person added directly by a Manager has none.
+     */
+    @Transactional(readOnly = true)
+    public ApplicationDetailResponse getForUser(UUID userId) {
+        return detail(applications.findByUserId(userId)
+                .orElseThrow(() -> ApiException.notFound("No application on file for this person.")));
+    }
+
     @Transactional(readOnly = true)
     public long pendingCount() {
         return applications.countByStatus(ApplicationStatus.PENDING);

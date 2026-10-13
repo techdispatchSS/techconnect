@@ -15,6 +15,7 @@ import silver.solutions.techconnect.config.TechConnectProperties;
 import silver.solutions.techconnect.dto.request.application.SubmitApplicationRequest;
 import silver.solutions.techconnect.dto.request.application.SubmitApplicationRequest.DocumentMeta;
 import silver.solutions.techconnect.entity.ApplicationDocument;
+import silver.solutions.techconnect.entity.DocumentKind;
 import silver.solutions.techconnect.entity.TechnicianApplication;
 import silver.solutions.techconnect.exception.ApiException;
 import silver.solutions.techconnect.mapper.AddressMapper;
@@ -140,8 +141,7 @@ public class ApplicationService {
         TechConnectProperties.Applications limits = properties.applications();
 
         if (files == null || files.isEmpty()) {
-            throw ApiException.badRequest(
-                    "Attach at least one certificate or qualification as proof.");
+            throw ApiException.badRequest(missingDocumentsMessage(DocumentKind.REQUIRED));
         }
         if (files.size() > limits.maxFiles()) {
             throw ApiException.badRequest("You can attach at most " + limits.maxFiles() + " files.");
@@ -149,6 +149,7 @@ public class ApplicationService {
         if (files.size() != request.documents().size()) {
             throw ApiException.badRequest("Each file needs a type and a title.");
         }
+        requireIdentityDocuments(request.documents());
 
         long total = files.stream().mapToLong(MultipartFile::getSize).sum();
         if (total > limits.maxRequestSize().toBytes()) {
@@ -176,6 +177,31 @@ public class ApplicationService {
             prepared.add(new Prepared(key, request.documents().get(i), info, bytes));
         }
         return prepared;
+    }
+
+    /**
+     * Every application carries exactly one ID document, one matric certificate and one proof of
+     * residence. Certifications are optional and there can be several.
+     */
+    private void requireIdentityDocuments(List<DocumentMeta> metas) {
+        List<DocumentKind> missing = new ArrayList<>();
+        for (DocumentKind kind : DocumentKind.REQUIRED) {
+            long count = metas.stream().filter(meta -> meta.kind() == kind).count();
+            if (count == 0) {
+                missing.add(kind);
+            } else if (count > 1) {
+                throw ApiException.badRequest("Attach only one " + kind.label() + ".");
+            }
+        }
+        if (!missing.isEmpty()) {
+            throw ApiException.badRequest(missingDocumentsMessage(missing));
+        }
+    }
+
+    private static String missingDocumentsMessage(List<DocumentKind> missing) {
+        return "Attach your "
+                + String.join(", ", missing.stream().map(DocumentKind::label).toList())
+                + ".";
     }
 
     private boolean isKnown(String email, String emailKey, String phoneKey, String idNumber) {

@@ -1,10 +1,13 @@
 package silver.solutions.techconnect.service.implementation;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import silver.solutions.techconnect.config.TechConnectProperties;
 import silver.solutions.techconnect.entity.User;
@@ -159,15 +162,17 @@ public class SmtpNotificationService implements NotificationService {
         // provider is configured, and what a developer reads on first run.
         log.info("Notification for {} — {}", to, subject);
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(properties.mail().from());
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(body);
-
         try {
+            // Plain text and a branded HTML alternative; the text is exactly the message body.
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper =
+                    new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+            helper.setFrom(properties.mail().from());
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body, BrandedEmail.html(body, properties.appBaseUrl()));
             mailSender.send(message);
-        } catch (MailException e) {
+        } catch (MailException | MessagingException e) {
             log.warn("Could not deliver '{}' to {} — the action itself still succeeded. "
                     + "Use the activation URL from the API response or the log above.",
                     subject, to, e);

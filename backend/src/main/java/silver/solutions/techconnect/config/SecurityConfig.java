@@ -1,6 +1,7 @@
 package silver.solutions.techconnect.config;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import jakarta.servlet.DispatcherType;
 import java.util.Set;
 import javax.crypto.SecretKey;
 import org.springframework.context.annotation.Bean;
@@ -97,6 +98,13 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // When an exception escapes a controller the container forwards to
+                        // /error to render it, and that second dispatch passes through this
+                        // chain too. Left to `anyRequest().authenticated()`, an anonymous caller
+                        // was told 401 for what was really a 500 (a storage failure on the public
+                        // application form, say), which hid the real problem. The error page
+                        // carries no data of its own, so the real status may be shown.
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         // Unauthenticated by necessity: these are how a user gets a token
                         // or recovers an account in the first place.
                         .requestMatchers(HttpMethod.POST,

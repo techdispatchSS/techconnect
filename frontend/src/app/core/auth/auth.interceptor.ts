@@ -10,6 +10,12 @@ const PUBLIC_PATHS = [
   'v1/auth/activate',
   'v1/auth/forgot-password',
   'v1/auth/reset-password',
+  // The technician application form. It is used by people who may be signed in on the same
+  // browser (a manager checking the form, say): sending that session's token here made a stale
+  // or revoked one fail the public submission with a 401, and then signed the person out.
+  // (`v1/admin/applications` does not contain this string, so the review screens still carry
+  // their token.)
+  'v1/applications',
 ];
 
 /**

@@ -1,9 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
+import { GooglePlacesService } from '../../core/google/google-places.service';
+import { PickedPlace, StreetInput } from '../../shared/street-input/street-input';
 import { ApplyApiService } from './apply-api.service';
 import { Apply } from './apply';
 import { ApplicationReceivedResponse, SubmitApplicationRequest } from './apply.models';
@@ -257,5 +260,90 @@ describe('Apply', () => {
     const honeypot = el.querySelector('.ap-hp')!;
     expect(honeypot.getAttribute('aria-hidden')).toBe('true');
     expect(honeypot.querySelector('input')!.getAttribute('tabindex')).toBe('-1');
+  });
+});
+
+const SANDTON: PickedPlace = {
+  street: '83 Rivonia Road',
+  suburb: 'Sandown',
+  city: 'Sandton',
+  province: 'GAUTENG',
+  postalCode: '2196',
+  latitude: -26.1,
+  longitude: 28.05,
+};
+
+describe('Apply: address search', () => {
+  let fixture: ComponentFixture<Apply>;
+  let el: HTMLElement;
+
+  async function setup(placesEnabled: boolean): Promise<void> {
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        { provide: ApplyApiService, useValue: { submit: vi.fn() } },
+        {
+          provide: GooglePlacesService,
+          useValue: { enabled: placesEnabled, suggest: () => Promise.resolve([]) },
+        },
+      ],
+    });
+    fixture = TestBed.createComponent(Apply);
+    el = fixture.nativeElement;
+    await fixture.whenStable();
+  }
+
+  function pick(place: PickedPlace): void {
+    fixture.debugElement.query(By.directive(StreetInput)).componentInstance.picked.emit(place);
+  }
+
+  it('offers the street search where the address is asked for', async () => {
+    await setup(true);
+
+    const street = el.querySelector<HTMLInputElement>('app-street-input input#ap-street');
+    expect(street).not.toBeNull();
+    expect(street!.getAttribute('role')).toBe('combobox');
+    expect(el.textContent).toContain(
+      "Choose your address from the list and we'll fill in the rest.",
+    );
+  });
+
+  it('fills the whole address when a suggestion is picked', async () => {
+    await setup(true);
+
+    pick(SANDTON);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.form.controls.address.getRawValue()).toEqual({
+      street: '83 Rivonia Road',
+      suburb: 'Sandown',
+      city: 'Sandton',
+      province: 'GAUTENG',
+      postalCode: '2196',
+    });
+    expect(el.querySelector<HTMLSelectElement>('#ap-province')!.value).toBe('GAUTENG');
+    expect(el.querySelector<HTMLInputElement>('#ap-postal')!.value).toBe('2196');
+  });
+
+  it('keeps what was typed for anything Google did not return', async () => {
+    await setup(true);
+    const address = fixture.componentInstance.form.controls.address;
+    address.patchValue({ suburb: 'My own suburb', postalCode: '1234' });
+
+    pick({ ...SANDTON, suburb: '', postalCode: '' });
+    await fixture.whenStable();
+
+    expect(address.controls.street.value).toBe('83 Rivonia Road');
+    expect(address.controls.city.value).toBe('Sandton');
+    expect(address.controls.suburb.value).toBe('My own suburb');
+    expect(address.controls.postalCode.value).toBe('1234');
+  });
+
+  it('is a plain street field, with no promise of suggestions, when no key is configured', async () => {
+    await setup(false);
+
+    expect(el.querySelector('input#ap-street')).not.toBeNull();
+    expect(el.textContent).not.toContain('fill in the rest');
   });
 });

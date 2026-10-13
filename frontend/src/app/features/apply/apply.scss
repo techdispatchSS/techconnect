@@ -196,3 +196,12 @@
     padding: 0 10px;
   }
 }
+
+// The shared street field was written for the admin portal and reads that portal's colour
+// tokens for its suggestion list; give it this page's so the list isn't white-on-white.
+.ap-street {
+  --admin-color-surface: var(--auth-color-surface);
+  --admin-color-text: var(--auth-color-text);
+  --admin-color-divider: var(--auth-color-divider);
+  --admin-color-accent: var(--auth-color-accent);
+}

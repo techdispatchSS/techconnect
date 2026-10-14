@@ -5,7 +5,7 @@ import jakarta.mail.internet.MimeMessage;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,10 +45,13 @@ public class SmtpNotificationService implements NotificationService {
     /** The logo (light ink, for the dark header), packaged with the app. */
     private static final String LOGO_RESOURCE = "brand/techconnect-email-logo-light.png";
 
-    /** "13 Oct 2026, 18:54 UTC". */
+    /**
+     * "13 Oct 2026, 20:54 SAST". The people who read these are in South Africa, so the time is
+     * given the way they say it. The zone has no daylight saving, so the label is a constant.
+     */
     private static final DateTimeFormatter WHEN =
-            DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm 'UTC'", Locale.ENGLISH)
-                    .withZone(ZoneOffset.UTC);
+            DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm 'SAST'", Locale.ENGLISH)
+                    .withZone(ZoneId.of("Africa/Johannesburg"));
 
     private final JavaMailSender mailSender;
     private final TechConnectProperties properties;

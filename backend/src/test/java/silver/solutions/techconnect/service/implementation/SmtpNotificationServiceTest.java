@@ -150,7 +150,7 @@ class SmtpNotificationServiceTest {
 
         // the reference in the header, the details, and the time in a readable form
         assertThat(all).contains("INC-2C16638C").contains("Sihle Sithole").contains("Networking");
-        assertThat(all).contains("13 Oct 2026, 18:54 UTC");
+        assertThat(all).contains("13 Oct 2026, 20:54 SAST").doesNotContain("UTC");
         // the site is a map link rather than text a mail client guesses at
         assertThat(all).contains("https://www.google.com/maps/search/?api=1&amp;query=13+Sloane+Street");
         // priority, marked and coloured
@@ -194,6 +194,18 @@ class SmtpNotificationServiceTest {
     }
 
     @Test
+    void theDeadlineIsInSouthAfricanTimeEvenWhenItCrossesMidnight() throws Exception {
+        var late = new NotificationService.DispatchNotice(
+                "INC-1", "Acme", "1 Main Rd", "CCTV", IncidentPriority.LOW, null,
+                Instant.parse("2026-10-13T22:30:00Z"), false, null);
+
+        service.sendDispatchNotice(user(), late);
+
+        // 22:30 UTC is half past midnight the next day in South Africa.
+        assertThat(everythingSaid(sent())).contains("14 Oct 2026, 00:30 SAST");
+    }
+
+    @Test
     void aReminderSaysTheJobIsStillWaiting() throws Exception {
         service.sendDispatchNotice(user(), notice(true));
 
@@ -215,7 +227,7 @@ class SmtpNotificationServiceTest {
         assertThat(text).contains("Client:").contains("Sihle Sithole");
         assertThat(text).contains("Site:").contains("13 Sloane Street");
         assertThat(text).contains("Priority:").contains("High");
-        assertThat(text).contains("Respond by:").contains("13 Oct 2026, 18:54 UTC");
+        assertThat(text).contains("Respond by:").contains("13 Oct 2026, 20:54 SAST");
         assertThat(text).contains("Accept job: https://www.tech-connect.app/jobs?dispatch=");
     }
 

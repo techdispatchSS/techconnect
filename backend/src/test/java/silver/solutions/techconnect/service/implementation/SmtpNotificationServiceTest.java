@@ -51,6 +51,7 @@ class SmtpNotificationServiceTest {
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("thabo@example.com");
         when(user.getName()).thenReturn("Thabo");
+        when(user.getTimeZone()).thenReturn("Africa/Johannesburg");
         return user;
     }
 
@@ -191,6 +192,45 @@ class SmtpNotificationServiceTest {
         } else if (part.isMimeType("image/*")) {
             into.add((jakarta.mail.internet.MimeBodyPart) part);
         }
+    }
+
+    private String deadlineFor(String zone) throws Exception {
+        User person = user();
+        when(person.getTimeZone()).thenReturn(zone);
+        service.sendDispatchNotice(person, notice(false));
+        return everythingSaid(sent());
+    }
+
+    @Test
+    void theDeadlineIsInTheRecipientsOwnZone() throws Exception {
+        // 18:54 UTC, the same instant, said four ways
+        assertThat(deadlineFor("Africa/Nairobi")).contains("13 Oct 2026, 21:54 EAT");
+    }
+
+    @Test
+    void westAfricaReadsWatAndGhanaReadsGmt() throws Exception {
+        assertThat(deadlineFor("Africa/Lagos")).contains("13 Oct 2026, 19:54 WAT");
+    }
+
+    @Test
+    void ghanaIsOnGreenwichTime() throws Exception {
+        assertThat(deadlineFor("Africa/Accra")).contains("13 Oct 2026, 18:54 GMT");
+    }
+
+    @Test
+    void aZoneWithoutACommonNameIsGivenAsAnOffset() throws Exception {
+        // Tripoli is UTC+2 all year but has no abbreviation people share
+        assertThat(deadlineFor("Africa/Tripoli")).contains("13 Oct 2026, 20:54 UTC+2");
+    }
+
+    @Test
+    void aPersonWithNoRecordedZoneIsGivenUtcRatherThanAGuess() throws Exception {
+        assertThat(deadlineFor(null)).contains("13 Oct 2026, 18:54 UTC");
+    }
+
+    @Test
+    void anUnreadableStoredZoneFallsBackToUtc() throws Exception {
+        assertThat(deadlineFor("Not/AZone")).contains("13 Oct 2026, 18:54 UTC");
     }
 
     @Test

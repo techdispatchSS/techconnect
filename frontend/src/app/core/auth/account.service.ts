@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, InjectionToken, inject } from '@angular/core';
+import { Observable, tap } from 'rxjs';
 
 import { Address, AddressRequest } from '../address.models';
 import { UserRole } from './auth.models';
@@ -18,6 +18,8 @@ export interface Profile {
    * job matching, so changing it is a dispatch decision that stays with the Manager.
    */
   canEditAddress: boolean;
+  /** The IANA zone this person was last seen in; null until they first sign in. */
+  timeZone: string | null;
 }
 
 export interface UpdateProfileRequest {
@@ -28,17 +30,51 @@ export interface UpdateProfileRequest {
   address?: AddressRequest;
 }
 
+/**
+ * Where this browser says it is, as an IANA zone id; null if it will not say. A token so a test
+ * can place the browser somewhere without replacing the whole of `Intl`.
+ */
+export const BROWSER_TIME_ZONE = new InjectionToken<() => string | null>('BROWSER_TIME_ZONE', {
+  providedIn: 'root',
+  factory: () => () => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+    } catch {
+      return null;
+    }
+  },
+});
+
 /** Account lifecycle calls that do not themselves establish a session. */
 @Injectable({ providedIn: 'root' })
 export class AccountService {
   private readonly http = inject(HttpClient);
+  private readonly browserTimeZone = inject(BROWSER_TIME_ZONE);
 
   /**
    * Confirms the stored token still corresponds to a live, active account. Returns 401 for a
    * session the backend has revoked, which the auth interceptor turns into a sign-out.
    */
   me(): Observable<Profile> {
-    return this.http.get<Profile>('v1/auth/me');
+    return this.http
+      .get<Profile>('v1/auth/me')
+      .pipe(tap((profile) => this.reportTimeZone(profile)));
+  }
+
+  /**
+   * Tells the backend which time zone this browser is in, so a time in an email is said in the
+   * person's own ("respond by 21:54 EAT" in Nairobi). Done on every session check but only sent
+   * when it differs from what is on record, so it follows someone who travels without chattering.
+   * Best effort: a failure here must never get in the way of using the app.
+   */
+  private reportTimeZone(profile: Profile): void {
+    const zone = this.browserTimeZone();
+    if (!zone || zone === profile.timeZone) {
+      return;
+    }
+    this.http
+      .put<Profile>('v1/auth/me/time-zone', { timeZone: zone })
+      .subscribe({ error: () => undefined });
   }
 
   /** Email and role are absent by design — both are administrative, audited changes. */

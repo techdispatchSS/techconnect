@@ -6,9 +6,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,13 +47,72 @@ public class SmtpNotificationService implements NotificationService {
     /** The logo (light ink, for the dark header), packaged with the app. */
     private static final String LOGO_RESOURCE = "brand/techconnect-email-logo-light.png";
 
+    private static final DateTimeFormatter WHEN_DATE_TIME =
+            DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Locale.ENGLISH);
+
     /**
-     * "13 Oct 2026, 20:54 SAST". The people who read these are in South Africa, so the time is
-     * given the way they say it. The zone has no daylight saving, so the label is a constant.
+     * What people in the zones this is used in call their time, where there is a name in common
+     * use. Anything not listed is given as an offset ("UTC+2"), which is always right.
      */
-    private static final DateTimeFormatter WHEN =
-            DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm 'SAST'", Locale.ENGLISH)
-                    .withZone(ZoneId.of("Africa/Johannesburg"));
+    private static final Map<String, String> ZONE_NAMES = Map.ofEntries(
+            // South Africa, Lesotho, Eswatini
+            Map.entry("Africa/Johannesburg", "SAST"), Map.entry("Africa/Maseru", "SAST"),
+            Map.entry("Africa/Mbabane", "SAST"),
+            // Central Africa Time
+            Map.entry("Africa/Harare", "CAT"), Map.entry("Africa/Maputo", "CAT"),
+            Map.entry("Africa/Lusaka", "CAT"), Map.entry("Africa/Gaborone", "CAT"),
+            Map.entry("Africa/Windhoek", "CAT"), Map.entry("Africa/Blantyre", "CAT"),
+            Map.entry("Africa/Lubumbashi", "CAT"), Map.entry("Africa/Kigali", "CAT"),
+            Map.entry("Africa/Bujumbura", "CAT"), Map.entry("Africa/Juba", "CAT"),
+            Map.entry("Africa/Khartoum", "CAT"),
+            // East Africa Time
+            Map.entry("Africa/Nairobi", "EAT"), Map.entry("Africa/Addis_Ababa", "EAT"),
+            Map.entry("Africa/Dar_es_Salaam", "EAT"), Map.entry("Africa/Kampala", "EAT"),
+            Map.entry("Africa/Mogadishu", "EAT"), Map.entry("Africa/Djibouti", "EAT"),
+            Map.entry("Africa/Asmara", "EAT"),
+            // West Africa Time
+            Map.entry("Africa/Lagos", "WAT"), Map.entry("Africa/Kinshasa", "WAT"),
+            Map.entry("Africa/Luanda", "WAT"), Map.entry("Africa/Douala", "WAT"),
+            Map.entry("Africa/Libreville", "WAT"), Map.entry("Africa/Niamey", "WAT"),
+            Map.entry("Africa/Ndjamena", "WAT"), Map.entry("Africa/Bangui", "WAT"),
+            Map.entry("Africa/Brazzaville", "WAT"), Map.entry("Africa/Malabo", "WAT"),
+            Map.entry("Africa/Porto-Novo", "WAT"), Map.entry("Africa/Algiers", "CET"),
+            Map.entry("Africa/Tunis", "CET"),
+            // Greenwich Mean Time
+            Map.entry("Africa/Accra", "GMT"), Map.entry("Africa/Abidjan", "GMT"),
+            Map.entry("Africa/Dakar", "GMT"), Map.entry("Africa/Bamako", "GMT"),
+            Map.entry("Africa/Ouagadougou", "GMT"), Map.entry("Africa/Conakry", "GMT"),
+            Map.entry("Africa/Freetown", "GMT"), Map.entry("Africa/Monrovia", "GMT"),
+            Map.entry("Africa/Banjul", "GMT"), Map.entry("Africa/Lome", "GMT"),
+            Map.entry("Africa/Nouakchott", "GMT"), Map.entry("UTC", "UTC"),
+            Map.entry("Etc/UTC", "UTC"));
+
+    /**
+     * "13 Oct 2026, 20:54 SAST" for a person in South Africa, "13 Oct 2026, 21:54 EAT" in Nairobi.
+     * The date moves with the zone, so a deadline late in the evening can read as the next day.
+     * A person with no recorded zone gets UTC, labelled as such, rather than a guess.
+     */
+    static String when(java.time.Instant instant, String zoneId) {
+        ZoneId zone = ZoneOffset.UTC;
+        if (zoneId != null && !zoneId.isBlank()) {
+            try {
+                zone = ZoneId.of(zoneId.trim());
+            } catch (java.time.DateTimeException e) {
+                zone = ZoneOffset.UTC;
+            }
+        }
+        String name = ZONE_NAMES.get(zone.getId());
+        if (name == null) {
+            int seconds = zone.getRules().getOffset(instant).getTotalSeconds();
+            int hours = Math.abs(seconds) / 3600;
+            int minutes = Math.abs(seconds) % 3600 / 60;
+            name = seconds == 0
+                    ? "UTC"
+                    : "UTC" + (seconds < 0 ? "-" : "+") + hours
+                            + (minutes == 0 ? "" : ":" + String.format("%02d", minutes));
+        }
+        return WHEN_DATE_TIME.withZone(zone).format(instant) + " " + name;
+    }
 
     private final JavaMailSender mailSender;
     private final TechConnectProperties properties;
@@ -151,7 +212,7 @@ public class SmtpNotificationService implements NotificationService {
                 hasText(notice.siteAddress()) ? mapsLink(notice.siteAddress()) : null));
         details.add(new Detail("Priority", notice.priority() == null ? "—" : label(notice.priority().name()),
                 false, toneOf(notice), null));
-        details.add(Detail.of("Respond by", WHEN.format(notice.expiresAt())));
+        details.add(Detail.of("Respond by", when(notice.expiresAt(), technician.getTimeZone())));
         if (hasText(notice.notes())) {
             details.add(Detail.wide("Notes", notice.notes()));
         }

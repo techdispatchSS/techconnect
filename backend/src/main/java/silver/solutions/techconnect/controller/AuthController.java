@@ -17,6 +17,7 @@ import silver.solutions.techconnect.dto.request.auth.ForgotPasswordRequest;
 import silver.solutions.techconnect.dto.request.auth.LoginRequest;
 import silver.solutions.techconnect.dto.request.auth.ResetPasswordRequest;
 import silver.solutions.techconnect.dto.request.auth.UpdateProfileRequest;
+import silver.solutions.techconnect.dto.request.auth.UpdateTimeZoneRequest;
 import silver.solutions.techconnect.dto.response.auth.LoginResponse;
 import silver.solutions.techconnect.dto.response.auth.ProfileResponse;
 import silver.solutions.techconnect.security.AuthenticatedUser;
@@ -49,6 +50,14 @@ public class AuthController {
             @AuthenticationPrincipal AuthenticatedUser principal,
             @Valid @RequestBody UpdateProfileRequest request) {
         return authService.updateProfile(principal.id(), request);
+    }
+
+    /** The zone this person's browser is in; see {@code AuthService.updateTimeZone}. */
+    @PutMapping("/me/time-zone")
+    public ProfileResponse updateTimeZone(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @Valid @RequestBody UpdateTimeZoneRequest request) {
+        return authService.updateTimeZone(principal.id(), request.timeZone());
     }
 
     @PostMapping("/login")

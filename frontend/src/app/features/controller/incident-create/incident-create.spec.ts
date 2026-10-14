@@ -152,10 +152,11 @@ describe('IncidentCreate', () => {
   });
 
   const PICKED = {
+    country: 'ZA',
     street: '83 Rivonia Rd',
     suburb: 'Sandton',
     city: 'Johannesburg',
-    province: 'GAUTENG' as const,
+    province: 'GAUTENG',
     postalCode: '2196',
     latitude: -26.1076,
     longitude: 28.0567,

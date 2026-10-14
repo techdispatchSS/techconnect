@@ -35,7 +35,7 @@ interface PlacesLibrary {
     fetchAutocompleteSuggestions(request: {
       input: string;
       sessionToken: object;
-      includedRegionCodes: string[];
+      includedRegionCodes?: string[];
     }): Promise<{ suggestions: { placePrediction: PlacePrediction | null }[] }>;
   };
 }
@@ -50,8 +50,7 @@ const MIN_INPUT_LENGTH = 3;
  * Address search backed by Google Places (New). Loads Google's script lazily on first use, so
  * screens that never search an address — and deployments with no key configured — pay nothing.
  *
- * <p>Suggestions are limited to South Africa, matching the province list the rest of the address
- * form is built around. Every lookup within one typing session shares a session token, which is
+ * <p>Suggestions are limited to the country the person has chosen. Every lookup within one typing session shares a session token, which is
  * how Google bills a search-then-select as a single request.
  */
 @Injectable({ providedIn: 'root' })
@@ -61,7 +60,11 @@ export class GooglePlacesService {
   private library: Promise<PlacesLibrary> | null = null;
   private sessionToken: object | null = null;
 
-  async suggest(input: string): Promise<AddressSuggestion[]> {
+  /**
+   * `country` is the ISO code the person has chosen; suggestions are limited to it. Null
+   * searches everywhere (a controller logging a site has no country to choose).
+   */
+  async suggest(input: string, country: string | null = 'ZA'): Promise<AddressSuggestion[]> {
     const query = input.trim();
     if (!this.enabled || query.length < MIN_INPUT_LENGTH) {
       return [];
@@ -73,7 +76,7 @@ export class GooglePlacesService {
     const { suggestions } = await places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
       input: query,
       sessionToken: this.sessionToken,
-      includedRegionCodes: ['za'],
+      ...(country ? { includedRegionCodes: [country.toLowerCase()] } : {}),
     });
 
     return suggestions

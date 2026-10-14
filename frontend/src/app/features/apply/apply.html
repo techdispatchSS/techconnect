@@ -110,26 +110,35 @@
           </div>
 
           <div class="field ap-span2">
-            <label for="ap-id">South African ID number</label>
+            <label for="ap-id">{{
+              inSouthAfrica() ? 'South African ID number' : 'ID or passport number'
+            }}</label>
             <input
               appTrimOnBlur
               id="ap-id"
               class="input"
               formControlName="idNumber"
-              inputmode="numeric"
+              [attr.inputmode]="inSouthAfrica() ? 'numeric' : 'text'"
               autocomplete="off"
-              maxlength="20"
+              maxlength="32"
               aria-describedby="ap-id-hint"
             />
             <p id="ap-id-hint" class="field-hint">
-              13 digits. Used only to check your application and shown only to managers.
+              @if (inSouthAfrica()) {
+                13 digits.
+              } @else {
+                Your national ID or passport number.
+              }
+              Used only to check your application and shown only to managers.
             </p>
             @if (form.controls.idNumber.touched && form.controls.idNumber.invalid) {
               <p class="field-error">
                 @if (form.controls.idNumber.hasError('required')) {
                   ID number is required
-                } @else {
+                } @else if (inSouthAfrica()) {
                   Enter a valid 13-digit South African ID number
+                } @else {
+                  Enter your ID or passport number (letters, digits, spaces, / and -)
                 }
               </p>
             }
@@ -140,16 +149,31 @@
       <fieldset class="ap-section" formGroupName="address">
         <legend>Where you're based</legend>
         <p class="field-hint">
-          We use this to match you with jobs near you, so every field is required.
+          We use this to match you with jobs near you.
+          @if (inSouthAfrica()) {
+            Every field is required.
+          } @else {
+            Suburb and postal code are optional if your area has none.
+          }
         </p>
 
         <div class="ap-grid">
+          <div class="field ap-span2">
+            <label for="ap-country">Country</label>
+            <select id="ap-country" class="input" formControlName="country" autocomplete="country">
+              @for (c of countries; track c.code) {
+                <option [value]="c.code">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+
           <div class="field ap-span2 ap-street">
             <label for="ap-street">Street</label>
             <app-street-input
               inputId="ap-street"
               inputClass="input"
               placeholder="Start typing your street address"
+              [country]="country()"
               [control]="form.controls.address.controls.street"
               (picked)="applyPlace($event)"
             />
@@ -166,7 +190,9 @@
           </div>
 
           <div class="field">
-            <label for="ap-suburb">Suburb</label>
+            <label for="ap-suburb">{{
+              inSouthAfrica() ? 'Suburb' : 'Suburb or district (optional)'
+            }}</label>
             <input
               appTrimOnBlur
               id="ap-suburb"
@@ -202,37 +228,55 @@
           </div>
 
           <div class="field">
-            <label for="ap-province">Province</label>
-            <select id="ap-province" class="input" formControlName="province">
-              <option value="">Select…</option>
-              @for (province of provinces; track province) {
-                <option [value]="province">{{ provinceLabels[province] }}</option>
-              }
-            </select>
+            @if (inSouthAfrica()) {
+              <label for="ap-province">Province</label>
+              <select id="ap-province" class="input" formControlName="province">
+                <option value="">Select…</option>
+                @for (province of provinces; track province) {
+                  <option [value]="province">{{ provinceLabels[province] }}</option>
+                }
+              </select>
+            } @else {
+              <label for="ap-region">State, province or region</label>
+              <input
+                appTrimOnBlur
+                id="ap-region"
+                class="input"
+                formControlName="province"
+                autocomplete="address-level1"
+                maxlength="120"
+              />
+            }
             @if (
               form.controls.address.controls.province.touched &&
               form.controls.address.controls.province.invalid
             ) {
-              <p class="field-error">Choose a province</p>
+              <p class="field-error">
+                {{ inSouthAfrica() ? 'Choose a province' : 'Enter your state, province or region' }}
+              </p>
             }
           </div>
 
           <div class="field">
-            <label for="ap-postal">Postal code</label>
+            <label for="ap-postal">{{
+              inSouthAfrica() ? 'Postal code' : 'Postal code (optional)'
+            }}</label>
             <input
               appTrimOnBlur
               id="ap-postal"
               class="input"
               formControlName="postalCode"
-              inputmode="numeric"
+              [attr.inputmode]="inSouthAfrica() ? 'numeric' : 'text'"
               autocomplete="postal-code"
-              maxlength="4"
+              [attr.maxlength]="inSouthAfrica() ? 4 : 12"
             />
             @if (
               form.controls.address.controls.postalCode.touched &&
               form.controls.address.controls.postalCode.invalid
             ) {
-              <p class="field-error">Enter a 4-digit postal code</p>
+              <p class="field-error">
+                {{ inSouthAfrica() ? 'Enter a 4-digit postal code' : 'Enter a valid postal code' }}
+              </p>
             }
           </div>
         </div>

@@ -41,16 +41,43 @@ public final class ApplicantIdentity {
         return local + "@" + domain;
     }
 
-    /** Digits only, with South Africa's +27 / 0027 prefix folded to the local leading 0. */
+    /**
+     * Digits only, in one canonical form whichever way the number was written, so a person cannot
+     * apply again by retyping their own number: "+254 712 345 678", "0712 345 678" and
+     * "00254712345678" are one number.
+     *
+     * <p>{@code dialCode} is the country the applicant says they are in (e.g. {@code "254"}); it
+     * is what a number typed the local way, with a leading 0, is read against.
+     *
+     * <p>South African numbers keep their long-standing canonical form (a leading 0), so every
+     * application already on record still matches.
+     */
+    public static String normalizePhone(String phone, String dialCode) {
+        String raw = phone.trim();
+        String digits = raw.replaceAll("\\D", "");
+
+        String international;
+        if (raw.startsWith("+")) {
+            international = digits;
+        } else if (digits.startsWith("00")) {
+            international = digits.substring(2);
+        } else if (digits.startsWith("0") && dialCode != null) {
+            international = dialCode + digits.substring(1);
+        } else if (dialCode != null && digits.startsWith(dialCode) && digits.length() > dialCode.length() + 6) {
+            // already carries the country code, just without the plus
+            international = digits;
+        } else {
+            international = dialCode != null ? dialCode + digits : digits;
+        }
+
+        if (international.startsWith("27") && international.length() == 11) {
+            return "0" + international.substring(2);
+        }
+        return international;
+    }
+
+    /** As above for a South African applicant; kept for callers that have no country to hand. */
     public static String normalizePhone(String phone) {
-        String digits = phone.replaceAll("\\D", "");
-        if (digits.startsWith("0027")) {
-            digits = digits.substring(4);
-            return digits.startsWith("0") ? digits : "0" + digits;
-        }
-        if (digits.startsWith("27") && digits.length() == 11) {
-            return "0" + digits.substring(2);
-        }
-        return digits;
+        return normalizePhone(phone, "27");
     }
 }

@@ -244,6 +244,7 @@ describe('Apply', () => {
     const [request, files] = submit.mock.calls[0] as [SubmitApplicationRequest, File[]];
     expect(request.firstName).toBe('Nomsa');
     expect(request.address).toEqual({
+      country: 'ZA',
       street: '1 Test Street',
       suburb: 'Umhlanga',
       city: 'Durban',
@@ -393,6 +394,92 @@ describe('Apply', () => {
     expect(submit).toHaveBeenCalledTimes(1);
   });
 
+  describe('from another country', () => {
+    async function inKenya(): Promise<void> {
+      await setup();
+      type('#ap-first', 'Wanjiru');
+      type('#ap-last', 'Kamau');
+      type('#ap-email', 'wanjiru@example.com');
+      type('#ap-phone', '+254 712 345 678');
+      choose('#ap-country', 'KE');
+      await fixture.whenStable();
+      type('#ap-id', 'A1234567');
+      type('#ap-street', '12 Moi Avenue');
+      type('#ap-city', 'Nairobi');
+      type('#ap-region', 'Nairobi County');
+      type('#ap-experience', 'Eight years installing network and CCTV systems for businesses.');
+      (el.querySelector('input[type="checkbox"]') as HTMLInputElement).click();
+      await attachRequired();
+    }
+
+    it('takes a typed region and no suburb or postcode, and a passport-style ID', async () => {
+      await inKenya();
+      await send();
+
+      expect(submit).toHaveBeenCalledTimes(1);
+      const [request] = submit.mock.calls[0] as [SubmitApplicationRequest, File[]];
+      expect(request.idNumber).toBe('A1234567');
+      expect(request.address).toEqual({
+        country: 'KE',
+        street: '12 Moi Avenue',
+        suburb: '',
+        city: 'Nairobi',
+        province: 'Nairobi County',
+        postalCode: '',
+      });
+    });
+
+    it('swaps the province list for a text box and says what is optional', async () => {
+      await setup();
+      expect(el.querySelector('select#ap-province')).not.toBeNull();
+      expect(el.querySelector('#ap-region')).toBeNull();
+
+      choose('#ap-country', 'NG');
+      await fixture.whenStable();
+
+      expect(el.querySelector('select#ap-province')).toBeNull();
+      expect(el.querySelector('#ap-region')).not.toBeNull();
+      expect(el.textContent).toContain('ID or passport number');
+      expect(el.textContent).toContain('Postal code (optional)');
+    });
+
+    it('accepts a postcode that is not four digits', async () => {
+      await inKenya();
+      type('#ap-postal', '00100');
+      await send();
+
+      expect(submit).toHaveBeenCalledTimes(1);
+      const [request] = submit.mock.calls[0] as [SubmitApplicationRequest, File[]];
+      expect(request.address.postalCode).toBe('00100');
+    });
+
+    it('still refuses a postcode that does not look like one', async () => {
+      await inKenya();
+      type('#ap-postal', '<script>');
+      await send();
+
+      expect(submit).not.toHaveBeenCalled();
+      expect(el.textContent).toContain('Enter a valid postal code');
+    });
+
+    it('forgets a South African province when the country changes', async () => {
+      await setup();
+      choose('#ap-province', 'GAUTENG');
+      choose('#ap-country', 'KE');
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.form.controls.address.controls.province.value).toBe('');
+    });
+
+    it('holds a South African to the South African ID again if they switch back', async () => {
+      await inKenya();
+      choose('#ap-country', 'ZA');
+      await fixture.whenStable();
+      type('#ap-id', 'A1234567');
+      expect(fixture.componentInstance.form.controls.idNumber.hasError('saId')).toBe(true);
+    });
+  });
+
   it('keeps the honeypot out of sight of people and assistive tech', async () => {
     await setup();
     const honeypot = el.querySelector('.ap-hp')!;
@@ -402,6 +489,7 @@ describe('Apply', () => {
 });
 
 const SANDTON: PickedPlace = {
+  country: 'ZA',
   street: '83 Rivonia Road',
   suburb: 'Sandown',
   city: 'Sandton',
@@ -454,6 +542,7 @@ describe('Apply: address search', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance.form.controls.address.getRawValue()).toEqual({
+      country: 'ZA',
       street: '83 Rivonia Road',
       suburb: 'Sandown',
       city: 'Sandton',

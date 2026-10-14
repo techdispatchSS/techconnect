@@ -123,6 +123,21 @@ describe('Reports', () => {
     expect(el.textContent).toContain('No technician was dispatched in this range.');
   });
 
+  it('says "under a minute" for a quick accept rather than 0 min', async () => {
+    await setup(() =>
+      of(
+        report({
+          dispatching: { ...report().dispatching, averageMinutesToAccept: 0 },
+          jobs: { ...report().jobs, averageHoursOnSite: 0 },
+        }),
+      ),
+    );
+
+    expect(el.textContent).toContain('< 1 min');
+    expect(el.textContent).toContain('< 6 min on site');
+    expect(el.textContent).not.toContain('0 min');
+  });
+
   it('re-reads when a preset is chosen', async () => {
     await setup();
     reportCall.mockClear();

@@ -60,7 +60,7 @@
       </div>
       <div class="controller-card rp-kpi">
         <span class="rp-kpi-label">Time to accept</span>
-        <span class="rp-kpi-value">{{ fmt(r.dispatching.averageMinutesToAccept, ' min') }}</span>
+        <span class="rp-kpi-value">{{ fmtMinutes(r.dispatching.averageMinutesToAccept) }}</span>
         <span class="rp-kpi-note"
           >{{ fmt(r.dispatching.acceptRatePercent, '%') }} of settled dispatches taken</span
         >
@@ -69,7 +69,7 @@
         <span class="rp-kpi-label">Jobs closed</span>
         <span class="rp-kpi-value">{{ r.jobs.closed }}</span>
         <span class="rp-kpi-note"
-          >{{ r.jobs.opened }} opened · {{ fmt(r.jobs.averageHoursOnSite, ' h') }} on site on
+          >{{ r.jobs.opened }} opened · {{ fmtHours(r.jobs.averageHoursOnSite) }} on site on
           average</span
         >
       </div>
@@ -152,7 +152,7 @@
           </div>
           <div>
             <dt>Average time to close</dt>
-            <dd>{{ fmt(r.jobs.averageHoursToClose, ' h') }}</dd>
+            <dd>{{ fmtHours(r.jobs.averageHoursToClose) }}</dd>
           </div>
         </dl>
       </section>

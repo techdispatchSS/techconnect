@@ -129,6 +129,22 @@ export class Reports implements OnInit {
     return value === null || value === undefined ? '—' : `${value}${suffix}`;
   }
 
+  /** Minutes, but a fast accept reads "under a minute" rather than a flat "0 min". */
+  fmtMinutes(value: number | null): string {
+    if (value === null || value === undefined) {
+      return '—';
+    }
+    return value < 1 ? '< 1 min' : `${value} min`;
+  }
+
+  /** Hours, but a very short stretch reads "under 6 min" rather than "0 h". */
+  fmtHours(value: number | null): string {
+    if (value === null || value === undefined) {
+      return '—';
+    }
+    return value < 0.1 ? '< 6 min' : `${value} h`;
+  }
+
   height(count: number): number {
     return Math.round((count / this.peak()) * 100);
   }

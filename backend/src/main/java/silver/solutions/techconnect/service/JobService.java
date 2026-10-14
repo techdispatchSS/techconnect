@@ -226,7 +226,7 @@ public class JobService {
                 parts.save(used);
             }
         }
-        record(job, JobStatus.COMPLETE, JobStatus.SUBMITTED, "Report submitted", technicianId);
+        record(job, JobStatus.COMPLETE, JobStatus.SUBMITTED, null, technicianId);
         return job;
     }
 

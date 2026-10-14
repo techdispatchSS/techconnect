@@ -5,7 +5,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { PROVINCE_LABELS } from '../../../../core/address.models';
+import { countryName, isSouthAfrica, regionDisplay } from '../../../../core/address.models';
 import { ConfirmDialog, ConfirmDialogData } from '../../../../shared/confirm-dialog/confirm-dialog';
 import { parseSkills } from '../../../../shared/skill-list';
 import { Skeleton } from '../../../../shared/skeleton/skeleton';
@@ -42,7 +42,9 @@ export class ApplicationDetailPage implements OnInit {
   readonly statusLabels = APPLICATION_STATUS_LABELS;
   readonly kindLabels = DOCUMENT_KIND_LABELS;
   readonly skillsOf = parseSkills;
-  readonly provinceLabels = PROVINCE_LABELS;
+  readonly regionDisplay = regionDisplay;
+  readonly countryName = countryName;
+  readonly isSouthAfrica = isSouthAfrica;
 
   readonly application = signal<ApplicationDetail | null>(null);
   readonly loading = signal(true);

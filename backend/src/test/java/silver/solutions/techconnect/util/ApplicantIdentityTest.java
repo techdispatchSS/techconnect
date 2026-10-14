@@ -34,4 +34,29 @@ class ApplicantIdentityTest {
         assertThat(ApplicantIdentity.normalizePhone("(082) 123 4567")).isEqualTo(local);
         assertThat(ApplicantIdentity.normalizePhone("27821234567")).isEqualTo(local);
     }
+
+    @Test
+    void aNumberIsOneNumberWhicheverWayRoundItIsWrittenInAnyCountry() {
+        String kenya = ApplicantIdentity.normalizePhone("+254 712 345 678", "254");
+
+        assertThat(kenya).isEqualTo("254712345678");
+        assertThat(ApplicantIdentity.normalizePhone("0712 345 678", "254")).isEqualTo(kenya);
+        assertThat(ApplicantIdentity.normalizePhone("00254712345678", "254")).isEqualTo(kenya);
+        assertThat(ApplicantIdentity.normalizePhone("254-712-345-678", "254")).isEqualTo(kenya);
+        assertThat(ApplicantIdentity.normalizePhone("(0712) 345678", "254")).isEqualTo(kenya);
+    }
+
+    @Test
+    void nigeriaAndGhanaAreNotMistakenForOneAnother() {
+        assertThat(ApplicantIdentity.normalizePhone("0803 123 4567", "234")).isEqualTo("2348031234567");
+        assertThat(ApplicantIdentity.normalizePhone("0803 123 4567", "233")).isEqualTo("2338031234567");
+    }
+
+    @Test
+    void southAfricanNumbersKeepTheirLocalFormSoExistingRecordsStillMatch() {
+        assertThat(ApplicantIdentity.normalizePhone("0821234567", "27")).isEqualTo("0821234567");
+        assertThat(ApplicantIdentity.normalizePhone("+27 82 123 4567", "27")).isEqualTo("0821234567");
+        // ...even when the applicant picked another country but typed a South African number
+        assertThat(ApplicantIdentity.normalizePhone("+27 82 123 4567", "254")).isEqualTo("0821234567");
+    }
 }

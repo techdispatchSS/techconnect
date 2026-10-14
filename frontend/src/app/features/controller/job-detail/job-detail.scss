@@ -1,0 +1,260 @@
+.jd-empty {
+  color: var(--controller-color-muted);
+  font-size: 13.5px;
+}
+.jd-empty a {
+  margin-left: 4px;
+}
+
+.jd {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.jd-meta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  border-left: 2px solid var(--controller-color-accent);
+  padding: 14px 18px;
+}
+.jd-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 10.5px;
+}
+.jd-meta-item span {
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--controller-color-muted);
+}
+.jd-meta-item strong {
+  font-family: var(--controller-font-heading);
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--controller-color-emphasis);
+}
+.jd-meta-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.jd-status {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px;
+  border-left: 2px solid var(--controller-color-divider-strong);
+}
+.jd-status--moving {
+  border-left-color: var(--controller-color-accent);
+}
+.jd-status--review {
+  border-left-color: var(--controller-color-accent-soft);
+}
+.jd-status-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.jd-status-title {
+  font-family: var(--controller-font-heading);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--controller-color-emphasis);
+}
+.jd-status-sla {
+  font-size: 12.5px;
+  color: var(--controller-color-muted);
+}
+.jd-status-sla--overdue {
+  color: var(--controller-color-accent-text);
+  font-weight: 600;
+}
+.jd-status-time {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--controller-color-muted);
+}
+.jd-status-note {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--controller-color-muted);
+}
+.jd-bar {
+  height: 5px;
+  background: var(--controller-color-divider-soft);
+}
+.jd-bar-fill {
+  display: block;
+  height: 100%;
+  background: rgba(240, 130, 33, 0.8);
+  transition: width 0.4s ease;
+}
+
+.jd-sim {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border: 1px dashed rgba(240, 130, 33, 0.55);
+  background: rgba(240, 130, 33, 0.06);
+}
+.jd-sim-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  background: var(--controller-color-accent);
+  color: #12140f;
+}
+.jd-sim-text {
+  font-size: 12.5px;
+  color: var(--controller-color-muted);
+  margin-right: auto;
+}
+.jd-sim-reason {
+  width: 240px;
+}
+.jd-sim-error {
+  flex: 1 1 100%;
+  font-size: 12.5px;
+  color: var(--controller-color-accent-text);
+}
+
+.jd-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 1000px) {
+  .jd-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.jd-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.jd-title {
+  margin: 0;
+  font-size: 11.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--controller-color-accent-text);
+}
+.jd-sub {
+  margin: 0 0 4px;
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--controller-color-muted);
+}
+.jd-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--controller-color-text);
+  white-space: pre-wrap;
+}
+.jd-muted {
+  color: var(--controller-color-muted);
+  font-size: 12px;
+}
+.jd-error {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--controller-color-accent-text);
+}
+
+.jd-facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.jd-facts > div {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+}
+.jd-facts dt {
+  min-width: 110px;
+  color: var(--controller-color-muted);
+}
+.jd-facts dd {
+  margin: 0 0 0 auto;
+  text-align: right;
+  color: var(--controller-color-emphasis);
+}
+
+.jd-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.jd-timeline li {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 14px;
+}
+.jd-timeline li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 12px;
+  bottom: 0;
+  width: 1px;
+  background: var(--controller-color-divider);
+}
+.jd-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  background: var(--controller-color-accent);
+}
+.jd-tl-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+.jd-tl-main strong {
+  color: var(--controller-color-emphasis);
+  font-weight: 600;
+}
+.jd-tl-reason {
+  font-size: 12.5px;
+  color: var(--controller-color-text);
+}
+
+.jd-report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+}
+@media (max-width: 720px) {
+  .jd-report-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.jd-parts {
+  width: 100%;
+}
+.jd-close {
+  border-left: 2px solid var(--controller-color-accent);
+}

@@ -30,6 +30,7 @@ import silver.solutions.techconnect.repository.DispatchRepository;
 import silver.solutions.techconnect.repository.DispatchResponseRepository;
 import silver.solutions.techconnect.repository.IncidentRepository;
 import silver.solutions.techconnect.repository.IncidentSpecifications;
+import silver.solutions.techconnect.repository.JobRepository;
 import silver.solutions.techconnect.repository.UserRepository;
 import silver.solutions.techconnect.util.Strings;
 
@@ -45,18 +46,21 @@ public class IncidentService {
     private final DispatchResponseRepository dispatchResponses;
     private final UserRepository users;
     private final IncidentMapper incidentMapper;
+    private final JobRepository jobs;
 
     public IncidentService(
             IncidentRepository incidents,
             DispatchRepository dispatches,
             DispatchResponseRepository dispatchResponses,
             UserRepository users,
-            IncidentMapper incidentMapper) {
+            IncidentMapper incidentMapper,
+            JobRepository jobs) {
         this.incidents = incidents;
         this.dispatches = dispatches;
         this.dispatchResponses = dispatchResponses;
         this.users = users;
         this.incidentMapper = incidentMapper;
+        this.jobs = jobs;
     }
 
     @Transactional(readOnly = true)
@@ -162,7 +166,8 @@ public class IncidentService {
         Map<UUID, String> namesById = users.findAllById(technicianIds).stream()
                 .collect(Collectors.toMap(User::getId, User::getName));
 
-        return incidentMapper.toProgressResponse(incident, dispatch, responses, namesById);
+        return incidentMapper.toProgressResponse(
+                incident, dispatch, responses, namesById, jobs.findByDispatchId(dispatch.getId()).orElse(null));
     }
 
     @Transactional(readOnly = true)

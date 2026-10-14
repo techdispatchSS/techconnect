@@ -51,6 +51,7 @@ class SmtpNotificationServiceTest {
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("thabo@example.com");
         when(user.getName()).thenReturn("Thabo");
+        when(user.getTimeZone()).thenReturn("Africa/Johannesburg");
         return user;
     }
 
@@ -150,7 +151,7 @@ class SmtpNotificationServiceTest {
 
         // the reference in the header, the details, and the time in a readable form
         assertThat(all).contains("INC-2C16638C").contains("Sihle Sithole").contains("Networking");
-        assertThat(all).contains("13 Oct 2026, 18:54 UTC");
+        assertThat(all).contains("13 Oct 2026, 20:54 SAST").doesNotContain("UTC");
         // the site is a map link rather than text a mail client guesses at
         assertThat(all).contains("https://www.google.com/maps/search/?api=1&amp;query=13+Sloane+Street");
         // priority, marked and coloured
@@ -193,6 +194,57 @@ class SmtpNotificationServiceTest {
         }
     }
 
+    private String deadlineFor(String zone) throws Exception {
+        User person = user();
+        when(person.getTimeZone()).thenReturn(zone);
+        service.sendDispatchNotice(person, notice(false));
+        return everythingSaid(sent());
+    }
+
+    @Test
+    void theDeadlineIsInTheRecipientsOwnZone() throws Exception {
+        // 18:54 UTC, the same instant, said four ways
+        assertThat(deadlineFor("Africa/Nairobi")).contains("13 Oct 2026, 21:54 EAT");
+    }
+
+    @Test
+    void westAfricaReadsWatAndGhanaReadsGmt() throws Exception {
+        assertThat(deadlineFor("Africa/Lagos")).contains("13 Oct 2026, 19:54 WAT");
+    }
+
+    @Test
+    void ghanaIsOnGreenwichTime() throws Exception {
+        assertThat(deadlineFor("Africa/Accra")).contains("13 Oct 2026, 18:54 GMT");
+    }
+
+    @Test
+    void aZoneWithoutACommonNameIsGivenAsAnOffset() throws Exception {
+        // Tripoli is UTC+2 all year but has no abbreviation people share
+        assertThat(deadlineFor("Africa/Tripoli")).contains("13 Oct 2026, 20:54 UTC+2");
+    }
+
+    @Test
+    void aPersonWithNoRecordedZoneIsGivenUtcRatherThanAGuess() throws Exception {
+        assertThat(deadlineFor(null)).contains("13 Oct 2026, 18:54 UTC");
+    }
+
+    @Test
+    void anUnreadableStoredZoneFallsBackToUtc() throws Exception {
+        assertThat(deadlineFor("Not/AZone")).contains("13 Oct 2026, 18:54 UTC");
+    }
+
+    @Test
+    void theDeadlineIsInSouthAfricanTimeEvenWhenItCrossesMidnight() throws Exception {
+        var late = new NotificationService.DispatchNotice(
+                "INC-1", "Acme", "1 Main Rd", "CCTV", IncidentPriority.LOW, null,
+                Instant.parse("2026-10-13T22:30:00Z"), false, null);
+
+        service.sendDispatchNotice(user(), late);
+
+        // 22:30 UTC is half past midnight the next day in South Africa.
+        assertThat(everythingSaid(sent())).contains("14 Oct 2026, 00:30 SAST");
+    }
+
     @Test
     void aReminderSaysTheJobIsStillWaiting() throws Exception {
         service.sendDispatchNotice(user(), notice(true));
@@ -215,7 +267,7 @@ class SmtpNotificationServiceTest {
         assertThat(text).contains("Client:").contains("Sihle Sithole");
         assertThat(text).contains("Site:").contains("13 Sloane Street");
         assertThat(text).contains("Priority:").contains("High");
-        assertThat(text).contains("Respond by:").contains("13 Oct 2026, 18:54 UTC");
+        assertThat(text).contains("Respond by:").contains("13 Oct 2026, 20:54 SAST");
         assertThat(text).contains("Accept job: https://www.tech-connect.app/jobs?dispatch=");
     }
 

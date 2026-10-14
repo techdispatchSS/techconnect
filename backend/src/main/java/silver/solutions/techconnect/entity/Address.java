@@ -39,18 +39,39 @@ public class Address {
     @Column(name = "address_city")
     private String city;
 
-    @Enumerated(EnumType.STRING)
+    /**
+     * Province, state or region as a person would write it. For South Africa it is one of the
+     * {@link Province} names; elsewhere it is free text, because the regions of fifty-four
+     * countries are not a list this app should try to own.
+     */
     @Column(name = "address_province")
-    private Province province;
+    private String province;
 
     @Column(name = "address_postal_code")
     private String postalCode;
 
-    public Address(String street, String suburb, String city, Province province, String postalCode) {
+    /** Null on a record that predates countries; read as {@link Country#DEFAULT}. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "address_country")
+    private Country country;
+
+    public Address(
+            String street,
+            String suburb,
+            String city,
+            String province,
+            String postalCode,
+            Country country) {
         this.street = street;
         this.suburb = suburb;
         this.city = city;
         this.province = province;
         this.postalCode = postalCode;
+        this.country = country;
+    }
+
+    /** The country, defaulting for an address recorded before countries existed. */
+    public Country countryOrDefault() {
+        return country == null ? Country.DEFAULT : country;
     }
 }

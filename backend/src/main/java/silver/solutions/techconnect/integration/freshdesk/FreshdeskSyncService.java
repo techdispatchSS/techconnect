@@ -163,6 +163,7 @@ public class FreshdeskSyncService {
                 return Change.UNCHANGED;
             }
             existing.setStatus(IncidentStatus.CLOSED);
+            existing.setClosedAt(java.time.Instant.now());
             incidents.save(existing);
             return Change.CLOSED;
         }

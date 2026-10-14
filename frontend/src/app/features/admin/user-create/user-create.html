@@ -187,13 +187,28 @@
               </div>
               <div class="uc-address-block" formGroupName="address">
                 <span class="admin-hint"
-                  >Address — used for distance-based job matching, so every field is required.</span
-                >
+                  >Address — used for distance-based job matching.
+                  @if (inSouthAfrica()) {
+                    Every field is required.
+                  } @else {
+                    Suburb and postal code are optional where there are none.
+                  }
+                </span>
                 <div class="uc-form-grid">
+                  <div class="admin-field uc-field-span2">
+                    <label for="uc-country">Country</label>
+                    <select id="uc-country" class="admin-input" formControlName="country">
+                      @for (c of countries; track c.code) {
+                        <option [value]="c.code">{{ c.name }}</option>
+                      }
+                    </select>
+                  </div>
+
                   <div class="admin-field uc-field-span2">
                     <label for="uc-street">Street</label>
                     <app-street-input
                       inputId="uc-street"
+                      [country]="country()"
                       [control]="form.controls.address.controls.street"
                       placeholder="12 Long Street"
                       (picked)="applyPlace($event)"
@@ -207,7 +222,9 @@
                   </div>
 
                   <div class="admin-field">
-                    <label for="uc-suburb">Suburb</label>
+                    <label for="uc-suburb">{{
+                      inSouthAfrica() ? 'Suburb' : 'Suburb (optional)'
+                    }}</label>
                     <input
                       appTrimOnBlur
                       id="uc-suburb"
@@ -243,30 +260,45 @@
                   </div>
 
                   <div class="admin-field">
-                    <label for="uc-province">Province</label>
-                    <select id="uc-province" class="admin-input" formControlName="province">
-                      <option value="" disabled>Select a province</option>
-                      @for (province of provinces; track province) {
-                        <option [value]="province">{{ provinceLabels[province] }}</option>
-                      }
-                    </select>
+                    @if (inSouthAfrica()) {
+                      <label for="uc-province">Province</label>
+                      <select id="uc-province" class="admin-input" formControlName="province">
+                        <option value="" disabled>Select a province</option>
+                        @for (province of provinces; track province) {
+                          <option [value]="province">{{ provinceLabels[province] }}</option>
+                        }
+                      </select>
+                    } @else {
+                      <label for="uc-province">State, province or region</label>
+                      <input
+                        appTrimOnBlur
+                        id="uc-province"
+                        class="admin-input"
+                        formControlName="province"
+                        autocomplete="off"
+                      />
+                    }
                     @if (
                       form.controls.address.controls.province.hasError('required') &&
                       form.controls.address.controls.province.touched
                     ) {
-                      <p class="admin-field-error">Province is required</p>
+                      <p class="admin-field-error">
+                        {{ inSouthAfrica() ? 'Province is required' : 'Region is required' }}
+                      </p>
                     }
                   </div>
 
                   <div class="admin-field">
-                    <label for="uc-postal-code">Postal code</label>
+                    <label for="uc-postal-code">{{
+                      inSouthAfrica() ? 'Postal code' : 'Postal code (optional)'
+                    }}</label>
                     <input
                       appTrimOnBlur
                       id="uc-postal-code"
                       class="admin-input"
                       formControlName="postalCode"
                       placeholder="8001"
-                      inputmode="numeric"
+                      [attr.inputmode]="inSouthAfrica() ? 'numeric' : 'text'"
                       autocomplete="off"
                     />
                     @if (
@@ -275,7 +307,13 @@
                     ) {
                       <p class="admin-field-error">Postal code is required</p>
                     } @else if (form.controls.address.controls.postalCode.hasError('pattern')) {
-                      <p class="admin-field-error">Enter a 4-digit postal code</p>
+                      <p class="admin-field-error">
+                        {{
+                          inSouthAfrica()
+                            ? 'Enter a 4-digit postal code'
+                            : 'Enter a valid postal code'
+                        }}
+                      </p>
                     }
                   </div>
                 </div>

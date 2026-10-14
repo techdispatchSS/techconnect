@@ -196,6 +196,78 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         assertThat(exists(a)).isFalse();
     }
 
+    private static final String NAIROBI = """
+            {"street":"12 Moi Avenue","city":"Nairobi","province":"Nairobi County","country":"KE"}""";
+
+    @Test
+    void acceptsAnApplicantInAnotherCountryWithNoSuburbOrPostcodeAndANonSouthAfricanId() throws Exception {
+        Applicant a = Applicant.unique("nairobi");
+        a.address = NAIROBI;
+        a.idNumber = "A1234567";
+        a.phone = "0712 345 678";
+
+        submit(a, validPdf()).andExpect(status().isAccepted());
+
+        TechnicianApplication saved = find(a);
+        assertThat(saved.getAddress().getCountry().name()).isEqualTo("KE");
+        assertThat(saved.getAddress().getProvince()).isEqualTo("Nairobi County");
+        assertThat(saved.getAddress().getSuburb()).isNull();
+        assertThat(saved.getAddress().getPostalCode()).isNull();
+        assertThat(saved.getIdNumber()).isEqualTo("A1234567");
+        assertThat(saved.getPhoneNormalized()).startsWith("254712");
+    }
+
+    @Test
+    void aSouthAfricanApplicantStillNeedsARealSouthAfricanId() throws Exception {
+        Applicant a = Applicant.unique("badza");
+        a.idNumber = "A1234567";
+
+        mvc.perform(multipartRequest(a, allWith(validPdf())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value(
+                        org.hamcrest.Matchers.containsString("South African ID")));
+
+        assertThat(exists(a)).isFalse();
+    }
+
+    @Test
+    void theSamePersonCannotReapplyFromTheirOwnCountryByWritingTheNumberAnotherWay() throws Exception {
+        Applicant first = Applicant.unique("kenya-a");
+        first.address = NAIROBI;
+        first.idNumber = "K" + (long) (Math.random() * 9_000_000) + 1_000_000;
+        first.phone = "+254 722 111 222";
+        submit(first, validPdf()).andExpect(status().isAccepted());
+        long before = applications.count();
+
+        Applicant again = Applicant.unique("kenya-b");
+        again.address = NAIROBI;
+        again.idNumber = "K" + (long) (Math.random() * 9_000_000) + 2_000_000;
+        again.phone = "0722 111 222";
+        submit(again, validPdf()).andExpect(status().isAccepted());
+
+        assertThat(applications.count()).as("quietly discarded: same number written locally")
+                .isEqualTo(before);
+        assertThat(exists(again)).isFalse();
+    }
+
+    @Test
+    void anInvalidProvinceForSouthAfricaOrAMalformedPostcodeIsRefused() throws Exception {
+        Applicant a = Applicant.unique("badprovince");
+        a.address = """
+                {"street":"1 Test Street","suburb":"Umhlanga","city":"Durban",
+                 "province":"ATLANTIS","postalCode":"4001"}""";
+
+        mvc.perform(multipartRequest(a, allWith(validPdf()))).andExpect(status().isBadRequest());
+
+        Applicant b = Applicant.unique("badpostcode");
+        b.address = """
+                {"street":"1 St","city":"Accra","province":"Greater Accra","postalCode":"<script>","country":"GH"}""";
+        mvc.perform(multipartRequest(b, allWith(validPdf()))).andExpect(status().isBadRequest());
+
+        assertThat(exists(a)).isFalse();
+        assertThat(exists(b)).isFalse();
+    }
+
     @Test
     void refusesWithoutConsent() throws Exception {
         Applicant a = Applicant.unique("noconsent");
@@ -674,6 +746,12 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
                         "application/pdf", TestFiles.pdf()));
     }
 
+    private static List<Part> allWith(Part... extra) {
+        List<Part> all = new java.util.ArrayList<>(requiredDocuments());
+        all.addAll(List.of(extra));
+        return all;
+    }
+
     /** Submits the three required documents followed by whatever extra parts the test gives. */
     private org.springframework.test.web.servlet.ResultActions submit(Applicant a, Part... parts)
             throws Exception {
@@ -760,6 +838,10 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         String experience = "Eight years installing and maintaining network and CCTV systems.";
         boolean consent = true;
         String website = "";
+        /** Replaced by tests that apply from somewhere other than Durban. */
+        String address = """
+                {"street":"1 Test Street","suburb":"Umhlanga","city":"Durban",
+                 "province":"KWAZULU_NATAL","postalCode":"4001"}""";
 
         static Applicant unique(String prefix) {
             Applicant a = new Applicant();
@@ -773,12 +855,12 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         String toJson(String documents) {
             return """
                     {"firstName":"%s","lastName":"%s","email":"%s","phone":"%s","idNumber":"%s",
-                     "address":{"street":"1 Test Street","suburb":"Umhlanga","city":"Durban",
-                                "province":"KWAZULU_NATAL","postalCode":"4001"},
+                     "address":%s,
                      "experienceSummary":"%s","skills":"CCTV, structured cabling",
                      "documents":[%s],"consent":%s,"website":"%s"}"""
                     .formatted(firstName, lastName, email.replace("\r", "\\r").replace("\n", "\\n"),
-                            phone, idNumber, experience.replace("\u0000", "\\u0000").replace("\u001b", "\\u001b"),
+                            phone, idNumber, address,
+                            experience.replace("\u0000", "\\u0000").replace("\u001b", "\\u001b"),
                             documents, consent, website);
         }
     }

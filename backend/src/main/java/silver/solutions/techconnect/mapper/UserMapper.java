@@ -40,7 +40,8 @@ public class UserMapper {
                 user.getPhone(),
                 addressMapper.toAddressResponse(user.getAddress()).orElse(null),
                 user.getRole(),
-                user.getRole() == UserRole.MANAGER);
+                user.getRole() == UserRole.MANAGER,
+                user.getTimeZone());
     }
 
     /** Builds a user with no address, phone or {@code createdBy} — only the bootstrap Manager

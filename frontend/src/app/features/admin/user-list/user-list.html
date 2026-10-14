@@ -239,18 +239,34 @@
             </div>
             <div class="ul-address-fields" formGroupName="address">
               <p class="admin-hint">
-                Used for distance-based job matching — every field is required.
+                Used for distance-based job matching —
+                @if (inSouthAfrica()) {
+                  every field is required.
+                } @else {
+                  suburb and postal code are optional.
+                }
               </p>
+              <div class="admin-field">
+                <label for="ul-country">Country</label>
+                <select id="ul-country" class="admin-input" formControlName="country">
+                  @for (c of countries; track c.code) {
+                    <option [value]="c.code">{{ c.name }}</option>
+                  }
+                </select>
+              </div>
               <div class="admin-field">
                 <label for="ul-street">Street</label>
                 <app-street-input
                   inputId="ul-street"
+                  [country]="country()"
                   [control]="form.controls.address.controls.street"
                   (picked)="applyPlace($event)"
                 />
               </div>
               <div class="admin-field">
-                <label for="ul-suburb">Suburb</label>
+                <label for="ul-suburb">{{
+                  inSouthAfrica() ? 'Suburb' : 'Suburb (optional)'
+                }}</label>
                 <input appTrimOnBlur id="ul-suburb" class="admin-input" formControlName="suburb" />
               </div>
               <div class="admin-field">
@@ -258,25 +274,41 @@
                 <input appTrimOnBlur id="ul-city" class="admin-input" formControlName="city" />
               </div>
               <div class="admin-field">
-                <label for="ul-province">Province</label>
-                <select id="ul-province" class="admin-input" formControlName="province">
-                  <option value="" disabled>Select a province</option>
-                  @for (province of provinces; track province) {
-                    <option [value]="province">{{ provinceLabels[province] }}</option>
-                  }
-                </select>
+                @if (inSouthAfrica()) {
+                  <label for="ul-province">Province</label>
+                  <select id="ul-province" class="admin-input" formControlName="province">
+                    <option value="" disabled>Select a province</option>
+                    @for (province of provinces; track province) {
+                      <option [value]="province">{{ provinceLabels[province] }}</option>
+                    }
+                  </select>
+                } @else {
+                  <label for="ul-province">State, province or region</label>
+                  <input
+                    appTrimOnBlur
+                    id="ul-province"
+                    class="admin-input"
+                    formControlName="province"
+                  />
+                }
               </div>
               <div class="admin-field">
-                <label for="ul-postal-code">Postal code</label>
+                <label for="ul-postal-code">{{
+                  inSouthAfrica() ? 'Postal code' : 'Postal code (optional)'
+                }}</label>
                 <input
                   appTrimOnBlur
                   id="ul-postal-code"
                   class="admin-input"
                   formControlName="postalCode"
-                  inputmode="numeric"
+                  [attr.inputmode]="inSouthAfrica() ? 'numeric' : 'text'"
                 />
                 @if (form.controls.address.controls.postalCode.hasError('pattern')) {
-                  <p class="admin-field-error">Enter a 4-digit postal code</p>
+                  <p class="admin-field-error">
+                    {{
+                      inSouthAfrica() ? 'Enter a 4-digit postal code' : 'Enter a valid postal code'
+                    }}
+                  </p>
                 }
               </div>
             </div>

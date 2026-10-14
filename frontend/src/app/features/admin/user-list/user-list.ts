@@ -1,13 +1,22 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
-import { Address, PROVINCES, PROVINCE_LABELS, Province } from '../../../core/address.models';
+import { bindAddressRules } from '../../../core/address-rules';
+import {
+  Address,
+  COUNTRIES,
+  DEFAULT_COUNTRY,
+  PROVINCES,
+  PROVINCE_LABELS,
+  isSouthAfrica,
+} from '../../../core/address.models';
 import { UserRole, UserStatus } from '../../../core/auth/auth.models';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/confirm-dialog/confirm-dialog';
 import { requiredTrimmed, trimStrings } from '../../../shared/form-text';
@@ -76,6 +85,8 @@ export class UserList implements OnInit {
   readonly kindLabels = DOCUMENT_KIND_LABELS;
   readonly statusLabels = STATUS_LABELS;
   readonly roleTabs = ROLE_TABS;
+  private readonly destroyRef = inject(DestroyRef);
+  readonly countries = COUNTRIES;
   readonly provinces = PROVINCES;
   readonly provinceLabels = PROVINCE_LABELS;
 
@@ -108,15 +119,22 @@ export class UserList implements OnInit {
   readonly form = this.fb.nonNullable.group({
     name: ['', [requiredTrimmed, Validators.maxLength(255)]],
     phone: ['', [Validators.maxLength(32)]],
+    // `country` leads the group so a Google suggestion (and a reset) sets it before the region.
     address: this.fb.nonNullable.group({
+      country: [DEFAULT_COUNTRY],
       street: ['', [requiredTrimmed, Validators.maxLength(255)]],
       suburb: ['', [requiredTrimmed, Validators.maxLength(120)]],
       city: ['', [requiredTrimmed, Validators.maxLength(120)]],
-      province: ['' as Province | '', [Validators.required]],
-      postalCode: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]],
+      province: ['', [Validators.required]],
+      postalCode: ['', [Validators.required]],
     }),
     role: ['TECHNICIAN' as UserRole, [Validators.required]],
   });
+
+  readonly country = toSignal(this.form.controls.address.controls.country.valueChanges, {
+    initialValue: this.form.controls.address.controls.country.value,
+  });
+  readonly inSouthAfrica = computed(() => isSouthAfrica(this.country()));
 
   readonly resultLine = computed(() => {
     const n = this.totalElements();
@@ -131,6 +149,7 @@ export class UserList implements OnInit {
   );
 
   ngOnInit(): void {
+    bindAddressRules(this.form.controls.address, this.destroyRef);
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(() => {
@@ -356,10 +375,11 @@ export class UserList implements OnInit {
    * rather than failing to open the panel, so a Manager can fill it in here instead. */
   private addressFormValue(address: Address | null) {
     return {
+      country: address?.country ?? DEFAULT_COUNTRY,
       street: address?.street ?? '',
       suburb: address?.suburb ?? '',
       city: address?.city ?? '',
-      province: (address?.province ?? '') as Province | '',
+      province: address?.province ?? '',
       postalCode: address?.postalCode ?? '',
     };
   }
@@ -380,7 +400,7 @@ export class UserList implements OnInit {
         trimStrings({
           name,
           phone: phone.trim() || null,
-          address: { ...address, province: address.province as Province },
+          address,
           role,
         }),
       )

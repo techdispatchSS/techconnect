@@ -13,6 +13,7 @@ import silver.solutions.techconnect.entity.Dispatch;
 import silver.solutions.techconnect.entity.DispatchResponse;
 import silver.solutions.techconnect.entity.DispatchResponseStatus;
 import silver.solutions.techconnect.entity.Incident;
+import silver.solutions.techconnect.entity.Job;
 
 @Component
 public class IncidentMapper {
@@ -82,15 +83,15 @@ public class IncidentMapper {
     }
 
     /**
-     * The ticket progress view (dispatch method, required skills/certs, and how every invited
-     * technician has responded) — see {@link IncidentProgressResponse} for why there is no
-     * on-site job timeline here yet.
+     * The ticket progress view: dispatch method, required skills/certs, how every invited
+     * technician has responded and, once accepted, the job that was opened for it.
      */
     public IncidentProgressResponse toProgressResponse(
             Incident incident,
             Dispatch dispatch,
             List<DispatchResponse> responses,
-            Map<UUID, String> technicianNamesById) {
+            Map<UUID, String> technicianNamesById,
+            Job job) {
 
         List<DispatchResponseEntry> entries = responses.stream()
                 .map(r -> new DispatchResponseEntry(
@@ -120,7 +121,9 @@ public class IncidentMapper {
                 dispatch.getCreatedAt(),
                 dispatch.getExpiresAt(),
                 entries,
-                acceptedTechnicianName);
+                acceptedTechnicianName,
+                job == null ? null : job.getId(),
+                job == null ? null : job.getStatus());
     }
 
     /** Falls back to a short, stable reference for incidents a Controller logged directly

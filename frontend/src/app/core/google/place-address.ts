@@ -1,8 +1,9 @@
-import { Address, PROVINCE_LABELS, PROVINCES, Province } from '../address.models';
+import { Address, COUNTRIES, PROVINCE_LABELS, PROVINCES } from '../address.models';
 
 /** The subset of a Google Places `AddressComponent` this mapping reads. */
 export interface PlaceAddressComponent {
   readonly longText: string | null;
+  readonly shortText?: string | null;
   readonly types: readonly string[];
 }
 
@@ -21,27 +22,43 @@ function componentText(components: readonly PlaceAddressComponent[], ...types: s
   return '';
 }
 
-function provinceFrom(name: string): Province | '' {
+/** A South African province's name from Google's text; anything else is kept as written. */
+function regionFrom(name: string, southAfrica: boolean): string {
+  if (!southAfrica) {
+    return name;
+  }
   const wanted = normalise(name);
   return PROVINCES.find((p) => normalise(PROVINCE_LABELS[p]) === wanted) ?? '';
 }
 
+/** The country's code if Google gave one and it is a country the app serves, else ''. */
+function countryFrom(components: readonly PlaceAddressComponent[]): string {
+  const code = components.find((c) => c.types.includes('country'))?.shortText?.toUpperCase() ?? '';
+  return COUNTRIES.some((c) => c.code === code) ? code : '';
+}
+
 /**
- * Maps Google's address components onto this app's structured South African address.
- * Anything Google doesn't supply comes back as an empty string, so the caller can fill what it
- * got and leave the rest for the person to complete.
+ * Maps Google's address components onto this app's structured address. Anything Google doesn't
+ * supply comes back as an empty string, so the caller can fill what it got and leave the rest
+ * for the person to complete.
+ *
+ * <p>`country` is the first key on purpose: a form that applies the fields in order sets the
+ * country before the region, and changing country clears the region.
  */
-export function addressFromComponents(
-  components: readonly PlaceAddressComponent[],
-): Omit<Address, 'province'> & { province: Province | '' } {
+export function addressFromComponents(components: readonly PlaceAddressComponent[]): Address {
   const streetNumber = componentText(components, 'street_number');
   const route = componentText(components, 'route');
+  const country = countryFrom(components);
 
   return {
+    country,
     street: [streetNumber, route].filter(Boolean).join(' '),
     suburb: componentText(components, 'sublocality_level_1', 'sublocality', 'neighborhood'),
     city: componentText(components, 'locality', 'administrative_area_level_2'),
-    province: provinceFrom(componentText(components, 'administrative_area_level_1')),
+    province: regionFrom(
+      componentText(components, 'administrative_area_level_1'),
+      !country || country === 'ZA',
+    ),
     postalCode: componentText(components, 'postal_code'),
   };
 }

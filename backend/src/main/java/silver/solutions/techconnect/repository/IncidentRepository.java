@@ -18,6 +18,13 @@ public interface IncidentRepository
 
     long countByStatus(IncidentStatus status);
 
+    long countByStatusNot(IncidentStatus status);
+
+    /** For reports: what was logged, and what was closed, in a window. */
+    java.util.List<Incident> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(Instant from, Instant to);
+
+    java.util.List<Incident> findByClosedAtGreaterThanEqualAndClosedAtLessThan(Instant from, Instant to);
+
     Optional<Incident> findByFreshdeskTicketId(String freshdeskTicketId);
 
     /**

@@ -86,15 +86,28 @@
             <section class="ad-section" formGroupName="address">
               <h3 class="ad-section-title">Address</h3>
               <p class="ad-hint">
-                Optional, but if you set one every field is required. It is used for distance-based
-                job matching.
+                Optional, but if you set one it must be complete
+                @if (!inSouthAfrica()) {
+                  (suburb and postal code can be left out).
+                }
+                It is used for distance-based job matching.
               </p>
+
+              <div class="ad-field">
+                <label for="pd-country">Country</label>
+                <select id="pd-country" class="ad-input" formControlName="country">
+                  @for (c of countries; track c.code) {
+                    <option [value]="c.code">{{ c.name }}</option>
+                  }
+                </select>
+              </div>
 
               <div class="ad-field">
                 <label for="pd-street">Street</label>
                 <app-street-input
                   inputId="pd-street"
                   inputClass="ad-input"
+                  [country]="country()"
                   [control]="form.controls.address.controls.street"
                   (picked)="applyPlace($event)"
                 />
@@ -113,13 +126,23 @@
 
               <div class="ad-row">
                 <div class="ad-field">
-                  <label for="pd-province">Province</label>
-                  <select id="pd-province" class="ad-input" formControlName="province">
-                    <option value="" disabled>Select a province</option>
-                    @for (province of provinces; track province) {
-                      <option [value]="province">{{ provinceLabels[province] }}</option>
-                    }
-                  </select>
+                  @if (inSouthAfrica()) {
+                    <label for="pd-province">Province</label>
+                    <select id="pd-province" class="ad-input" formControlName="province">
+                      <option value="" disabled>Select a province</option>
+                      @for (province of provinces; track province) {
+                        <option [value]="province">{{ provinceLabels[province] }}</option>
+                      }
+                    </select>
+                  } @else {
+                    <label for="pd-province">State, province or region</label>
+                    <input
+                      appTrimOnBlur
+                      id="pd-province"
+                      class="ad-input"
+                      formControlName="province"
+                    />
+                  }
                 </div>
                 <div class="ad-field">
                   <label for="pd-postal-code">Postal code</label>
@@ -128,15 +151,22 @@
                     id="pd-postal-code"
                     class="ad-input"
                     formControlName="postalCode"
-                    inputmode="numeric"
+                    [attr.inputmode]="inSouthAfrica() ? 'numeric' : 'text'"
                   />
+                  @if (form.controls.address.controls.postalCode.hasError('pattern')) {
+                    <p class="ad-field-error">
+                      {{
+                        inSouthAfrica()
+                          ? 'Enter a 4-digit postal code'
+                          : 'Enter a valid postal code'
+                      }}
+                    </p>
+                  }
                 </div>
               </div>
 
               @if (form.controls.address.hasError('incomplete') && form.controls.address.touched) {
-                <p class="ad-field-error">
-                  Fill in every address field, or clear all of them to leave it unset.
-                </p>
+                <p class="ad-field-error">Complete the address, or clear it to leave it unset.</p>
               }
             </section>
           }

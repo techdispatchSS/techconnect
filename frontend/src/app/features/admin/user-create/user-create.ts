@@ -1,11 +1,20 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router, RouterLink } from '@angular/router';
 
-import { PROVINCES, PROVINCE_LABELS, Province } from '../../../core/address.models';
+import { bindAddressRules } from '../../../core/address-rules';
+import {
+  COUNTRIES,
+  DEFAULT_COUNTRY,
+  PROVINCES,
+  PROVINCE_LABELS,
+  countryName,
+  isSouthAfrica,
+  regionDisplay,
+} from '../../../core/address.models';
 import { UserRole } from '../../../core/auth/auth.models';
 import { requiredTrimmed, trimStrings } from '../../../shared/form-text';
 import { PickedAddress, StreetInput } from '../../../shared/street-input/street-input';
@@ -61,6 +70,8 @@ export class UserCreate {
   readonly steps = STEPS;
   readonly roleCards = ROLE_CARDS;
   readonly roleLabels = ROLE_LABELS;
+  private readonly destroyRef = inject(DestroyRef);
+  readonly countries = COUNTRIES;
   readonly provinces = PROVINCES;
   readonly provinceLabels = PROVINCE_LABELS;
 
@@ -77,12 +88,14 @@ export class UserCreate {
     lastName: ['', [requiredTrimmed, Validators.maxLength(255)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
     phone: ['', [Validators.maxLength(32)]],
+    // `country` leads the group so a Google suggestion sets it before the region.
     address: this.fb.nonNullable.group({
+      country: [DEFAULT_COUNTRY],
       street: ['', [requiredTrimmed, Validators.maxLength(255)]],
       suburb: ['', [requiredTrimmed, Validators.maxLength(120)]],
       city: ['', [requiredTrimmed, Validators.maxLength(120)]],
-      province: ['' as Province | '', [Validators.required]],
-      postalCode: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]],
+      province: ['', [Validators.required]],
+      postalCode: ['', [Validators.required]],
     }),
     role: ['TECHNICIAN' as UserRole, [Validators.required]],
   });
@@ -96,7 +109,13 @@ export class UserCreate {
     initialValue: this.form.controls.role.value,
   });
 
+  readonly country = toSignal(this.form.controls.address.controls.country.valueChanges, {
+    initialValue: this.form.controls.address.controls.country.value,
+  });
+  readonly inSouthAfrica = computed(() => isSouthAfrica(this.country()));
+
   constructor() {
+    bindAddressRules(this.form.controls.address, this.destroyRef);
     // Editing the email is how the person answers "that one is taken".
     this.form.controls.email.valueChanges
       .pipe(takeUntilDestroyed())
@@ -175,14 +194,15 @@ export class UserCreate {
   } {
     const v = this.form.getRawValue();
     const a = v.address;
-    const province = a.province ? this.provinceLabels[a.province] : '';
+    const province = regionDisplay(a.province);
+    const country = isSouthAfrica(a.country) ? '' : countryName(a.country);
     return {
       name: `${v.firstName} ${v.lastName}`.trim(),
       email: v.email.trim(),
       phone: v.phone.trim(),
       roleLabel: ROLE_LABELS[v.role],
       roleBlurb: ROLE_BLURBS[v.role],
-      address: [a.street, a.suburb, a.city, province, a.postalCode]
+      address: [a.street, a.suburb, a.city, province, a.postalCode, country]
         .map((part) => part.trim())
         .filter(Boolean)
         .join(', '),
@@ -217,7 +237,7 @@ export class UserCreate {
           lastName,
           email,
           phone: phone.trim() || null,
-          address: { ...address, province: address.province as Province },
+          address,
           role,
         }),
       )
@@ -275,7 +295,14 @@ export class UserCreate {
       lastName: '',
       email: '',
       phone: '',
-      address: { street: '', suburb: '', city: '', province: '', postalCode: '' },
+      address: {
+        country: DEFAULT_COUNTRY,
+        street: '',
+        suburb: '',
+        city: '',
+        province: '',
+        postalCode: '',
+      },
       role: 'TECHNICIAN',
     });
   }

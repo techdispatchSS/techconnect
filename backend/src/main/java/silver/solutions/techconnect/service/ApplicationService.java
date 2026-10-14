@@ -94,14 +94,24 @@ public class ApplicationService {
 
         String email = request.email().trim();
         String emailKey = ApplicantIdentity.normalizeEmail(email);
-        String phoneKey = ApplicantIdentity.normalizePhone(request.phone());
+        // The ID is compared in one form: no spaces, upper case. For a South African applicant it
+        // must be a real ID number (13 digits and a valid check digit); elsewhere any national
+        // ID or passport number of a plausible shape is accepted.
+        String idNumber = request.idNumber().replaceAll("\\s+", "").toUpperCase(java.util.Locale.ROOT);
+        if (request.address().countryOrDefault() == silver.solutions.techconnect.entity.Country.ZA
+                && !silver.solutions.techconnect.util.SouthAfricanId.isValid(idNumber)) {
+            throw ApiException.badRequest("Enter a valid 13-digit South African ID number.");
+        }
+
+        String phoneKey = ApplicantIdentity.normalizePhone(
+                request.phone(), request.address().countryOrDefault().dialCode());
 
         if (phoneKey.length() < 9) {
             throw ApiException.badRequest("Enter a valid phone number.");
         }
 
         // Checked before anything is uploaded, so repeat/blocked submissions cost no storage.
-        if (isKnown(email, emailKey, phoneKey, request.idNumber())) {
+        if (isKnown(email, emailKey, phoneKey, idNumber)) {
             log.info("Application discarded: applicant already known");
             pause();
             return;
@@ -114,13 +124,13 @@ public class ApplicationService {
                 uploaded.add(file.key());
             }
             transaction.executeWithoutResult(status ->
-                    save(request, email, emailKey, phoneKey, prepared));
+                    save(request, email, emailKey, phoneKey, idNumber, prepared));
         } catch (DataIntegrityViolationException e) {
             cleanUp(uploaded);
             // The unique indexes are the real guard: two simultaneous submissions both pass the
             // check above, and the database lets exactly one through. Anything else that trips a
             // constraint is a genuine bug and must not be silently swallowed.
-            if (isKnown(email, emailKey, phoneKey, request.idNumber())) {
+            if (isKnown(email, emailKey, phoneKey, idNumber)) {
                 log.info("Application discarded: lost a race with an identical submission");
                 pause();
                 return;
@@ -216,6 +226,7 @@ public class ApplicationService {
             String email,
             String emailKey,
             String phoneKey,
+            String idNumber,
             List<Prepared> prepared) {
 
         TechnicianApplication application = new TechnicianApplication();
@@ -225,7 +236,7 @@ public class ApplicationService {
         application.setEmailNormalized(emailKey);
         application.setPhone(request.phone().trim());
         application.setPhoneNormalized(phoneKey);
-        application.setIdNumber(request.idNumber());
+        application.setIdNumber(idNumber);
         application.setAddress(addressMapper.toEntity(request.address()));
         application.setExperienceSummary(Strings.cleanText(request.experienceSummary()));
         application.setSkills(Strings.blankToNull(Strings.cleanText(request.skills())));

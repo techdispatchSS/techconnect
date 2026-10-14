@@ -127,9 +127,8 @@ export interface DispatchResponseEntry {
 
 /**
  * The ticket progress view: the incident, the most recent dispatch sent for it, and how every
- * invited technician has responded so far. There is deliberately no on-site job timeline (en
- * route / on site / work started) here — the technician app that would write those events
- * doesn't exist yet, so there's nothing real to show beyond dispatch and response state.
+ * invited technician has responded so far. Once accepted it names the job, whose own page has
+ * the on-site timeline.
  */
 export interface IncidentProgress {
   incident: Incident;
@@ -146,6 +145,9 @@ export interface IncidentProgress {
   dispatchExpiresAt: string;
   responses: DispatchResponseEntry[];
   acceptedTechnicianName: string | null;
+  /** The job opened when it was accepted, and where it stands; null before that. */
+  jobId: string | null;
+  jobStatus: JobStatus | null;
 }
 
 /** An incident the Controller logs by hand (a phone call). Mirrors `CreateIncidentRequest`. */
@@ -182,6 +184,154 @@ export interface SimulatedTicket {
 export interface DispatchAnswer {
   dispatchId: string;
   outcome: 'ACCEPTED' | 'DECLINED';
+}
+
+/** Mirrors the backend `JobStatus` (FR-05–FR-07). */
+export type JobStatus =
+  | 'EN_ROUTE'
+  | 'ON_SITE'
+  | 'WORK_STARTED'
+  | 'ON_HOLD'
+  | 'WORK_RESUMED'
+  | 'COMPLETE'
+  | 'SUBMITTED'
+  | 'CLOSED';
+
+/** A tab on the job screens: what is being worked, what awaits sign-off, what is finished. */
+export type JobStage = 'ACTIVE' | 'REVIEW' | 'CLOSED';
+
+export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
+  EN_ROUTE: 'En route',
+  ON_SITE: 'On site',
+  WORK_STARTED: 'Work started',
+  ON_HOLD: 'On hold',
+  WORK_RESUMED: 'Work resumed',
+  COMPLETE: 'Work complete',
+  SUBMITTED: 'Report submitted',
+  CLOSED: 'Closed',
+};
+
+export interface JobSummary {
+  id: string;
+  incidentId: string;
+  ticketRef: string | null;
+  clientName: string | null;
+  siteAddress: string | null;
+  priority: IncidentPriority | null;
+  slaDueAt: string | null;
+  overdue: boolean;
+  technicianId: string;
+  technicianName: string;
+  status: JobStatus;
+  acceptedAt: string;
+  arrivedAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  submittedAt: string | null;
+  closedAt: string | null;
+}
+
+export interface JobHistoryEntry {
+  status: JobStatus;
+  previousStatus: JobStatus | null;
+  reason: string | null;
+  changedById: string;
+  changedByName: string;
+  changedAt: string;
+}
+
+export interface JobDetail {
+  job: JobSummary;
+  contactName: string | null;
+  contactPhone: string | null;
+  issueType: string | null;
+  description: string | null;
+  jobType: string | null;
+  notesForTechnician: string | null;
+  resolutionNotes: string | null;
+  rootCause: string | null;
+  recommendations: string | null;
+  labourHours: number | null;
+  parts: { name: string; quantity: number; serialNumber: string | null }[];
+  closingNotes: string | null;
+  closedByName: string | null;
+  /** Oldest first. */
+  history: JobHistoryEntry[];
+  canClose: boolean;
+}
+
+export interface JobCounts {
+  active: number;
+  review: number;
+  closed: number;
+}
+
+export interface TechnicianRosterEntry {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  accountStatus: 'PENDING_ACTIVATION' | 'ACTIVE' | 'DISABLED';
+  availability: TechnicianAvailability;
+  city: string | null;
+  region: string | null;
+  country: string | null;
+  skills: string[];
+  currentJob: {
+    jobId: string;
+    ticketRef: string | null;
+    clientName: string | null;
+    status: JobStatus;
+  } | null;
+  jobsClosed: number;
+  lastSeenAt: string | null;
+}
+
+/** Mirrors the backend `ReportResponse`. A measure with nothing behind it is null, never 0. */
+export interface Report {
+  from: string;
+  to: string;
+  zone: string;
+  incidents: { created: number; closed: number; open: number; overdueNow: number };
+  sla: { withinSla: number; late: number; compliancePercent: number | null };
+  dispatching: {
+    dispatches: number;
+    accepted: number;
+    expired: number;
+    invitations: number;
+    accepts: number;
+    declines: number;
+    noResponses: number;
+    averageMinutesToAccept: number | null;
+    acceptRatePercent: number | null;
+  };
+  jobs: {
+    opened: number;
+    submitted: number;
+    closed: number;
+    averageHoursOnSite: number | null;
+    averageLabourHours: number | null;
+    averageHoursToClose: number | null;
+  };
+  byPriority: {
+    priority: IncidentPriority;
+    created: number;
+    closed: number;
+    withinSla: number;
+    late: number;
+  }[];
+  byTechnician: {
+    technicianId: string;
+    name: string;
+    invited: number;
+    accepted: number;
+    declined: number;
+    noResponse: number;
+    jobs: number;
+    jobsClosed: number;
+    averageLabourHours: number | null;
+  }[];
+  daily: { date: string; created: number; closed: number }[];
 }
 
 /** The queue's filter tabs — "Unassigned" and the KPI counts share one source of truth

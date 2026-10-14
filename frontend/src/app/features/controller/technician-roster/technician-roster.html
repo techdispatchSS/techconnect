@@ -1,0 +1,144 @@
+<div class="tr">
+  <div class="tr-toolbar">
+    <label class="tr-search">
+      <input
+        class="controller-input"
+        [formControl]="search"
+        placeholder="Search name, email, skill, city…"
+        aria-label="Search technicians"
+      />
+    </label>
+    <label class="tr-filter">
+      <span class="tr-filter-label">Availability</span>
+      <select
+        class="controller-input"
+        [value]="availability()"
+        (change)="setAvailability($any($event.target).value)"
+      >
+        <option value="">Everyone</option>
+        @for (a of availabilities; track a) {
+          <option [value]="a">{{ availabilityLabels[a] }}</option>
+        }
+      </select>
+    </label>
+    <p class="tr-note">Technicians are added and managed by a Manager.</p>
+  </div>
+
+  <div class="controller-card tr-card">
+    @if (loading()) {
+      <table class="controller-table tr-table" aria-busy="true" aria-label="Loading technicians">
+        <thead>
+          <tr>
+            <th>Technician</th>
+            <th>Availability</th>
+            <th>Current job</th>
+            <th>Skills</th>
+            <th>Based in</th>
+            <th style="text-align: right">Jobs closed</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of skeletonRows; track row) {
+            <tr aria-hidden="true">
+              <td><app-skeleton width="9rem" height="14px" /></td>
+              <td><app-skeleton width="5.5rem" height="22px" /></td>
+              <td><app-skeleton width="8rem" height="14px" /></td>
+              <td><app-skeleton width="10rem" height="14px" /></td>
+              <td><app-skeleton width="7rem" height="14px" /></td>
+              <td style="text-align: right"><app-skeleton width="2rem" height="14px" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else if (loadFailed()) {
+      <p class="tr-empty">Couldn't load the technicians. Try again shortly.</p>
+    } @else if (technicians().length === 0) {
+      <p class="tr-empty">No technicians match.</p>
+    } @else {
+      <table class="controller-table tr-table">
+        <thead>
+          <tr>
+            <th>Technician</th>
+            <th>Availability</th>
+            <th>Current job</th>
+            <th>Skills</th>
+            <th>Based in</th>
+            <th style="text-align: right">Jobs closed</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of technicians(); track t.id) {
+            <tr>
+              <td>
+                <span class="tr-name">{{ t.name }}</span>
+                <span class="tr-contact">{{ t.email }}</span>
+                @if (t.phone) {
+                  <span class="tr-contact">{{ t.phone }}</span>
+                }
+                @if (t.accountStatus === 'PENDING_ACTIVATION') {
+                  <span class="tr-flag">Hasn't activated their account</span>
+                } @else if (t.accountStatus === 'DISABLED') {
+                  <span class="tr-flag">Offboarded</span>
+                }
+              </td>
+              <td>
+                <span class="tr-avail tr-avail--{{ t.availability.toLowerCase() }}">{{
+                  availabilityLabels[t.availability]
+                }}</span>
+                @if (t.lastSeenAt) {
+                  <span class="tr-contact">seen {{ t.lastSeenAt | date: 'd MMM, HH:mm' }}</span>
+                }
+              </td>
+              <td>
+                @if (t.currentJob; as job) {
+                  <a [routerLink]="['/incidents/jobs', job.jobId]" class="tr-job">
+                    {{ job.ticketRef }} · {{ job.clientName }}
+                  </a>
+                  <span class="tr-contact">{{ jobStatusLabels[job.status] }}</span>
+                } @else {
+                  <span class="tr-contact">—</span>
+                }
+              </td>
+              <td>
+                @if (t.skills.length > 0) {
+                  <span class="tr-skills">
+                    @for (skill of t.skills; track skill) {
+                      <span class="tr-skill">{{ skill }}</span>
+                    }
+                  </span>
+                } @else {
+                  <span class="tr-contact">—</span>
+                }
+              </td>
+              <td>{{ where(t) }}</td>
+              <td style="text-align: right">{{ t.jobsClosed }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  @if (totalPages() > 1) {
+    <nav class="tr-pager" aria-label="Technician pages">
+      <span class="tr-pager-range">{{ rangeLabel() }}</span>
+      <button
+        type="button"
+        class="controller-btn controller-btn-secondary"
+        [disabled]="page() === 0"
+        (click)="goTo(page() - 1)"
+      >
+        Previous
+      </button>
+      <span class="tr-pager-page">Page {{ page() + 1 }} of {{ totalPages() }}</span>
+      <button
+        type="button"
+        class="controller-btn controller-btn-secondary"
+        [disabled]="page() + 1 >= totalPages()"
+        (click)="goTo(page() + 1)"
+      >
+        Next
+      </button>
+    </nav>
+  }
+</div>

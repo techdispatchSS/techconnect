@@ -77,6 +77,10 @@ public class Incident {
     @Column(name = "sla_due_at")
     private Instant slaDueAt;
 
+    /** When it was closed, from the job being closed out here or the ticket resolving in Freshdesk. */
+    @Column(name = "closed_at")
+    private Instant closedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 

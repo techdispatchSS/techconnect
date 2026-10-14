@@ -179,6 +179,26 @@ public class AuthService {
         return userMapper.toProfileResponse(user);
     }
 
+    /**
+     * Records the zone the caller's browser is in, so times in their emails are said in it. Only
+     * a real IANA region id is accepted: this is read back and used to format dates, so anything
+     * else is refused rather than stored. Not an audited change: it is a display preference that
+     * follows the person's device, not an edit of their record.
+     */
+    @Transactional
+    public ProfileResponse updateTimeZone(UUID userId, String timeZone) {
+        String zone = timeZone == null ? "" : timeZone.trim();
+        if (!java.time.ZoneId.getAvailableZoneIds().contains(zone)) {
+            throw ApiException.badRequest("That is not a recognised time zone.");
+        }
+        User user = require(userId);
+        if (!zone.equals(user.getTimeZone())) {
+            user.setTimeZone(zone);
+            users.save(user);
+        }
+        return userMapper.toProfileResponse(user);
+    }
+
     /** Consumes an activation link and sets the user's first password. */
     @Transactional
     public void activate(String token, String rawPassword) {

@@ -265,7 +265,8 @@ public class DispatchService {
                 incident.getPriority(),
                 dispatch.getNotesForTechnician(),
                 dispatch.getExpiresAt(),
-                reminder);
+                reminder,
+                dispatch.getId());
 
         Runnable send = () -> {
             for (User recipient : recipients) {

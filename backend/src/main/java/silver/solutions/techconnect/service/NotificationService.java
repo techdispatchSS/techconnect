@@ -1,6 +1,7 @@
 package silver.solutions.techconnect.service;
 
 import java.time.Instant;
+import java.util.UUID;
 import silver.solutions.techconnect.entity.IncidentPriority;
 import silver.solutions.techconnect.entity.User;
 
@@ -41,7 +42,9 @@ public interface NotificationService {
             String notes,
             Instant expiresAt,
             /** True when this is a repeat of an earlier notification, not the first. */
-            boolean reminder) {}
+            boolean reminder,
+            /** The dispatch this answers, so the email's buttons can point at it. May be null. */
+            UUID dispatchId) {}
 
     /**
      * Tells a technician a job has been sent to them and is waiting for their answer. Sent when

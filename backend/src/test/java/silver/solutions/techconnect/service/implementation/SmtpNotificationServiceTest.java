@@ -13,17 +13,21 @@ import jakarta.mail.Part;
 import jakarta.mail.Session;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import silver.solutions.techconnect.config.TechConnectProperties;
+import silver.solutions.techconnect.entity.IncidentPriority;
 import silver.solutions.techconnect.entity.User;
 import silver.solutions.techconnect.entity.UserRole;
+import silver.solutions.techconnect.service.NotificationService;
 
 class SmtpNotificationServiceTest {
 
@@ -92,7 +96,7 @@ class SmtpNotificationServiceTest {
 
         assertThat(text).contains("Hi Thabo,").contains("reset-password?token=abc");
         assertThat(html)
-                .contains("techconnect-email-logo.png")
+                .contains("Tech-Connect")
                 .contains("Hi Thabo,")
                 .contains("<a href=\"https://www.tech-connect.app/reset-password?token=abc\"");
     }
@@ -119,8 +123,100 @@ class SmtpNotificationServiceTest {
 
         String said = everythingSaid(sent());
         assertThat(said).contains("https://www.tech-connect.app/activate?token=abc");
-        assertThat(said).contains("Install the TechConnect app");
+        assertThat(said).contains("Install the app");
         assertThat(said).contains("https://www.tech-connect.app/install");
+    }
+
+    private static NotificationService.DispatchNotice notice(boolean reminder) {
+        return new NotificationService.DispatchNotice(
+                "INC-2C16638C",
+                "Sihle Sithole",
+                "13 Sloane Street, Bryanston, Epsom Downs, 2021",
+                "Networking",
+                IncidentPriority.HIGH,
+                null,
+                Instant.parse("2026-10-13T18:54:00Z"),
+                reminder,
+                UUID.fromString("11111111-2222-3333-4444-555555555555"));
+    }
+
+    @Test
+    void aJobEmailIsADetailsGridWithAcceptAndDeclineButtons() throws Exception {
+        service.sendDispatchNotice(user(), notice(false));
+
+        MimeMessage message = sent();
+        assertThat(message.getSubject()).isEqualTo("New job: INC-2C16638C · Sihle Sithole (high)");
+        String all = everythingSaid(message);
+
+        // the reference in the header, the details, and the time in a readable form
+        assertThat(all).contains("INC-2C16638C").contains("Sihle Sithole").contains("Networking");
+        assertThat(all).contains("13 Oct 2026, 18:54 UTC");
+        // the site is a map link rather than text a mail client guesses at
+        assertThat(all).contains("https://www.google.com/maps/search/?api=1&amp;query=13+Sloane+Street");
+        // priority, marked and coloured
+        assertThat(all).contains("&#9679; High");
+        // accept and decline, each carrying the dispatch and the answer
+        assertThat(all).contains(">Accept job</a>").contains(">Decline</a>");
+        assertThat(all).contains("dispatch=11111111-2222-3333-4444-555555555555&amp;respond=accept");
+        assertThat(all).contains("dispatch=11111111-2222-3333-4444-555555555555&amp;respond=decline");
+        assertThat(all).contains("You&#39;ll be asked to sign in to TechConnect.");
+        assertThat(all).contains("waiting for your answer");
+    }
+
+    @Test
+    void theLogoIsAttachedToTheMessageItself() throws Exception {
+        service.sendDispatchNotice(user(), notice(false));
+
+        MimeMessage message = sent();
+        List<jakarta.mail.internet.MimeBodyPart> images = new ArrayList<>();
+        collectImages(message, images);
+
+        assertThat(images).hasSize(1);
+        assertThat(images.getFirst().getContentType()).startsWith("image/png");
+        assertThat(images.getFirst().getContentID()).isEqualTo("<tc-logo>");
+        // a real PNG, not an empty placeholder
+        byte[] bytes = images.getFirst().getInputStream().readAllBytes();
+        assertThat(bytes).hasSizeGreaterThan(5_000);
+        assertThat(bytes[1]).isEqualTo((byte) 'P');
+        assertThat(everythingSaid(message)).contains("cid:tc-logo");
+    }
+
+    private static void collectImages(Part part, List<jakarta.mail.internet.MimeBodyPart> into)
+            throws Exception {
+        if (part.isMimeType("multipart/*")) {
+            Multipart multipart = (Multipart) part.getContent();
+            for (int i = 0; i < multipart.getCount(); i++) {
+                collectImages(multipart.getBodyPart(i), into);
+            }
+        } else if (part.isMimeType("image/*")) {
+            into.add((jakarta.mail.internet.MimeBodyPart) part);
+        }
+    }
+
+    @Test
+    void aReminderSaysTheJobIsStillWaiting() throws Exception {
+        service.sendDispatchNotice(user(), notice(true));
+
+        MimeMessage message = sent();
+        assertThat(message.getSubject()).startsWith("Reminder: job waiting for your answer");
+        assertThat(everythingSaid(message)).contains("still waiting for an answer");
+    }
+
+    @Test
+    void theJobEmailsPlainTextCarriesTheSameFacts() throws Exception {
+        service.sendDispatchNotice(user(), notice(false));
+
+        List<String[]> parts = new ArrayList<>();
+        leaves(sent(), parts);
+        String text = parts.stream().filter(p -> p[0].startsWith("text/plain"))
+                .map(p -> p[1]).findFirst().orElseThrow();
+
+        assertThat(text).contains("Ticket:").contains("INC-2C16638C");
+        assertThat(text).contains("Client:").contains("Sihle Sithole");
+        assertThat(text).contains("Site:").contains("13 Sloane Street");
+        assertThat(text).contains("Priority:").contains("High");
+        assertThat(text).contains("Respond by:").contains("13 Oct 2026, 18:54 UTC");
+        assertThat(text).contains("Accept job: https://www.tech-connect.app/jobs?dispatch=");
     }
 
     @Test

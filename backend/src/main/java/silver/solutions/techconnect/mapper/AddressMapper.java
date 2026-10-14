@@ -12,10 +12,11 @@ public class AddressMapper {
     public Address toEntity(AddressRequest request) {
         return new Address(
                 request.street(),
-                request.suburb(),
+                blankToNull(request.suburb()),
                 request.city(),
                 request.province(),
-                request.postalCode());
+                blankToNull(request.postalCode()),
+                request.countryOrDefault());
     }
 
     /**
@@ -29,6 +30,11 @@ public class AddressMapper {
                 a.getSuburb(),
                 a.getCity(),
                 a.getProvince(),
-                a.getPostalCode()));
+                a.getPostalCode(),
+                a.countryOrDefault()));
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

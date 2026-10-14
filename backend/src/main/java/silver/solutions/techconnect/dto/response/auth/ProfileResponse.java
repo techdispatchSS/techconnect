@@ -16,4 +16,6 @@ public record ProfileResponse(
         AddressResponse address,
         UserRole role,
         /** False for every role but MANAGER — see {@code AuthService.updateProfile}. */
-        boolean canEditAddress) {}
+        boolean canEditAddress,
+        /** IANA zone id the person was last seen in; null until they first sign in. */
+        String timeZone) {}

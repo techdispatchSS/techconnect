@@ -1,5 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, Injector, afterNextRender, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  Injector,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormBuilder,
@@ -9,7 +18,14 @@ import {
 } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import { PROVINCES, PROVINCE_LABELS, Province } from '../../core/address.models';
+import { bindAddressRules } from '../../core/address-rules';
+import {
+  COUNTRIES,
+  DEFAULT_COUNTRY,
+  PROVINCES,
+  PROVINCE_LABELS,
+  isSouthAfrica,
+} from '../../core/address.models';
 import { GooglePlacesService } from '../../core/google/google-places.service';
 import { requiredTrimmed, trimStrings } from '../../shared/form-text';
 import { MAX_SKILLS, joinSkills, parseSkills } from '../../shared/skill-list';
@@ -45,13 +61,25 @@ function onTrimmed(validator: ValidatorFn): ValidatorFn {
 
 const NAME_PATTERN = onTrimmed(Validators.pattern(/^[\p{L}][\p{L} .'’-]*$/u));
 
-/** Judges the ID number with spaces ignored, so "900101 5000 085" is accepted as typed. */
-const SA_ID: ValidatorFn = (control) =>
-  typeof control.value === 'string' &&
-  control.value.trim() !== '' &&
-  !isValidSouthAfricanId(control.value)
-    ? { saId: true }
-    : null;
+/**
+ * Judges the ID number with spaces ignored, so "900101 5000 085" is accepted as typed. Only a
+ * South African applicant is held to the South African format; elsewhere the numbers (national
+ * ID, passport) vary too much for anything stricter than "looks like an identifier".
+ */
+function idNumberRule(country: () => string): ValidatorFn {
+  return (control) => {
+    const value: unknown = control.value;
+    if (typeof value !== 'string' || value.trim() === '') {
+      return null;
+    }
+    if (isSouthAfrica(country())) {
+      return isValidSouthAfricanId(value) ? null : { saId: true };
+    }
+    return OTHER_ID.test(value.trim()) ? null : { otherId: true };
+  };
+}
+
+const OTHER_ID = /^[A-Za-z0-9][A-Za-z0-9 /-]{2,30}[A-Za-z0-9]$/;
 
 /**
  * Public technician application. Deliberately not part of the sign-in screens: there is no
@@ -74,6 +102,8 @@ export class Apply {
   /** Whether Google address search is configured; without it the street is plain text. */
   readonly placesEnabled = inject(GooglePlacesService).enabled;
 
+  private readonly destroyRef = inject(DestroyRef);
+  readonly countries = COUNTRIES;
   readonly provinces = PROVINCES;
   readonly provinceLabels = PROVINCE_LABELS;
   readonly required = REQUIRED_DOCUMENTS;
@@ -141,21 +171,34 @@ export class Apply {
     this.certifications().filter((d) => d.title.trim() === ''),
   );
 
+  /** Held outside the form so the ID number's rule can read it as it is validated. */
+  private readonly countryControl = this.fb.nonNullable.control(DEFAULT_COUNTRY);
+
   readonly form = this.fb.nonNullable.group({
     firstName: ['', [requiredTrimmed, Validators.maxLength(100), NAME_PATTERN]],
     lastName: ['', [requiredTrimmed, Validators.maxLength(100), NAME_PATTERN]],
     email: ['', [Validators.required, onTrimmed(Validators.email), Validators.maxLength(254)]],
-    idNumber: ['', [Validators.required, Validators.maxLength(20), SA_ID]],
+    idNumber: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(32),
+        idNumberRule(() => this.countryControl.value),
+      ],
+    ],
     phone: [
       '',
       [Validators.required, onTrimmed(Validators.pattern(/^\+?[0-9][0-9 ()-]{7,18}[0-9]$/))],
     ],
+    // `country` leads the group: a suggestion sets its fields in this order, so the country is
+    // in place before the region (and changing country clears the region).
     address: this.fb.nonNullable.group({
+      country: this.countryControl,
       street: ['', [requiredTrimmed, Validators.maxLength(255)]],
       suburb: ['', [requiredTrimmed, Validators.maxLength(120)]],
       city: ['', [requiredTrimmed, Validators.maxLength(120)]],
-      province: ['' as Province | '', [Validators.required]],
-      postalCode: ['', [Validators.required, onTrimmed(Validators.pattern(/^\d{4}$/))]],
+      province: ['', [Validators.required]],
+      postalCode: ['', [Validators.required]],
     }),
     experienceSummary: [
       '',
@@ -165,6 +208,19 @@ export class Apply {
     // Honeypot: hidden from people, tempting to bots.
     website: [''],
   });
+
+  /** The chosen country, as a signal for the template. */
+  readonly country = toSignal(this.countryControl.valueChanges, {
+    initialValue: this.countryControl.value,
+  });
+  readonly inSouthAfrica = computed(() => isSouthAfrica(this.country()));
+
+  constructor() {
+    bindAddressRules(this.form.controls.address, this.destroyRef);
+    this.countryControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.form.controls.idNumber.updateValueAndValidity());
+  }
 
   /** Enter or a comma adds the skill typed so far; Enter must not submit the whole form. */
   onSkillKeydown(event: KeyboardEvent): void {
@@ -327,7 +383,7 @@ export class Apply {
           email: value.email,
           phone: value.phone,
           idNumber: value.idNumber.replace(/\s+/g, ''),
-          address: { ...value.address, province: value.address.province as Province },
+          address: value.address,
           experienceSummary: value.experienceSummary,
           skills: joinSkills(this.skills()),
           documents: docs.map((d) => ({ kind: d.kind, title: d.title })),

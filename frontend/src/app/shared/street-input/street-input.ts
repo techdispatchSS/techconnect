@@ -7,7 +7,8 @@ import { Address } from '../../core/address.models';
 import { TrimOnBlur } from '../trim-on-blur';
 import { AddressSuggestion, GooglePlacesService } from '../../core/google/google-places.service';
 
-export type PickedAddress = Omit<Address, 'province'> & { province: Address['province'] | '' };
+/** An address from a suggestion: anything Google did not supply is an empty string. */
+export type PickedAddress = Address;
 
 /** What a pick actually carries: the address, and where Google puts it on the map. Callers
  * that only care about the address can keep typing the handler as `PickedAddress`. */
@@ -41,6 +42,8 @@ export class StreetInput {
   /** The input's styling class: the admin portal's by default; the controller dashboard
    * passes its own so the field matches the rest of that form. */
   readonly inputClass = input('admin-input');
+  /** ISO code of the country being typed in; suggestions are limited to it. Null: anywhere. */
+  readonly country = input<string | null>('ZA');
   readonly picked = output<PickedPlace>();
 
   readonly suggestions = signal<AddressSuggestion[]>([]);
@@ -120,7 +123,7 @@ export class StreetInput {
     const id = ++this.requestId;
     this.searching.set(true);
     try {
-      const results = await this.places.suggest(text);
+      const results = await this.places.suggest(text, this.country());
       if (id === this.requestId) {
         this.suggestions.set(results);
         this.activeIndex.set(-1);

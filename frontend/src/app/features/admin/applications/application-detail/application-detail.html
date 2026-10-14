@@ -51,8 +51,15 @@
           <div class="ad-fact-wide">
             <dt>Based in</dt>
             <dd>
-              {{ address.street }}, {{ address.suburb }}, {{ address.city }},
-              {{ provinceLabels[address.province] }} {{ address.postalCode }}
+              {{ address.street }},
+              @if (address.suburb) {
+                {{ address.suburb }},
+              }
+              {{ address.city }}, {{ regionDisplay(address.province) }}
+              {{ address.postalCode }}
+              @if (!isSouthAfrica(address.country)) {
+                · {{ countryName(address.country) }}
+              }
             </dd>
           </div>
         }

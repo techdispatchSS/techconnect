@@ -18,6 +18,7 @@ function person(id: string, name: string, role: UserRole): AdminUser {
     email: `${id}@example.com`,
     phone: null,
     address: {
+      country: 'ZA',
       street: '1 Test Street',
       suburb: 'Bryanston',
       city: 'Sandton',

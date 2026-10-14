@@ -1,6 +1,11 @@
 import { addressFromComponents } from './place-address';
 
 const c = (longText: string, ...types: string[]) => ({ longText, types });
+const country = (longText: string, shortText: string) => ({
+  longText,
+  shortText,
+  types: ['country'],
+});
 
 describe('addressFromComponents', () => {
   it('maps a full South African address', () => {
@@ -12,9 +17,10 @@ describe('addressFromComponents', () => {
         c('Cape Town', 'locality'),
         c('Western Cape', 'administrative_area_level_1'),
         c('8001', 'postal_code'),
-        c('South Africa', 'country'),
+        country('South Africa', 'ZA'),
       ]),
     ).toEqual({
+      country: 'ZA',
       street: '12 Long Street',
       suburb: 'Gardens',
       city: 'Cape Town',
@@ -37,11 +43,35 @@ describe('addressFromComponents', () => {
         c('Somewhere Else', 'administrative_area_level_1'),
       ]),
     ).toEqual({
+      country: '',
       street: 'Route 62',
       suburb: '',
       city: 'Sarah Baartman District Municipality',
       province: '',
       postalCode: '',
     });
+  });
+
+  it('reads the country and keeps a region outside South Africa as written', () => {
+    expect(
+      addressFromComponents([
+        c('12', 'street_number'),
+        c('Moi Avenue', 'route'),
+        c('Nairobi', 'locality'),
+        c('Nairobi County', 'administrative_area_level_1'),
+        country('Kenya', 'KE'),
+      ]),
+    ).toEqual({
+      country: 'KE',
+      street: '12 Moi Avenue',
+      suburb: '',
+      city: 'Nairobi',
+      province: 'Nairobi County',
+      postalCode: '',
+    });
+  });
+
+  it('ignores a country the app does not serve', () => {
+    expect(addressFromComponents([country('France', 'FR')]).country).toBe('');
   });
 });

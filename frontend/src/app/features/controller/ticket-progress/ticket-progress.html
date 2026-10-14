@@ -41,6 +41,13 @@
       <div class="controller-card tp-banner tp-banner--accepted">
         <span class="tp-banner-title">Assigned to {{ p.acceptedTechnicianName }}</span>
         <span class="tp-banner-hint">This technician accepted the dispatch.</span>
+        @if (p.jobId; as jobId) {
+          <a
+            [routerLink]="['/incidents/jobs', jobId]"
+            class="controller-btn controller-btn-primary tp-banner-job"
+            >View job</a
+          >
+        }
       </div>
     } @else if (p.dispatchStatus === 'EXPIRED') {
       <div class="controller-card tp-banner tp-banner--expired">

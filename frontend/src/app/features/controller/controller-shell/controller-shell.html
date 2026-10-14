@@ -43,9 +43,11 @@
         }
       </a>
 
-      <span
-        class="controller-shell-nav-item controller-shell-nav-item--disabled"
-        title="Part of the technician job flow — not built yet"
+      <a
+        routerLink="/incidents/jobs"
+        routerLinkActive="controller-shell-nav-item--active"
+        class="controller-shell-nav-item"
+        (click)="closeSidebarOnHandset()"
       >
         <span class="controller-shell-nav-item-main">
           <svg
@@ -61,11 +63,16 @@
           </svg>
           <span>Active jobs</span>
         </span>
-      </span>
+        @if (activeJobs(); as count) {
+          <span class="controller-shell-nav-item-count">{{ count }}</span>
+        }
+      </a>
 
-      <span
-        class="controller-shell-nav-item controller-shell-nav-item--disabled"
-        title="Part of the technician job flow — not built yet"
+      <a
+        routerLink="/incidents/review"
+        routerLinkActive="controller-shell-nav-item--active"
+        class="controller-shell-nav-item"
+        (click)="closeSidebarOnHandset()"
       >
         <span class="controller-shell-nav-item-main">
           <svg
@@ -81,14 +88,62 @@
           </svg>
           <span>Review &amp; close</span>
         </span>
-      </span>
+        @if (reviewJobs(); as count) {
+          <span class="controller-shell-nav-item-count">{{ count }}</span>
+        }
+      </a>
+    </nav>
+
+    <div class="controller-shell-section-label">People &amp; insight</div>
+    <nav class="controller-shell-nav">
+      <a
+        routerLink="/incidents/technicians"
+        routerLinkActive="controller-shell-nav-item--active"
+        class="controller-shell-nav-item"
+        (click)="closeSidebarOnHandset()"
+      >
+        <span class="controller-shell-nav-item-main">
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <circle cx="9" cy="8" r="3.2" />
+            <path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" />
+            <path d="M16 6.2a3 3 0 0 1 0 5.6M18 14c1.7.6 3 2.2 3 5" />
+          </svg>
+          <span>Technicians</span>
+        </span>
+      </a>
+
+      <a
+        routerLink="/incidents/reports"
+        routerLinkActive="controller-shell-nav-item--active"
+        class="controller-shell-nav-item"
+        (click)="closeSidebarOnHandset()"
+      >
+        <span class="controller-shell-nav-item-main">
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+          </svg>
+          <span>Reports</span>
+        </span>
+      </a>
     </nav>
 
     <div class="controller-shell-section-label">Elsewhere</div>
     <div class="controller-shell-elsewhere">
-      <span>User management</span>
-      <span>Reports</span>
-      <span>Integrations</span>
+      <span title="Needs the Freshdesk account details from the owners">Integrations</span>
     </div>
 
     <button

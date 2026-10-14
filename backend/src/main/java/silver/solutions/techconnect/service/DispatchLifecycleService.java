@@ -50,16 +50,19 @@ public class DispatchLifecycleService {
     private final DispatchRepository dispatches;
     private final DispatchResponseRepository responses;
     private final IncidentRepository incidents;
+    private final JobService jobs;
     private final TransactionTemplate transactions;
 
     public DispatchLifecycleService(
             DispatchRepository dispatches,
             DispatchResponseRepository responses,
             IncidentRepository incidents,
+            JobService jobs,
             PlatformTransactionManager transactionManager) {
         this.dispatches = dispatches;
         this.responses = responses;
         this.incidents = incidents;
+        this.jobs = jobs;
         this.transactions = new TransactionTemplate(transactionManager);
     }
 
@@ -116,6 +119,8 @@ public class DispatchLifecycleService {
             responses.save(mine);
             dispatch.setStatus(DispatchStatus.ACCEPTED);
             dispatches.save(dispatch);
+            // The work now has an owner and a job to follow, in the same transaction as the accept.
+            jobs.openFor(dispatch, technicianId);
             // The job is gone for everyone else; they will not be answering it.
             lapsePending(dispatchId);
             log.info("Dispatch {} accepted by technician {}", dispatchId, technicianId);

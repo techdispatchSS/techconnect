@@ -1,0 +1,199 @@
+<div class="rp">
+  <div class="rp-toolbar">
+    <label class="rp-date">
+      <span>From</span>
+      <input type="date" class="controller-input" [formControl]="from" (change)="load()" />
+    </label>
+    <label class="rp-date">
+      <span>To</span>
+      <input type="date" class="controller-input" [formControl]="to" (change)="load()" />
+    </label>
+    <span class="rp-presets">
+      @for (preset of presets; track preset.label) {
+        <button
+          type="button"
+          class="controller-btn controller-btn-secondary"
+          (click)="usePreset(preset.back)"
+        >
+          {{ preset.label }}
+        </button>
+      }
+    </span>
+    <button
+      type="button"
+      class="controller-btn controller-btn-primary rp-export"
+      [disabled]="exporting() || loading()"
+      (click)="download()"
+    >
+      {{ exporting() ? 'Preparing…' : 'Download CSV' }}
+    </button>
+  </div>
+
+  @if (errorMessage(); as message) {
+    <p class="rp-error" role="alert">{{ message }}</p>
+  }
+
+  @if (loading() && !report()) {
+    <div class="rp-kpis" aria-busy="true" aria-label="Loading report">
+      @for (n of [0, 1, 2, 3]; track n) {
+        <div class="controller-card rp-kpi"><app-skeleton width="6rem" height="38px" /></div>
+      }
+    </div>
+  } @else if (loadFailed()) {
+    <p class="rp-empty">Couldn't load the report. Try again shortly.</p>
+  } @else if (report(); as r) {
+    <div class="rp-kpis" [class.rp-kpis--stale]="loading()">
+      <div class="controller-card rp-kpi">
+        <span class="rp-kpi-label">SLA met</span>
+        <span class="rp-kpi-value">{{ fmt(r.sla.compliancePercent, '%') }}</span>
+        <span class="rp-kpi-note"
+          >{{ r.sla.withinSla }} on time · {{ r.sla.late }} late of the closed</span
+        >
+      </div>
+      <div class="controller-card rp-kpi">
+        <span class="rp-kpi-label">Incidents</span>
+        <span class="rp-kpi-value">{{ r.incidents.created }}</span>
+        <span class="rp-kpi-note"
+          >{{ r.incidents.closed }} closed · {{ r.incidents.open }} open now ·
+          {{ r.incidents.overdueNow }} overdue now</span
+        >
+      </div>
+      <div class="controller-card rp-kpi">
+        <span class="rp-kpi-label">Time to accept</span>
+        <span class="rp-kpi-value">{{ fmt(r.dispatching.averageMinutesToAccept, ' min') }}</span>
+        <span class="rp-kpi-note"
+          >{{ fmt(r.dispatching.acceptRatePercent, '%') }} of settled dispatches taken</span
+        >
+      </div>
+      <div class="controller-card rp-kpi">
+        <span class="rp-kpi-label">Jobs closed</span>
+        <span class="rp-kpi-value">{{ r.jobs.closed }}</span>
+        <span class="rp-kpi-note"
+          >{{ r.jobs.opened }} opened · {{ fmt(r.jobs.averageHoursOnSite, ' h') }} on site on
+          average</span
+        >
+      </div>
+    </div>
+
+    <section class="controller-card rp-section">
+      <h6 class="rp-title">Incidents per day</h6>
+      <div class="rp-chart" role="img" [attr.aria-label]="'Incidents logged and closed per day'">
+        @for (day of r.daily; track day.date; let i = $index) {
+          <div
+            class="rp-day"
+            [attr.title]="day.date + ': ' + day.created + ' logged, ' + day.closed + ' closed'"
+          >
+            <span class="rp-bars">
+              <span class="rp-bar rp-bar--created" [style.height.%]="height(day.created)"></span>
+              <span class="rp-bar rp-bar--closed" [style.height.%]="height(day.closed)"></span>
+            </span>
+            <span class="rp-day-label">{{ showLabel(i) ? dayLabel(day.date) : '' }}</span>
+          </div>
+        }
+      </div>
+      <div class="rp-legend">
+        <span><span class="rp-swatch rp-swatch--created"></span> Logged</span>
+        <span><span class="rp-swatch rp-swatch--closed"></span> Closed</span>
+      </div>
+    </section>
+
+    <div class="rp-two">
+      <section class="controller-card rp-section">
+        <h6 class="rp-title">By priority</h6>
+        <table class="controller-table">
+          <thead>
+            <tr>
+              <th>Priority</th>
+              <th style="text-align: right">Logged</th>
+              <th style="text-align: right">Closed</th>
+              <th style="text-align: right">On time</th>
+              <th style="text-align: right">Late</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of r.byPriority; track row.priority) {
+              <tr>
+                <td>{{ priorityLabels[row.priority] }}</td>
+                <td style="text-align: right">{{ row.created }}</td>
+                <td style="text-align: right">{{ row.closed }}</td>
+                <td style="text-align: right">{{ row.withinSla }}</td>
+                <td style="text-align: right">{{ row.late }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+
+      <section class="controller-card rp-section">
+        <h6 class="rp-title">Dispatching</h6>
+        <dl class="rp-facts">
+          <div>
+            <dt>Dispatches sent</dt>
+            <dd>{{ r.dispatching.dispatches }}</dd>
+          </div>
+          <div>
+            <dt>Accepted · lapsed</dt>
+            <dd>{{ r.dispatching.accepted }} · {{ r.dispatching.expired }}</dd>
+          </div>
+          <div>
+            <dt>Invitations</dt>
+            <dd>{{ r.dispatching.invitations }}</dd>
+          </div>
+          <div>
+            <dt>Accepted · declined · no reply</dt>
+            <dd>
+              {{ r.dispatching.accepts }} · {{ r.dispatching.declines }} ·
+              {{ r.dispatching.noResponses }}
+            </dd>
+          </div>
+          <div>
+            <dt>Average labour per job</dt>
+            <dd>{{ fmt(r.jobs.averageLabourHours, ' h') }}</dd>
+          </div>
+          <div>
+            <dt>Average time to close</dt>
+            <dd>{{ fmt(r.jobs.averageHoursToClose, ' h') }}</dd>
+          </div>
+        </dl>
+      </section>
+    </div>
+
+    <section class="controller-card rp-section">
+      <h6 class="rp-title">By technician</h6>
+      @if (r.byTechnician.length === 0) {
+        <p class="rp-empty">No technician was dispatched in this range.</p>
+      } @else {
+        <div class="rp-scroll">
+          <table class="controller-table">
+            <thead>
+              <tr>
+                <th>Technician</th>
+                <th style="text-align: right">Invited</th>
+                <th style="text-align: right">Accepted</th>
+                <th style="text-align: right">Declined</th>
+                <th style="text-align: right">No reply</th>
+                <th style="text-align: right">Jobs</th>
+                <th style="text-align: right">Closed</th>
+                <th style="text-align: right">Avg labour</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of r.byTechnician; track row.technicianId) {
+                <tr>
+                  <td>{{ row.name }}</td>
+                  <td style="text-align: right">{{ row.invited }}</td>
+                  <td style="text-align: right">{{ row.accepted }}</td>
+                  <td style="text-align: right">{{ row.declined }}</td>
+                  <td style="text-align: right">{{ row.noResponse }}</td>
+                  <td style="text-align: right">{{ row.jobs }}</td>
+                  <td style="text-align: right">{{ row.jobsClosed }}</td>
+                  <td style="text-align: right">{{ fmt(row.averageLabourHours, ' h') }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</div>

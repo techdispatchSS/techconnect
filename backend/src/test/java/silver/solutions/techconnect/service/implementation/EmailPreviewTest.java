@@ -32,6 +32,17 @@ import silver.solutions.techconnect.service.NotificationService.DispatchNotice;
  */
 class EmailPreviewTest {
 
+    private static final String LOGO_BASE64;
+
+    static {
+        try (var in = EmailPreviewTest.class.getResourceAsStream(
+                "/brand/techconnect-email-logo-light.png")) {
+            LOGO_BASE64 = java.util.Base64.getEncoder().encodeToString(in.readAllBytes());
+        } catch (java.io.IOException e) {
+            throw new java.io.UncheckedIOException(e);
+        }
+    }
+
     private static String htmlOf(Part part) throws Exception {
         if (part.isMimeType("text/html")) {
             return String.valueOf(part.getContent());
@@ -96,8 +107,10 @@ class EmailPreviewTest {
             MimeMessage message = messages.get(i);
             message.saveChanges();
             String html = htmlOf(message);
-            assertThat(html).as(names[i]).isNotNull().contains("Tech-Connect");
-            Files.writeString(out.resolve(names[i] + ".html"), html);
+            assertThat(html).as(names[i]).isNotNull().contains("cid:tc-logo");
+            // A browser cannot resolve cid: addresses, so the preview inlines the same image.
+            Files.writeString(out.resolve(names[i] + ".html"),
+                    html.replace("cid:tc-logo", "data:image/png;base64," + LOGO_BASE64));
         }
     }
 }

@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import silver.solutions.techconnect.config.TechConnectProperties;
 import silver.solutions.techconnect.entity.User;
@@ -40,6 +41,9 @@ import silver.solutions.techconnect.service.implementation.EmailContent.Tone;
 public class SmtpNotificationService implements NotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(SmtpNotificationService.class);
+
+    /** The logo (light ink, for the dark header), packaged with the app. */
+    private static final String LOGO_RESOURCE = "brand/techconnect-email-logo-light.png";
 
     /** "13 Oct 2026, 18:54 UTC". */
     private static final DateTimeFormatter WHEN =
@@ -247,6 +251,11 @@ public class SmtpNotificationService implements NotificationService {
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(content.toPlainText(), content.toHtml());
+            // Must come after setText: the logo is attached to the HTML part it appears in.
+            ClassPathResource logo = new ClassPathResource(LOGO_RESOURCE);
+            if (logo.exists()) {
+                helper.addInline(EmailContent.LOGO_CID, logo, "image/png");
+            }
             mailSender.send(message);
         } catch (MailException | MessagingException | UnsupportedEncodingException e) {
             log.warn("Could not deliver '{}' to {} — the action itself still succeeded. "

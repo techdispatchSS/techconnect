@@ -32,10 +32,14 @@ class EmailContentTest {
     }
 
     @Test
-    void theHeaderCarriesTheMarkTheNameAndTheReference() {
+    void theHeaderCarriesTheRealLogoAndTheReference() {
         String html = job().toHtml();
 
-        assertThat(html).contains("Tech-Connect").contains("INC-2C16638C").contains(">T</td>");
+        // the logo is the attached image, with readable alt text for clients that decline it
+        assertThat(html)
+                .contains("<img src=\"cid:tc-logo\"")
+                .contains("alt=\"Tech-Connect\"")
+                .contains("INC-2C16638C");
         // the orange rule under the header
         assertThat(html).contains("border-bottom:5px solid #f07f1d");
     }
@@ -92,7 +96,9 @@ class EmailContentTest {
 
         assertThat(html)
                 .doesNotContain("<script>")
-                .doesNotContain("<img")
+                // the logo is the only image; an image tag in the message text stays inert text
+                .doesNotContain("<img src=x")
+                .contains("&lt;img src=x")
                 .doesNotContain("<b>REF</b>")
                 .contains("&lt;script&gt;")
                 .contains("&amp;");

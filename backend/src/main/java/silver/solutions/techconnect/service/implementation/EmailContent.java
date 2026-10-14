@@ -110,6 +110,9 @@ record EmailContent(
 
     // ------------------------------------------------------------------ HTML
 
+    /** The content id the logo is attached under; the HTML refers to it as {@code cid:tc-logo}. */
+    static final String LOGO_CID = "tc-logo";
+
     private static final String ORANGE = "#f07f1d";
     private static final String INK = "#1a1c20";
     private static final String BODY = "#33363b";
@@ -162,15 +165,14 @@ record EmailContent(
         html.append("<tr><td style=\"background:").append(INK).append(";padding:22px 36px;")
                 .append("border-bottom:5px solid ").append(ORANGE).append(";\">")
                 .append("<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>")
-                // the mark: an orange disc with a white T, drawn in markup so no image is needed
-                .append("<td width=\"44\" valign=\"middle\"><table role=\"presentation\" cellpadding=\"0\" ")
-                .append("cellspacing=\"0\"><tr><td align=\"center\" valign=\"middle\" width=\"40\" height=\"40\" ")
-                .append("style=\"width:40px;height:40px;border-radius:20px;background:").append(ORANGE)
-                .append(";color:#ffffff;font-family:").append(FONT)
-                .append(";font-size:22px;font-weight:bold;line-height:40px;\">T</td></tr></table></td>")
+                // The real logo, attached to the message itself (not fetched from a web address), so
+                // it shows even where remote images are blocked. The alt text is white on the dark
+                // header for the clients that still decline to show it.
                 .append("<td valign=\"middle\" style=\"font-family:").append(FONT)
-                .append(";font-size:26px;font-weight:bold;color:#ffffff;letter-spacing:-0.3px;\">")
-                .append("Tech-Connect</td>");
+                .append(";font-size:26px;font-weight:bold;color:#ffffff;\">")
+                .append("<img src=\"cid:").append(LOGO_CID).append("\" alt=\"Tech-Connect\" width=\"214\" ")
+                .append("style=\"display:block;border:0;outline:none;width:214px;max-width:100%;")
+                .append("height:auto;color:#ffffff;font-size:26px;font-weight:bold;\"></td>");
         if (reference != null && !reference.isBlank()) {
             html.append("<td align=\"right\" valign=\"middle\" style=\"font-family:'Courier New',Courier,monospace;")
                     .append("font-size:13px;color:#a7abb1;\">").append(esc(reference)).append("</td>");

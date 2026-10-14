@@ -164,6 +164,36 @@ class SmtpNotificationServiceTest {
     }
 
     @Test
+    void theLogoIsAttachedToTheMessageItself() throws Exception {
+        service.sendDispatchNotice(user(), notice(false));
+
+        MimeMessage message = sent();
+        List<jakarta.mail.internet.MimeBodyPart> images = new ArrayList<>();
+        collectImages(message, images);
+
+        assertThat(images).hasSize(1);
+        assertThat(images.getFirst().getContentType()).startsWith("image/png");
+        assertThat(images.getFirst().getContentID()).isEqualTo("<tc-logo>");
+        // a real PNG, not an empty placeholder
+        byte[] bytes = images.getFirst().getInputStream().readAllBytes();
+        assertThat(bytes).hasSizeGreaterThan(5_000);
+        assertThat(bytes[1]).isEqualTo((byte) 'P');
+        assertThat(everythingSaid(message)).contains("cid:tc-logo");
+    }
+
+    private static void collectImages(Part part, List<jakarta.mail.internet.MimeBodyPart> into)
+            throws Exception {
+        if (part.isMimeType("multipart/*")) {
+            Multipart multipart = (Multipart) part.getContent();
+            for (int i = 0; i < multipart.getCount(); i++) {
+                collectImages(multipart.getBodyPart(i), into);
+            }
+        } else if (part.isMimeType("image/*")) {
+            into.add((jakarta.mail.internet.MimeBodyPart) part);
+        }
+    }
+
+    @Test
     void aReminderSaysTheJobIsStillWaiting() throws Exception {
         service.sendDispatchNotice(user(), notice(true));
 

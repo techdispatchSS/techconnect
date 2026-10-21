@@ -1,14 +1,18 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, interval, switchMap, tap } from 'rxjs';
 
 import { ControllerApiService } from '../controller-api.service';
 import { needsNewDispatch } from '../dispatch-state';
 import { DispatchType, Incident, PRIORITY_LABELS, TechnicianCandidate } from '../controller.models';
 import { TechnicianMap } from '../technician-map/technician-map';
 import { Skeleton } from '../../../shared/skeleton/skeleton';
+
+/** How often the hold on the incident is renewed; the server's hold lasts two minutes. */
+const LOCK_RENEWAL_MS = 40_000;
 
 function splitList(raw: string): string[] {
   return raw
@@ -97,8 +101,9 @@ function compareBy(key: TechnicianSortKey, a: TechnicianCandidate, b: Technician
   templateUrl: './create-dispatch.html',
   styleUrl: './create-dispatch.scss',
 })
-export class CreateDispatch implements OnInit {
+export class CreateDispatch implements OnInit, OnDestroy {
   private readonly api = inject(ControllerApiService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
@@ -118,6 +123,13 @@ export class CreateDispatch implements OnInit {
   readonly submitting = signal(false);
   readonly submitFailed = signal(false);
   readonly submitMessage = signal("Couldn't create the dispatch. Try again.");
+
+  /**
+   * Why this controller cannot dispatch it: someone else is already at it (the server names them).
+   * The screen holds the incident while it is open, so two controllers do not both send it out.
+   */
+  readonly lockMessage = signal<string | null>(null);
+  private holdingLock = false;
 
   readonly form = this.fb.nonNullable.group({
     jobType: ['Incident'],
@@ -220,6 +232,11 @@ export class CreateDispatch implements OnInit {
       error: () => this.loadFailed.set(true),
     });
 
+    this.holdIncident();
+    interval(LOCK_RENEWAL_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.holdIncident());
+
     this.form.controls.requiredSkills.valueChanges
       .pipe(
         debounceTime(300),
@@ -238,6 +255,37 @@ export class CreateDispatch implements OnInit {
         this.technicians.set(candidates);
         this.loadingTechnicians.set(false);
       });
+  }
+
+  /**
+   * Takes the hold on the incident, and renews it. A refusal means someone else has it (or took it
+   * after this one lapsed), and the form stops offering to send.
+   */
+  private holdIncident(): void {
+    this.api.lockIncident(this.incidentId).subscribe({
+      next: () => {
+        this.holdingLock = true;
+        this.lockMessage.set(null);
+      },
+      error: (error: unknown) => {
+        if (error instanceof HttpErrorResponse && error.status === 409) {
+          this.holdingLock = false;
+          this.lockMessage.set(
+            (error.error as { error?: string } | null)?.error ??
+              'Someone else is dispatching this incident.',
+          );
+        }
+        // Any other failure (a dropped connection) is left to the next renewal; the server still
+        // refuses a second live dispatch whatever happens here.
+      },
+    });
+  }
+
+  /** Leaving the screen lets the incident go, rather than holding it until it lapses. */
+  ngOnDestroy(): void {
+    if (this.holdingLock) {
+      this.api.unlockIncident(this.incidentId).subscribe({ error: () => undefined });
+    }
   }
 
   pickMethod(method: DispatchType): void {
@@ -275,7 +323,7 @@ export class CreateDispatch implements OnInit {
 
   submit(): void {
     const incident = this.incident();
-    if (!incident || this.selectedIds().size === 0 || this.submitting()) {
+    if (!incident || this.selectedIds().size === 0 || this.submitting() || this.lockMessage()) {
       return;
     }
 

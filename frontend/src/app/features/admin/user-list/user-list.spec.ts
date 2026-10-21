@@ -156,7 +156,7 @@ describe('UserList', () => {
 
       expect(forUser).toHaveBeenCalledWith('t1');
       expect(docTitles()).toEqual(['ID document', 'Splicing Cert']);
-      expect(el.querySelector('.ul-docs')!.textContent).toContain('ID document · id.pdf · 2 KB');
+      expect(el.querySelector('.ul-docs')!.textContent).toContain('Identification document · id.pdf · 2 KB');
       expect(el.querySelector('.ul-docs')!.textContent).toContain('3.0 MB');
       expect(el.querySelectorAll('.ul-doc button')).toHaveLength(2);
     });

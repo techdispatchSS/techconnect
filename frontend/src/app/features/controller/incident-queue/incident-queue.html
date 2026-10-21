@@ -24,7 +24,7 @@
     <button
       type="button"
       class="controller-btn controller-btn-primary"
-      [disabled]="!selected()"
+      [disabled]="!selected() || (!!lockedByOther(selected()!) && needsNew(selected()!))"
       (click)="openIncident()"
     >
       {{ selected() ? actionLabel(selected()!) : 'Create dispatch' }}
@@ -185,6 +185,11 @@
                     <span [class]="chipClass(row)" [attr.title]="stateOf(row).detail">{{
                       stateOf(row).chip
                     }}</span>
+                    @if (lockedByOther(row); as lock) {
+                      <span class="iq-lock-chip" title="They have it open to dispatch it"
+                        >{{ lock.byName }} is dispatching</span
+                      >
+                    }
                   </td>
                   <td class="iq-c-priority">
                     @if (row.priority) {

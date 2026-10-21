@@ -183,17 +183,57 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
     }
 
     @Test
-    void refusesTwoOfTheSameRequiredDocument() throws Exception {
-        Applicant a = Applicant.unique("twoids");
+    void aRequiredDocumentMayBeSeveralFilesLikeBothSidesOfAnId() throws Exception {
+        Applicant a = Applicant.unique("twosides");
         List<Part> parts = new java.util.ArrayList<>(requiredDocuments());
-        parts.add(file("ID again", "ID_DOCUMENT", "id2.pdf", "application/pdf", TestFiles.pdf()));
+        parts.add(file("ID back", "ID_DOCUMENT", "id-back.pdf", "application/pdf", TestFiles.pdf()));
+        parts.add(file("Bill page 2", "PROOF_OF_RESIDENCE", "bill-2.pdf", "application/pdf",
+                TestFiles.pdf()));
+
+        mvc.perform(multipartRequest(a, parts)).andExpect(status().isAccepted());
+
+        assertThat(documents.findByApplicationIdOrderByCreatedAtAsc(find(a).getId())).hasSize(5);
+    }
+
+    @Test
+    void refusesMoreFilesForOneRequiredDocumentThanItMayTake() throws Exception {
+        Applicant a = Applicant.unique("manyids");
+        List<Part> parts = new java.util.ArrayList<>(requiredDocuments());
+        for (int i = 0; i < DocumentKind.MAX_PER_REQUIRED; i++) {
+            parts.add(file("ID " + i, "ID_DOCUMENT", "id-" + i + ".pdf", "application/pdf",
+                    TestFiles.pdf()));
+        }
 
         mvc.perform(multipartRequest(a, parts))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value(
-                        org.hamcrest.Matchers.containsString("only one")));
+                        org.hamcrest.Matchers.containsString("at most 4 files for your identification document")));
 
         assertThat(exists(a)).isFalse();
+    }
+
+    @Test
+    void identificationNumbersFromAroundTheWorldAreAcceptedAsWritten() throws Exception {
+        for (String id : List.of("63-123456 A 12", "AB/1234/56", "A.123.456-7", "GHA-123456789-0",
+                "KE (12) 345678", "ÅKE 1234567")) {
+            Applicant a = Applicant.unique("id" + Math.abs(id.hashCode()));
+            a.address = NAIROBI;
+            a.idNumber = id;
+
+            submit(a, validPdf()).andExpect(status().isAccepted());
+        }
+    }
+
+    @Test
+    void anIdentificationNumberWithMarkupOrPunctuationItNeverHasIsRefused() throws Exception {
+        for (String id : List.of("<script>alert(1)", "123;DROP TABLE", "A'B 123 45", "<b>1234567</b>")) {
+            Applicant a = Applicant.unique("badid" + Math.abs(id.hashCode()));
+            a.address = NAIROBI;
+            a.idNumber = id;
+
+            mvc.perform(multipartRequest(a, allWith(validPdf()))).andExpect(status().isBadRequest());
+            assertThat(exists(a)).isFalse();
+        }
     }
 
     private static final String NAIROBI = """
@@ -739,8 +779,9 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
     /** The three documents every application must carry. */
     private static List<Part> requiredDocuments() {
         return List.of(
-                file("ID document", "ID_DOCUMENT", "id.pdf", "application/pdf", TestFiles.pdf()),
-                file("Matric certificate", "MATRIC_CERTIFICATE", "matric.pdf", "application/pdf",
+                file("Identification document", "ID_DOCUMENT", "id.pdf", "application/pdf",
+                        TestFiles.pdf()),
+                file("High school diploma", "MATRIC_CERTIFICATE", "matric.pdf", "application/pdf",
                         TestFiles.pdf()),
                 file("Proof of residence", "PROOF_OF_RESIDENCE", "residence.pdf",
                         "application/pdf", TestFiles.pdf()));

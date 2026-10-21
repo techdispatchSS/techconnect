@@ -40,10 +40,11 @@ public record SubmitApplicationRequest(
                         message = "must be a valid phone number")
                 String phone,
         // A national ID or passport number. South Africa's is checked in full (13 digits and its
-        // check digit) by ApplicationService once the country is known; elsewhere only its shape.
+        // check digit) by ApplicationService once the country is known; elsewhere only its shape:
+        // letters and digits with the separators real ones use (63-123456 A 12, AB/1234/56, 12.345).
         @NotBlank @Size(max = 32)
                 @Pattern(
-                        regexp = "^[A-Za-z0-9][A-Za-z0-9 /\\-]{2,30}[A-Za-z0-9]$",
+                        regexp = "^[\\p{L}\\p{N}][\\p{L}\\p{N} /.:#()_\\-]{1,30}[\\p{L}\\p{N}]$",
                         message = "must be a valid ID or passport number")
                 String idNumber,
         @NotNull @Valid AddressRequest address,

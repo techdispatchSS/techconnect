@@ -19,13 +19,7 @@ import {
 import { RouterLink } from '@angular/router';
 
 import { bindAddressRules } from '../../core/address-rules';
-import {
-  COUNTRIES,
-  DEFAULT_COUNTRY,
-  PROVINCES,
-  PROVINCE_LABELS,
-  isSouthAfrica,
-} from '../../core/address.models';
+import { COUNTRIES, PROVINCES, PROVINCE_LABELS } from '../../core/address.models';
 import { GooglePlacesService } from '../../core/google/google-places.service';
 import { requiredTrimmed, trimStrings } from '../../shared/form-text';
 import { MAX_SKILLS, joinSkills, parseSkills } from '../../shared/skill-list';
@@ -35,6 +29,7 @@ import {
   ACCEPT_ATTRIBUTE,
   DocumentKind,
   MAX_FILES,
+  MAX_FILES_PER_REQUIRED,
   MAX_FILE_BYTES,
   PickedDocument,
   REQUIRED_DOCUMENTS,
@@ -63,8 +58,9 @@ const NAME_PATTERN = onTrimmed(Validators.pattern(/^[\p{L}][\p{L} .'’-]*$/u));
 
 /**
  * Judges the ID number with spaces ignored, so "900101 5000 085" is accepted as typed. Only a
- * South African applicant is held to the South African format; elsewhere the numbers (national
- * ID, passport) vary too much for anything stricter than "looks like an identifier".
+ * South African applicant is held to the South African format; everywhere else the numbers
+ * (national ID, passport) vary too much for anything stricter than "looks like an identifier":
+ * letters and digits with the separators real ones use, such as 63-123456 A 12 or AB/1234/56.
  */
 function idNumberRule(country: () => string): ValidatorFn {
   return (control) => {
@@ -72,14 +68,14 @@ function idNumberRule(country: () => string): ValidatorFn {
     if (typeof value !== 'string' || value.trim() === '') {
       return null;
     }
-    if (isSouthAfrica(country())) {
+    if (country() === 'ZA') {
       return isValidSouthAfricanId(value) ? null : { saId: true };
     }
     return OTHER_ID.test(value.trim()) ? null : { otherId: true };
   };
 }
 
-const OTHER_ID = /^[A-Za-z0-9][A-Za-z0-9 /-]{2,30}[A-Za-z0-9]$/;
+const OTHER_ID = /^[\p{L}\p{N}][\p{L}\p{N} /.:#()_-]{1,30}[\p{L}\p{N}]$/u;
 
 /**
  * Public technician application. Deliberately not part of the sign-in screens: there is no
@@ -146,23 +142,25 @@ export class Apply {
 
   readonly canAddMore = computed(() => this.documents().length < MAX_FILES);
 
-  /** The ID, matric and proof-of-residence files the applicant has picked, by kind. */
+  /** The identification, diploma and proof-of-residence files picked, by kind; each has one or more. */
   readonly requiredDocs = computed(() => {
-    const byKind = new Map<DocumentKind, PickedDocument>();
+    const byKind = new Map<DocumentKind, PickedDocument[]>();
     for (const doc of this.documents()) {
       if (REQUIRED_DOCUMENTS.some((r) => r.kind === doc.kind)) {
-        byKind.set(doc.kind, doc);
+        byKind.set(doc.kind, [...(byKind.get(doc.kind) ?? []), doc]);
       }
     }
     return byKind;
   });
+  /** Problems with the files picked for a required document, by kind. */
+  readonly requiredProblems = signal<Partial<Record<DocumentKind, string[]>>>({});
   /** The optional, applicant-named certifications, in the order they were added. */
   readonly certifications = computed(() =>
     this.documents().filter((d) => d.kind === 'CERTIFICATE'),
   );
 
   private readonly missingRequired = computed(() =>
-    REQUIRED_DOCUMENTS.filter((r) => !this.requiredDocs().has(r.kind)).map((r) => r.kind),
+    REQUIRED_DOCUMENTS.filter((r) => !this.requiredDocs().get(r.kind)?.length).map((r) => r.kind),
   );
   /** Required documents still to upload; only reported after a submit attempt. */
   readonly missingKinds = computed(() => (this.triedToSubmit() ? this.missingRequired() : []));
@@ -171,8 +169,12 @@ export class Apply {
     this.certifications().filter((d) => d.title.trim() === ''),
   );
 
-  /** Held outside the form so the ID number's rule can read it as it is validated. */
-  private readonly countryControl = this.fb.nonNullable.control(DEFAULT_COUNTRY);
+  /**
+   * Held outside the form so the ID number's rule can read it as it is validated. Empty until the
+   * applicant chooses: nobody is assumed to be South African, and until they choose the form asks
+   * only for what is the same everywhere.
+   */
+  private readonly countryControl = this.fb.nonNullable.control('', [Validators.required]);
 
   readonly form = this.fb.nonNullable.group({
     firstName: ['', [requiredTrimmed, Validators.maxLength(100), NAME_PATTERN]],
@@ -213,7 +215,12 @@ export class Apply {
   readonly country = toSignal(this.countryControl.valueChanges, {
     initialValue: this.countryControl.value,
   });
-  readonly inSouthAfrica = computed(() => isSouthAfrica(this.country()));
+  readonly inSouthAfrica = computed(() => this.country() === 'ZA');
+  readonly countryChosen = computed(() => this.country() !== '');
+  /** The calling code of the chosen country, so the phone number can be asked for with it. */
+  readonly dialCode = computed(
+    () => COUNTRIES.find((c) => c.code === this.country())?.dialCode ?? '',
+  );
 
   constructor() {
     bindAddressRules(this.form.controls.address, this.destroyRef);
@@ -259,10 +266,18 @@ export class Apply {
 
   // --- documents -------------------------------------------------------------------------
 
-  /** One of the three required documents: choosing again replaces the earlier file. */
+  /** Whether another file can still go with a required document. */
+  canAddTo(kind: DocumentKind): boolean {
+    return (
+      (this.requiredDocs().get(kind)?.length ?? 0) < MAX_FILES_PER_REQUIRED &&
+      this.documents().length < MAX_FILES
+    );
+  }
+
+  /** One of the three required documents: every file picked goes with it, up to the limit. */
   onRequiredChosen(kind: DocumentKind, event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.setRequired(kind, Array.from(input.files ?? [])[0]);
+    this.addRequired(kind, Array.from(input.files ?? []));
     // So choosing the same file again after removing it still fires `change`.
     input.value = '';
   }
@@ -282,7 +297,7 @@ export class Apply {
   onDropRequired(event: DragEvent, kind: DocumentKind): void {
     event.preventDefault();
     this.dragging.set(null);
-    this.setRequired(kind, Array.from(event.dataTransfer?.files ?? [])[0]);
+    this.addRequired(kind, Array.from(event.dataTransfer?.files ?? []));
   }
 
   onDropCertification(event: DragEvent): void {
@@ -291,21 +306,38 @@ export class Apply {
     this.addCertifications(Array.from(event.dataTransfer?.files ?? []));
   }
 
-  private setRequired(kind: DocumentKind, file: File | undefined): void {
-    if (!file) {
+  private addRequired(kind: DocumentKind, files: File[]): void {
+    if (files.length === 0) {
       return;
     }
-    const problem = problemWithFile(file);
-    if (problem) {
-      this.fileProblems.set([problem]);
-      return;
-    }
-    this.fileProblems.set([]);
     const label = REQUIRED_DOCUMENTS.find((r) => r.kind === kind)!.label;
-    this.documents.update((current) => [
-      ...current.filter((d) => d.kind !== kind),
-      { key: this.nextKey++, file, kind, title: label },
-    ]);
+    const problems: string[] = [];
+    const accepted: PickedDocument[] = [];
+    const already = this.requiredDocs().get(kind)?.length ?? 0;
+
+    for (const file of files) {
+      if (already + accepted.length >= MAX_FILES_PER_REQUIRED) {
+        problems.push(
+          `You can add up to ${MAX_FILES_PER_REQUIRED} files for your ${label.toLowerCase()}.`,
+        );
+        break;
+      }
+      if (this.documents().length + accepted.length >= MAX_FILES) {
+        problems.push(`You can attach at most ${MAX_FILES} files.`);
+        break;
+      }
+      const problem = problemWithFile(file);
+      if (problem) {
+        problems.push(problem);
+        continue;
+      }
+      accepted.push({ key: this.nextKey++, file, kind, title: label });
+    }
+
+    this.requiredProblems.update((current) => ({ ...current, [kind]: problems }));
+    if (accepted.length > 0) {
+      this.documents.update((current) => [...current, ...accepted]);
+    }
   }
 
   private addCertifications(files: File[]): void {
@@ -343,6 +375,7 @@ export class Apply {
   removeDocument(key: number): void {
     this.documents.update((current) => current.filter((d) => d.key !== key));
     this.fileProblems.set([]);
+    this.requiredProblems.set({});
   }
 
   setTitle(key: number, value: string): void {
@@ -382,7 +415,7 @@ export class Apply {
           lastName: value.lastName,
           email: value.email,
           phone: value.phone,
-          idNumber: value.idNumber.replace(/\s+/g, ''),
+          idNumber: value.idNumber.replace(/\s+/g, '').toUpperCase(),
           address: value.address,
           experienceSummary: value.experienceSummary,
           skills: joinSkills(this.skills()),

@@ -190,8 +190,9 @@ public class ApplicationService {
     }
 
     /**
-     * Every application carries exactly one ID document, one matric certificate and one proof of
-     * residence. Certifications are optional and there can be several.
+     * Every application carries an identification document, a high school diploma and a proof of
+     * residence, each of one file or several (both sides of an ID, every page of a bill, up to
+     * {@link DocumentKind#MAX_PER_REQUIRED}). Certifications are optional and there can be several.
      */
     private void requireIdentityDocuments(List<DocumentMeta> metas) {
         List<DocumentKind> missing = new ArrayList<>();
@@ -199,8 +200,9 @@ public class ApplicationService {
             long count = metas.stream().filter(meta -> meta.kind() == kind).count();
             if (count == 0) {
                 missing.add(kind);
-            } else if (count > 1) {
-                throw ApiException.badRequest("Attach only one " + kind.label() + ".");
+            } else if (count > DocumentKind.MAX_PER_REQUIRED) {
+                throw ApiException.badRequest("Attach at most " + DocumentKind.MAX_PER_REQUIRED
+                        + " files for your " + kind.label() + ".");
             }
         }
         if (!missing.isEmpty()) {

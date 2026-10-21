@@ -15,10 +15,12 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, interval, startWith } from 'rxjs';
 
+import { AuthService } from '../../../core/auth/auth.service';
 import { ControllerApiService } from '../controller-api.service';
 import {
   Incident,
   IncidentKpis,
+  IncidentLock,
   IncidentPriority,
   PRIORITY_LABELS,
   QUEUE_TABS,
@@ -48,6 +50,7 @@ const PAGE_SIZE = 20;
 })
 export class IncidentQueue implements OnInit {
   private readonly api = inject(ControllerApiService);
+  private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -262,7 +265,22 @@ export class IncidentQueue implements OnInit {
     this.router.navigate(['/incidents', segment, incident.id]);
   }
 
+  /** Whether it is waiting for a (new) dispatch, as opposed to one already out or taken. */
+  needsNew(incident: Incident): boolean {
+    return needsNewDispatch(incident.dispatch);
+  }
+
+  /** Someone other than this controller is dispatching it right now. */
+  lockedByOther(incident: Incident): IncidentLock | null {
+    const lock = incident.lock;
+    return lock && lock.byId !== this.auth.currentUser()?.userId ? lock : null;
+  }
+
   actionLabel(incident: Incident): string {
+    const lock = this.lockedByOther(incident);
+    if (lock && needsNewDispatch(incident.dispatch)) {
+      return `${lock.byName} is dispatching`;
+    }
     if (!incident.dispatch) {
       return 'Create dispatch';
     }

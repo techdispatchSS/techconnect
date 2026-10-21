@@ -30,5 +30,8 @@ public record IncidentResponse(
          * "Create dispatch" versus "View progress" accordingly. */
         boolean hasDispatch,
         /** The latest dispatch and how it stands; null if none has been sent. */
-        DispatchSummary dispatch) {
+        DispatchSummary dispatch,
+        /** The controller dispatching it right now, so no one else starts the same dispatch;
+         * null when nobody is. */
+        IncidentLock lock) {
 }

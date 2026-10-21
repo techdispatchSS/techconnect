@@ -343,6 +343,13 @@
 
 // Where the dispatch stands, in the row and on the ticket. "Waiting" is the live state, so it is
 // the one that carries the accent; the rest are quieter.
+.iq-lock-chip {
+  display: block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--controller-color-accent-text-soft);
+  white-space: nowrap;
+}
 .iq-dispatch-chip {
   display: inline-block;
   font-size: 11.5px;

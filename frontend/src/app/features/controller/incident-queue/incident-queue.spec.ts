@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
-import { AuthService } from '../../../core/auth/auth.service';
 import { ControllerApiService } from '../controller-api.service';
 import {
   DispatchSummary,
@@ -40,7 +39,6 @@ function incident(over: Partial<Incident> = {}): Incident {
     requiredSkills: [],
     hasDispatch: false,
     dispatch: null,
-    lock: null,
     ...over,
   };
 }
@@ -117,8 +115,6 @@ describe('IncidentQueue', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        // Signed in as the controller whose id is "me".
-        { provide: AuthService, useValue: { currentUser: signal({ userId: 'me' }) } },
         ...(options.selected
           ? [
               {
@@ -454,46 +450,6 @@ describe('IncidentQueue', () => {
       await new Promise((resolve) => setTimeout(resolve));
 
       expect(scrollIntoView).not.toHaveBeenCalled();
-    });
-  });
-  describe('dispatch lock', () => {
-    const theirLock = {
-      byId: 'someone-else',
-      byName: 'Sarah Dlamini',
-      expiresAt: new Date(Date.now() + 90_000).toISOString(),
-    };
-
-    it('says who is dispatching an incident, and stops this controller starting it too', async () => {
-      await setup([incident({ lock: theirLock })]);
-
-      expect(el.querySelector('.iq-lock-chip')!.textContent).toContain(
-        'Sarah Dlamini is dispatching',
-      );
-
-      (el.querySelector('.iq-ticket-btn') as HTMLElement).click();
-      await fixture.whenStable();
-
-      const button = Array.from(el.querySelectorAll<HTMLButtonElement>('.iq-toolbar button')).find(
-        (b) => b.textContent!.includes('is dispatching'),
-      )!;
-      expect(button.disabled).toBe(true);
-    });
-
-    it('says nothing about a hold this controller has themselves', async () => {
-      await setup([incident({ lock: { ...theirLock, byId: 'me', byName: 'Me' } })]);
-
-      expect(el.querySelector('.iq-lock-chip')).toBeNull();
-      (el.querySelector('.iq-ticket-btn') as HTMLElement).click();
-      await fixture.whenStable();
-      const button = Array.from(el.querySelectorAll<HTMLButtonElement>('.iq-toolbar button')).find(
-        (b) => b.textContent!.includes('Create dispatch'),
-      )!;
-      expect(button.disabled).toBe(false);
-    });
-
-    it('says nothing when nobody is dispatching it', async () => {
-      await setup([incident()]);
-      expect(el.querySelector('.iq-lock-chip')).toBeNull();
     });
   });
 });

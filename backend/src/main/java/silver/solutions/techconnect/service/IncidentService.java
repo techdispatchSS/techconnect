@@ -75,8 +75,7 @@ public class IncidentService {
         Map<UUID, Dispatch> latestByIncident = latestDispatchesFor(page);
 
         Map<UUID, List<DispatchResponse>> responsesByDispatch = responsesFor(latestByIncident.values());
-        Map<UUID, String> acceptedNames = new HashMap<>(acceptedNames(responsesByDispatch));
-        acceptedNames.putAll(lockHolderNames(page.getContent()));
+        Map<UUID, String> acceptedNames = acceptedNames(responsesByDispatch);
 
         return PageResponse.of(page, incident -> {
             Dispatch latest = latestByIncident.get(incident.getId());
@@ -142,14 +141,13 @@ public class IncidentService {
         Incident incident = require(id);
         Dispatch latest = dispatches.findByIncidentIdOrderByCreatedAtDesc(id)
                 .stream().findFirst().orElse(null);
-        Map<UUID, String> names = new HashMap<>(lockHolderNames(List.of(incident)));
         if (latest == null) {
-            return incidentMapper.toIncidentResponse(incident, null, List.of(), names);
+            return incidentMapper.toIncidentResponse(incident, null, List.of(), Map.of());
         }
         Map<UUID, List<DispatchResponse>> responses = responsesFor(List.of(latest));
-        names.putAll(acceptedNames(responses));
         return incidentMapper.toIncidentResponse(
-                incident, latest, responses.getOrDefault(latest.getId(), List.of()), names);
+                incident, latest, responses.getOrDefault(latest.getId(), List.of()),
+                acceptedNames(responses));
     }
 
     /**
@@ -179,21 +177,6 @@ public class IncidentService {
                 incidents.countUnassigned(IncidentStatus.CLOSED, DispatchStatus.EXPIRED),
                 incidents.countByStatus(IncidentStatus.IN_PROGRESS),
                 incidents.countOverdue(IncidentStatus.CLOSED, IncidentStatus.OVERDUE, Instant.now()));
-    }
-
-    /** Names for whoever currently holds a dispatch lock on these incidents. */
-    private Map<UUID, String> lockHolderNames(java.util.Collection<Incident> page) {
-        Instant now = Instant.now();
-        List<UUID> holders = page.stream()
-                .map(i -> i.liveLockHolder(now))
-                .filter(java.util.Objects::nonNull)
-                .distinct()
-                .toList();
-        if (holders.isEmpty()) {
-            return Map.of();
-        }
-        return users.findAllById(holders).stream()
-                .collect(Collectors.toMap(User::getId, User::getName));
     }
 
     private Map<UUID, List<DispatchResponse>> responsesFor(java.util.Collection<Dispatch> dispatchList) {

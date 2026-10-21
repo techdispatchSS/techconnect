@@ -53,7 +53,7 @@ class IncidentLockIntegrationTest extends AbstractDispatchIntegrationTest {
     }
 
     @Test
-    void openingAnIncidentTakesItAndTheQueueShowsWhoHasIt() throws Exception {
+    void openingAnIncidentTakesItButTheQueueSaysNothingAboutIt() throws Exception {
         String ann = controllerToken();
         Incident incident = incident("OpensTheLockCo", IncidentStatus.NEW, IncidentPriority.HIGH);
 
@@ -61,16 +61,14 @@ class IncidentLockIntegrationTest extends AbstractDispatchIntegrationTest {
         assertThat((String) JsonPath.read(body, "$.byName")).isEqualTo("Test Controller");
         assertThat(Instant.parse(JsonPath.read(body, "$.expiresAt"))).isAfter(Instant.now());
 
-        String holder = JsonPath.read(body, "$.byId");
+        // Another controller learns of it only by opening the incident to dispatch it: neither
+        // the incident nor the queue says who has it.
         mvc.perform(get("/v1/controller/incidents/{id}", incident.getId())
                         .header("Authorization", auth(controllerToken())))
-                .andExpect(jsonPath("$.lock.byId").value(holder))
-                .andExpect(jsonPath("$.lock.byName").value("Test Controller"));
-
-        // The list says so too, which is what the queue reads.
+                .andExpect(jsonPath("$.lock").doesNotExist());
         mvc.perform(get("/v1/controller/incidents").param("q", "OpensTheLockCo")
                         .header("Authorization", auth(controllerToken())))
-                .andExpect(jsonPath("$.content[0].lock.byId").value(holder));
+                .andExpect(jsonPath("$.content[0].lock").doesNotExist());
     }
 
     @Test
@@ -115,9 +113,8 @@ class IncidentLockIntegrationTest extends AbstractDispatchIntegrationTest {
         incidents.save(held);
 
         lockBody(ben, incident.getId(), 200);
-        mvc.perform(get("/v1/controller/incidents/{id}", incident.getId())
-                        .header("Authorization", auth(ann)))
-                .andExpect(jsonPath("$.lock").isNotEmpty());
+        // Now Ann is the one turned away.
+        lockBody(ann, incident.getId(), 409);
     }
 
     @Test

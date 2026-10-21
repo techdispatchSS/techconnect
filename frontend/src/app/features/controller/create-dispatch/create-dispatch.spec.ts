@@ -64,6 +64,7 @@ describe('CreateDispatch', () => {
   let createDispatch: ReturnType<typeof vi.fn>;
   let lockIncident: ReturnType<typeof vi.fn>;
   let unlockIncident: ReturnType<typeof vi.fn>;
+  let getIncident: ReturnType<typeof vi.fn>;
 
   async function setup(
     dispatch: DispatchSummary | null,
@@ -88,6 +89,7 @@ describe('CreateDispatch', () => {
     createDispatch = vi.fn(() =>
       of({ id: 'd2', incidentId: 'inc-1', dispatchType: 'BROADCAST', status: 'PENDING' }),
     );
+    getIncident = vi.fn(() => of(incident));
     lockIncident = vi.fn(() =>
       options.lockedBy ? throwError(() => lockRefusal(options.lockedBy!)) : of({}),
     );
@@ -104,7 +106,7 @@ describe('CreateDispatch', () => {
         {
           provide: ControllerApiService,
           useValue: {
-            getIncident: () => of(incident),
+            getIncident,
             recommendTechnicians: () => of(technicians),
             createDispatch,
             lockIncident,
@@ -213,6 +215,66 @@ describe('CreateDispatch', () => {
     it('does not flash the form before it knows whether the incident is taken', async () => {
       await setup(null, [TECH], { lockedBy: 'Sarah Dlamini' });
       expect(el.querySelector('.cd-body')).toBeNull();
+    });
+
+    describe('when blocked', () => {
+      beforeEach(() => vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] }));
+      afterEach(() => vi.useRealTimers());
+
+      it('opens within seconds of the other controller leaving, not at the slow renewal', async () => {
+        await setup(null, [TECH], { lockedBy: 'Sarah Dlamini' });
+        expect(el.querySelector('.cd-blocked')).not.toBeNull();
+
+        // Sarah leaves: her hold is released, so the next look succeeds.
+        lockIncident.mockImplementation(() => of({}));
+        vi.advanceTimersByTime(3_000);
+        await fixture.whenStable();
+
+        expect(el.querySelector('.cd-blocked')).toBeNull();
+        expect(el.textContent).toContain('Broadcast job');
+      });
+
+      it('keeps looking while it is still taken', async () => {
+        await setup(null, [TECH], { lockedBy: 'Sarah Dlamini' });
+        const before = lockIncident.mock.calls.length;
+
+        vi.advanceTimersByTime(9_000);
+        await fixture.whenStable();
+
+        expect(lockIncident.mock.calls.length - before).toBe(3);
+        expect(el.querySelector('.cd-blocked')).not.toBeNull();
+      });
+
+      it('goes to where it stands if the other controller sent it meanwhile', async () => {
+        await setup(null, [TECH], { lockedBy: 'Sarah Dlamini' });
+
+        // Sarah sent it: the incident now has a dispatch out, and is still "taken".
+        getIncident.mockImplementation(() =>
+          of({
+            id: 'inc-1',
+            requiredSkills: [],
+            hasDispatch: true,
+            dispatch: summary(),
+          } as unknown as Incident),
+        );
+        vi.advanceTimersByTime(3_000);
+        await fixture.whenStable();
+
+        expect(navigate).toHaveBeenCalledWith(['/incidents/progress', 'inc-1'], {
+          replaceUrl: true,
+        });
+      });
+
+      it('does not nag while it holds the incident itself', async () => {
+        await setup(null);
+        const before = lockIncident.mock.calls.length;
+
+        vi.advanceTimersByTime(9_000);
+        await fixture.whenStable();
+
+        // Only the slow renewal applies; nothing at the blocked screen's quick pace.
+        expect(lockIncident.mock.calls.length).toBe(before);
+      });
     });
 
     it('does not try to let go of a hold it never had', async () => {

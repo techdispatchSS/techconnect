@@ -13,6 +13,8 @@ import { Skeleton } from '../../../shared/skeleton/skeleton';
 
 /** How often the hold on the incident is renewed; the server's hold lasts two minutes. */
 const LOCK_RENEWAL_MS = 40_000;
+/** How often a blocked screen looks again to see whether the other controller has left. */
+const LOCK_RETRY_MS = 3_000;
 
 function splitList(raw: string): string[] {
   return raw
@@ -214,31 +216,25 @@ export class CreateDispatch implements OnInit, OnDestroy {
   );
 
   ngOnInit(): void {
-    this.api.getIncident(this.incidentId).subscribe({
-      next: (incident) => {
-        // Already sent (and still out, or taken): there is nothing to create here. Show where
-        // it stands instead of a form whose send button would only be refused. `replaceUrl` so
-        // the browser's Back button doesn't land on this form again.
-        if (!needsNewDispatch(incident.dispatch)) {
-          void this.router.navigate(['/incidents/progress', incident.id], { replaceUrl: true });
-          return;
-        }
-        this.incident.set(incident);
-        this.form.patchValue({
-          requiredSkills: incident.requiredSkills.join(', '),
-          slaResponse: incident.sla ?? '',
-          siteContact: incident.contactName
-            ? `${incident.contactName}${incident.contactPhone ? ' · ' + incident.contactPhone : ''}`
-            : '',
-        });
-      },
-      error: () => this.loadFailed.set(true),
-    });
+    this.loadIncident();
 
     this.holdIncident();
+    // Holding it: renew now and then. Blocked: look again every few seconds, so the screen opens
+    // almost the moment the other controller leaves rather than at the next slow renewal.
     interval(LOCK_RENEWAL_MS)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.holdIncident());
+      .subscribe(() => {
+        if (!this.lockMessage()) {
+          this.holdIncident();
+        }
+      });
+    interval(LOCK_RETRY_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.lockMessage()) {
+          this.holdIncident();
+        }
+      });
 
     this.form.controls.requiredSkills.valueChanges
       .pipe(
@@ -260,6 +256,30 @@ export class CreateDispatch implements OnInit, OnDestroy {
       });
   }
 
+  /** Reads the incident; sends the controller to its progress if a dispatch is already out. */
+  private loadIncident(): void {
+    this.api.getIncident(this.incidentId).subscribe({
+      next: (incident) => {
+        // Already sent (and still out, or taken): there is nothing to create here. Show where
+        // it stands instead of a form whose send button would only be refused. `replaceUrl` so
+        // the browser's Back button doesn't land on this form again.
+        if (!needsNewDispatch(incident.dispatch)) {
+          void this.router.navigate(['/incidents/progress', incident.id], { replaceUrl: true });
+          return;
+        }
+        this.incident.set(incident);
+        this.form.patchValue({
+          requiredSkills: incident.requiredSkills.join(', '),
+          slaResponse: incident.sla ?? '',
+          siteContact: incident.contactName
+            ? `${incident.contactName}${incident.contactPhone ? ' · ' + incident.contactPhone : ''}`
+            : '',
+        });
+      },
+      error: () => this.loadFailed.set(true),
+    });
+  }
+
   /**
    * Takes the hold on the incident, and renews it. A refusal means someone else has it (or took it
    * after this one lapsed), and the form stops offering to send.
@@ -267,14 +287,25 @@ export class CreateDispatch implements OnInit, OnDestroy {
   private holdIncident(): void {
     this.api.lockIncident(this.incidentId).subscribe({
       next: () => {
+        const wasBlocked = this.lockMessage() !== null;
         this.holdingLock = true;
         this.lockMessage.set(null);
         this.lockChecked.set(true);
+        // It was taken and is free now. What they did meanwhile may have changed it (they may
+        // have sent it), so read it again, which also moves on if a dispatch is out.
+        if (wasBlocked) {
+          this.loadIncident();
+        }
       },
       error: (error: unknown) => {
         this.lockChecked.set(true);
         if (error instanceof HttpErrorResponse && error.status === 409) {
           this.holdingLock = false;
+          // Still blocked: if they sent it, there is nothing left to dispatch, so go to where it
+          // stands instead of waiting here.
+          if (this.lockMessage() !== null) {
+            this.loadIncident();
+          }
           this.lockMessage.set(
             (error.error as { error?: string } | null)?.error ??
               'Someone else is dispatching this incident.',

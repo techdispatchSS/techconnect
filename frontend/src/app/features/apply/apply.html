@@ -494,9 +494,21 @@
             (change)="onCertificationChosen($event)"
           />
           <span class="ap-drop-title">
-            {{ canAddMore() ? 'Click here to upload a certification' : 'File limit reached' }}
+            @if (!canAddMore()) {
+              File limit reached
+            } @else if (certifications().length > 0) {
+              Click here to upload another certification
+            } @else {
+              Click here to upload a certification
+            }
           </span>
-          <span class="ap-drop-sub">PDF preferred, JPG or PNG also fine, or drop it here</span>
+          <span class="ap-drop-sub">
+            @if (certifications().length > 0 && canAddMore()) {
+              Add as many as you need. PDF preferred, JPG or PNG also fine, or drop it here
+            } @else {
+              PDF preferred, JPG or PNG also fine, or drop it here
+            }
+          </span>
         </label>
 
         @for (problem of fileProblems(); track problem) {

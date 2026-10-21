@@ -344,6 +344,11 @@ describe('Apply', () => {
 
     await attach(pdf('scan0042.pdf'));
 
+    // Once one is up, the invitation says another can follow.
+    const invitation = el.querySelector('.ap-drop--cert')!.textContent!;
+    expect(invitation).toContain('Click here to upload another certification');
+    expect(invitation).toContain('Add as many as you need');
+
     const name = el.querySelector<HTMLInputElement>('input[id^="ap-doc-title-"]')!;
     expect(name.value).toBe('');
     expect(el.textContent).toContain('What is this certification called?');

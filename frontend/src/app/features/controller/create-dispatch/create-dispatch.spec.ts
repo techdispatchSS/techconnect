@@ -190,20 +190,29 @@ describe('CreateDispatch', () => {
       }
     });
 
-    it('says who has it, and will not send, when another controller is dispatching it', async () => {
+    it('shows only that someone else is dispatching it, with nothing to click but the way out', async () => {
       await setup(null, [TECH], { lockedBy: 'Sarah Dlamini' });
 
-      expect(el.querySelector('.cd-lock')!.textContent).toContain('Sarah Dlamini is dispatching');
+      expect(el.querySelector('.cd-blocked')!.textContent).toContain(
+        'Someone else is dispatching this',
+      );
+      expect(el.textContent).toContain('Sarah Dlamini is dispatching');
 
-      (el.querySelector('.cd-table-card tbody tr') as HTMLElement).click();
-      await fixture.whenStable();
-      const send = Array.from(el.querySelectorAll('button')).find((b) =>
-        b.textContent!.includes('Broadcast job'),
-      ) as HTMLButtonElement;
-      expect(send.disabled).toBe(true);
-      send.click();
-      await fixture.whenStable();
+      // None of the dispatch screen is there: no details, no technicians, no way to send.
+      expect(el.querySelector('.cd-body')).toBeNull();
+      expect(el.querySelector('.cd-table-card')).toBeNull();
+      expect(el.querySelector('.cd-meta')).toBeNull();
+      expect(el.textContent).not.toContain('Broadcast job');
+      const actions = Array.from(el.querySelectorAll('a, button')).map((n) =>
+        n.textContent!.trim(),
+      );
+      expect(actions).toEqual(['Back to queue']);
       expect(createDispatch).not.toHaveBeenCalled();
+    });
+
+    it('does not flash the form before it knows whether the incident is taken', async () => {
+      await setup(null, [TECH], { lockedBy: 'Sarah Dlamini' });
+      expect(el.querySelector('.cd-body')).toBeNull();
     });
 
     it('does not try to let go of a hold it never had', async () => {

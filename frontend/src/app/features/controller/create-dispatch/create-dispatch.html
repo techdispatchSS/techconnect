@@ -1,5 +1,21 @@
-@if (loadFailed()) {
+@if (lockMessage(); as message) {
+  <!-- Someone else is dispatching it: this is all the controller sees, and there is nothing to
+       click but the way out. -->
+  <div class="cd-blocked" role="alertdialog" aria-labelledby="cd-blocked-title">
+    <div class="controller-card cd-blocked-card">
+      <h2 id="cd-blocked-title" class="cd-blocked-title">Someone else is dispatching this</h2>
+      <p class="cd-blocked-text">{{ message }}</p>
+      <a routerLink="/incidents/queue" class="controller-btn controller-btn-primary"
+        >Back to queue</a
+      >
+    </div>
+  </div>
+} @else if (loadFailed()) {
   <p class="cd-empty">Couldn't load that incident.</p>
+} @else if (!lockChecked()) {
+  <div class="cd" aria-busy="true" aria-label="Opening the incident">
+    <div class="controller-card cd-meta"><app-skeleton width="30rem" height="36px" /></div>
+  </div>
 } @else if (incident(); as inc) {
   <div class="cd">
     <div class="controller-card cd-meta">
@@ -27,16 +43,6 @@
         >Back to queue</a
       >
     </div>
-
-    @if (lockMessage(); as message) {
-      <div class="controller-card cd-lock" role="alert">
-        <span class="cd-lock-title">Someone else is dispatching this</span>
-        <span class="cd-lock-text">{{ message }}</span>
-        <a routerLink="/incidents/queue" class="controller-btn controller-btn-secondary"
-          >Back to queue</a
-        >
-      </div>
-    }
 
     <div class="cd-body">
       <section class="controller-card cd-details" [formGroup]="form">
@@ -295,7 +301,7 @@
           <button
             type="button"
             class="controller-btn controller-btn-primary"
-            [disabled]="selectedIds().size === 0 || submitting() || !!lockMessage()"
+            [disabled]="selectedIds().size === 0 || submitting()"
             (click)="submit()"
           >
             {{

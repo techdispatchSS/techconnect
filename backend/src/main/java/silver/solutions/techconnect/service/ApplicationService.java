@@ -111,7 +111,7 @@ public class ApplicationService {
         }
 
         // Checked before anything is uploaded, so repeat/blocked submissions cost no storage.
-        if (isKnown(email, emailKey, phoneKey, idNumber)) {
+        if (isKnown(email, emailKey, phoneKey, idNumber, request.address().countryOrDefault())) {
             log.info("Application discarded: applicant already known");
             pause();
             return;
@@ -130,7 +130,7 @@ public class ApplicationService {
             // The unique indexes are the real guard: two simultaneous submissions both pass the
             // check above, and the database lets exactly one through. Anything else that trips a
             // constraint is a genuine bug and must not be silently swallowed.
-            if (isKnown(email, emailKey, phoneKey, idNumber)) {
+            if (isKnown(email, emailKey, phoneKey, idNumber, request.address().countryOrDefault())) {
                 log.info("Application discarded: lost a race with an identical submission");
                 pause();
                 return;
@@ -216,8 +216,10 @@ public class ApplicationService {
                 + ".";
     }
 
-    private boolean isKnown(String email, String emailKey, String phoneKey, String idNumber) {
-        return applications.existsByEmailNormalizedOrPhoneNormalizedOrIdNumber(emailKey, phoneKey, idNumber)
+    private boolean isKnown(
+            String email, String emailKey, String phoneKey, String idNumber,
+            silver.solutions.techconnect.entity.Country country) {
+        return applications.existsByAnyIdentifier(emailKey, phoneKey, idNumber, country)
                 || users.existsByEmailIgnoreCase(email);
     }
 

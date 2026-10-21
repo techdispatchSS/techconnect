@@ -290,6 +290,34 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         assertThat(exists(again)).isFalse();
     }
 
+    private static final String ACCRA = """
+            {"street":"4 Ring Road","city":"Accra","province":"Greater Accra","country":"GH"}""";
+
+    @Test
+    void anIdNumberIsUniqueWithinItsCountryNotAcrossTheWorld() throws Exception {
+        String number = "AB" + (long) (Math.random() * 90_000_000L + 10_000_000L);
+
+        Applicant kenyan = Applicant.unique("id-ke");
+        kenyan.address = NAIROBI;
+        kenyan.idNumber = number;
+        submit(kenyan, validPdf()).andExpect(status().isAccepted());
+
+        // The same string issued by another country is a different person, not a repeat.
+        Applicant ghanaian = Applicant.unique("id-gh");
+        ghanaian.address = ACCRA;
+        ghanaian.idNumber = number;
+        submit(ghanaian, validPdf()).andExpect(status().isAccepted());
+        assertThat(exists(kenyan)).isTrue();
+        assertThat(exists(ghanaian)).as("not discarded as a repeat of the Kenyan").isTrue();
+
+        // Within one country it is a repeat, whatever else was changed.
+        Applicant again = Applicant.unique("id-ke-again");
+        again.address = NAIROBI;
+        again.idNumber = number;
+        submit(again, validPdf()).andExpect(status().isAccepted());
+        assertThat(exists(again)).as("quietly discarded: same number, same country").isFalse();
+    }
+
     @Test
     void anInvalidProvinceForSouthAfricaOrAMalformedPostcodeIsRefused() throws Exception {
         Applicant a = Applicant.unique("badprovince");

@@ -129,6 +129,9 @@ export class CreateDispatch implements OnInit, OnDestroy {
    * The screen holds the incident while it is open, so two controllers do not both send it out.
    */
   readonly lockMessage = signal<string | null>(null);
+  /** Whether the first attempt to take the incident has been answered, so the form is never shown
+   * for a moment to someone who is about to be told it is taken. */
+  readonly lockChecked = signal(false);
   private holdingLock = false;
 
   readonly form = this.fb.nonNullable.group({
@@ -266,8 +269,10 @@ export class CreateDispatch implements OnInit, OnDestroy {
       next: () => {
         this.holdingLock = true;
         this.lockMessage.set(null);
+        this.lockChecked.set(true);
       },
       error: (error: unknown) => {
+        this.lockChecked.set(true);
         if (error instanceof HttpErrorResponse && error.status === 409) {
           this.holdingLock = false;
           this.lockMessage.set(

@@ -18,6 +18,7 @@ function person(id: string, name: string, role: UserRole): AdminUser {
     email: `${id}@example.com`,
     phone: null,
     address: {
+      country: 'ZA',
       street: '1 Test Street',
       suburb: 'Bryanston',
       city: 'Sandton',
@@ -155,7 +156,9 @@ describe('UserList', () => {
 
       expect(forUser).toHaveBeenCalledWith('t1');
       expect(docTitles()).toEqual(['ID document', 'Splicing Cert']);
-      expect(el.querySelector('.ul-docs')!.textContent).toContain('ID document · id.pdf · 2 KB');
+      expect(el.querySelector('.ul-docs')!.textContent).toContain(
+        'Identification document · id.pdf · 2 KB',
+      );
       expect(el.querySelector('.ul-docs')!.textContent).toContain('3.0 MB');
       expect(el.querySelectorAll('.ul-doc button')).toHaveLength(2);
     });

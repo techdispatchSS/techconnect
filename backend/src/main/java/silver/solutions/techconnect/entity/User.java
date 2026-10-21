@@ -47,6 +47,13 @@ public class User {
     @Column(nullable = false)
     private String name;
 
+    /**
+     * IANA zone id ("Africa/Nairobi") the person is in, reported by their browser at sign-in. Used
+     * to say times in their own zone in emails. Null until they first sign in.
+     */
+    @Column(name = "time_zone")
+    private String timeZone;
+
     private String phone;
 
     /**

@@ -1,7 +1,8 @@
 import { Component, input, provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 
 import { ControllerApiService } from '../controller-api.service';
 import { DispatchSummary, Incident, TechnicianCandidate } from '../controller.models';
@@ -48,15 +49,27 @@ const TECH: TechnicianCandidate = {
   status: 'AVAILABLE',
 };
 
+/** What the server says when another controller already has the incident open. */
+function lockRefusal(name: string): HttpErrorResponse {
+  return new HttpErrorResponse({
+    status: 409,
+    error: { error: `${name} is dispatching this incident right now. Try again in a moment.` },
+  });
+}
+
 describe('CreateDispatch', () => {
   let fixture: ComponentFixture<CreateDispatch>;
   let el: HTMLElement;
   let navigate: ReturnType<typeof vi.spyOn>;
   let createDispatch: ReturnType<typeof vi.fn>;
+  let lockIncident: ReturnType<typeof vi.fn>;
+  let unlockIncident: ReturnType<typeof vi.fn>;
+  let getIncident: ReturnType<typeof vi.fn>;
 
   async function setup(
     dispatch: DispatchSummary | null,
     technicians: TechnicianCandidate[] = [TECH],
+    options: { lockedBy?: string } = {},
   ): Promise<void> {
     const incident = {
       id: 'inc-1',
@@ -76,6 +89,11 @@ describe('CreateDispatch', () => {
     createDispatch = vi.fn(() =>
       of({ id: 'd2', incidentId: 'inc-1', dispatchType: 'BROADCAST', status: 'PENDING' }),
     );
+    getIncident = vi.fn(() => of(incident));
+    lockIncident = vi.fn(() =>
+      options.lockedBy ? throwError(() => lockRefusal(options.lockedBy!)) : of({}),
+    );
+    unlockIncident = vi.fn(() => of(undefined));
 
     TestBed.configureTestingModule({
       providers: [
@@ -88,9 +106,11 @@ describe('CreateDispatch', () => {
         {
           provide: ControllerApiService,
           useValue: {
-            getIncident: () => of(incident),
+            getIncident,
             recommendTechnicians: () => of(technicians),
             createDispatch,
+            lockIncident,
+            unlockIncident,
           },
         },
       ],
@@ -146,6 +166,127 @@ describe('CreateDispatch', () => {
 
     expect(createDispatch).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith(['/incidents/progress', 'inc-1'], { replaceUrl: true });
+  });
+
+  describe('holding the incident while dispatching it', () => {
+    it('takes the incident when the screen opens, and lets go when it is left', async () => {
+      await setup(null);
+      expect(lockIncident).toHaveBeenCalledWith('inc-1');
+
+      fixture.destroy();
+      expect(unlockIncident).toHaveBeenCalledWith('inc-1');
+    });
+
+    it('keeps renewing the hold while the screen stays open', async () => {
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+      try {
+        await setup(null);
+        expect(lockIncident).toHaveBeenCalledTimes(1);
+
+        vi.advanceTimersByTime(40_000);
+        expect(lockIncident).toHaveBeenCalledTimes(2);
+        vi.advanceTimersByTime(40_000);
+        expect(lockIncident).toHaveBeenCalledTimes(3);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('shows only that someone else is dispatching it, with nothing to click but the way out', async () => {
+      await setup(null, [TECH], { lockedBy: 'Sarah Dlamini' });
+
+      expect(el.querySelector('.cd-blocked')!.textContent).toContain(
+        'Someone else is dispatching this',
+      );
+      expect(el.textContent).toContain('Sarah Dlamini is dispatching');
+
+      // None of the dispatch screen is there: no details, no technicians, no way to send.
+      expect(el.querySelector('.cd-body')).toBeNull();
+      expect(el.querySelector('.cd-table-card')).toBeNull();
+      expect(el.querySelector('.cd-meta')).toBeNull();
+      expect(el.textContent).not.toContain('Broadcast job');
+      const actions = Array.from(el.querySelectorAll('a, button')).map((n) =>
+        n.textContent!.trim(),
+      );
+      expect(actions).toEqual(['Back to queue']);
+      expect(createDispatch).not.toHaveBeenCalled();
+    });
+
+    it('does not flash the form before it knows whether the incident is taken', async () => {
+      await setup(null, [TECH], { lockedBy: 'Sarah Dlamini' });
+      expect(el.querySelector('.cd-body')).toBeNull();
+    });
+
+    describe('when blocked', () => {
+      beforeEach(() => vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] }));
+      afterEach(() => vi.useRealTimers());
+
+      it('opens within seconds of the other controller leaving, not at the slow renewal', async () => {
+        await setup(null, [TECH], { lockedBy: 'Sarah Dlamini' });
+        expect(el.querySelector('.cd-blocked')).not.toBeNull();
+
+        // Sarah leaves: her hold is released, so the next look succeeds.
+        lockIncident.mockImplementation(() => of({}));
+        vi.advanceTimersByTime(3_000);
+        await fixture.whenStable();
+
+        expect(el.querySelector('.cd-blocked')).toBeNull();
+        expect(el.textContent).toContain('Broadcast job');
+      });
+
+      it('keeps looking while it is still taken', async () => {
+        await setup(null, [TECH], { lockedBy: 'Sarah Dlamini' });
+        const before = lockIncident.mock.calls.length;
+
+        vi.advanceTimersByTime(9_000);
+        await fixture.whenStable();
+
+        expect(lockIncident.mock.calls.length - before).toBe(3);
+        expect(el.querySelector('.cd-blocked')).not.toBeNull();
+      });
+
+      it('goes to where it stands if the other controller sent it meanwhile', async () => {
+        await setup(null, [TECH], { lockedBy: 'Sarah Dlamini' });
+
+        // Sarah sent it: the incident now has a dispatch out, and is still "taken".
+        getIncident.mockImplementation(() =>
+          of({
+            id: 'inc-1',
+            requiredSkills: [],
+            hasDispatch: true,
+            dispatch: summary(),
+          } as unknown as Incident),
+        );
+        vi.advanceTimersByTime(3_000);
+        await fixture.whenStable();
+
+        expect(navigate).toHaveBeenCalledWith(['/incidents/progress', 'inc-1'], {
+          replaceUrl: true,
+        });
+      });
+
+      it('does not nag while it holds the incident itself', async () => {
+        await setup(null);
+        const before = lockIncident.mock.calls.length;
+
+        vi.advanceTimersByTime(9_000);
+        await fixture.whenStable();
+
+        // Only the slow renewal applies; nothing at the blocked screen's quick pace.
+        expect(lockIncident.mock.calls.length).toBe(before);
+      });
+    });
+
+    it('does not try to let go of a hold it never had', async () => {
+      await setup(null, [TECH], { lockedBy: 'Sarah Dlamini' });
+      fixture.destroy();
+      expect(unlockIncident).not.toHaveBeenCalled();
+    });
+
+    it('says nothing when it has the incident to itself', async () => {
+      await setup(null);
+      expect(el.querySelector('.cd-lock')).toBeNull();
+    });
   });
 
   describe('sorting the recommended technicians', () => {

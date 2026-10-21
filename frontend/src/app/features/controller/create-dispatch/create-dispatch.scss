@@ -34,6 +34,36 @@
   font-size: 14.5px;
   color: var(--controller-color-emphasis);
 }
+// Someone else is dispatching this incident: nothing but this is shown.
+.cd-blocked {
+  display: grid;
+  place-items: center;
+  min-height: 60vh;
+}
+.cd-blocked-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 460px;
+  padding: 32px 36px;
+  text-align: center;
+  border-top: 2px solid var(--controller-color-accent);
+}
+.cd-blocked-title {
+  margin: 0;
+  font-family: var(--controller-font-heading);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--controller-color-emphasis);
+}
+.cd-blocked-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--controller-color-muted);
+}
+
 .cd-meta-back {
   margin-left: auto;
   flex: none;

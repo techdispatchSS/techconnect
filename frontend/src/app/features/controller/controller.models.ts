@@ -16,6 +16,13 @@ export interface PageResponse<T> {
   totalPages: number;
 }
 
+/** Who is dispatching an incident right now, and until when their hold lasts unrenewed. */
+export interface IncidentLock {
+  byId: string;
+  byName: string;
+  expiresAt: string;
+}
+
 export interface Incident {
   id: string;
   ticketRef: string;

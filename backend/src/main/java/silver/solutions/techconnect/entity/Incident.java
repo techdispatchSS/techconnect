@@ -77,6 +77,13 @@ public class Incident {
     @Column(name = "sla_due_at")
     private Instant slaDueAt;
 
+    /** The controller currently dispatching this incident; only meaningful until lockExpiresAt. */
+    @Column(name = "locked_by")
+    private UUID lockedBy;
+
+    @Column(name = "lock_expires_at")
+    private Instant lockExpiresAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -86,6 +93,13 @@ public class Incident {
     @PreUpdate
     void onUpdate() {
         this.updatedAt = Instant.now();
+    }
+
+    /** Who holds the dispatch lock right now, or null if nobody does or it has lapsed. */
+    public UUID liveLockHolder(Instant now) {
+        return lockedBy != null && lockExpiresAt != null && lockExpiresAt.isAfter(now)
+                ? lockedBy
+                : null;
     }
 
     /**

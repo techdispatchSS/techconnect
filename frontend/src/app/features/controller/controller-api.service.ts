@@ -11,6 +11,7 @@ import {
   Incident,
   IncidentKpis,
   IncidentListFilters,
+  IncidentLock,
   IncidentProgress,
   PageResponse,
   ResendResult,
@@ -73,6 +74,19 @@ export class ControllerApiService {
 
   createDispatch(request: CreateDispatchRequest): Observable<DispatchCreateResponse> {
     return this.http.post<DispatchCreateResponse>('v1/controller/dispatches', request);
+  }
+
+  /**
+   * Takes (or renews) the hold on dispatching an incident, so two controllers do not both send it
+   * out. 409, naming whoever else has it, when someone does.
+   */
+  lockIncident(id: string): Observable<IncidentLock> {
+    return this.http.post<IncidentLock>(`v1/controller/incidents/${id}/lock`, null);
+  }
+
+  /** Lets go of the hold; harmless if this controller does not have it. */
+  unlockIncident(id: string): Observable<void> {
+    return this.http.delete<void>(`v1/controller/incidents/${id}/lock`);
   }
 
   /** Notifies the technicians who haven't answered again. 409 (with a reason) once it has been

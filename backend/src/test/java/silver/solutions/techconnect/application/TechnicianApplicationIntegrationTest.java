@@ -183,17 +183,157 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
     }
 
     @Test
-    void refusesTwoOfTheSameRequiredDocument() throws Exception {
-        Applicant a = Applicant.unique("twoids");
+    void aRequiredDocumentMayBeSeveralFilesLikeBothSidesOfAnId() throws Exception {
+        Applicant a = Applicant.unique("twosides");
         List<Part> parts = new java.util.ArrayList<>(requiredDocuments());
-        parts.add(file("ID again", "ID_DOCUMENT", "id2.pdf", "application/pdf", TestFiles.pdf()));
+        parts.add(file("ID back", "ID_DOCUMENT", "id-back.pdf", "application/pdf", TestFiles.pdf()));
+        parts.add(file("Bill page 2", "PROOF_OF_RESIDENCE", "bill-2.pdf", "application/pdf",
+                TestFiles.pdf()));
+
+        mvc.perform(multipartRequest(a, parts)).andExpect(status().isAccepted());
+
+        assertThat(documents.findByApplicationIdOrderByCreatedAtAsc(find(a).getId())).hasSize(5);
+    }
+
+    @Test
+    void refusesMoreFilesForOneRequiredDocumentThanItMayTake() throws Exception {
+        Applicant a = Applicant.unique("manyids");
+        List<Part> parts = new java.util.ArrayList<>(requiredDocuments());
+        for (int i = 0; i < DocumentKind.MAX_PER_REQUIRED; i++) {
+            parts.add(file("ID " + i, "ID_DOCUMENT", "id-" + i + ".pdf", "application/pdf",
+                    TestFiles.pdf()));
+        }
 
         mvc.perform(multipartRequest(a, parts))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value(
-                        org.hamcrest.Matchers.containsString("only one")));
+                        org.hamcrest.Matchers.containsString("at most 4 files for your identification document")));
 
         assertThat(exists(a)).isFalse();
+    }
+
+    @Test
+    void identificationNumbersFromAroundTheWorldAreAcceptedAsWritten() throws Exception {
+        for (String id : List.of("63-123456 A 12", "AB/1234/56", "A.123.456-7", "GHA-123456789-0",
+                "KE (12) 345678", "ÅKE 1234567")) {
+            Applicant a = Applicant.unique("id" + Math.abs(id.hashCode()));
+            a.address = NAIROBI;
+            a.idNumber = id;
+
+            submit(a, validPdf()).andExpect(status().isAccepted());
+        }
+    }
+
+    @Test
+    void anIdentificationNumberWithMarkupOrPunctuationItNeverHasIsRefused() throws Exception {
+        for (String id : List.of("<script>alert(1)", "123;DROP TABLE", "A'B 123 45", "<b>1234567</b>")) {
+            Applicant a = Applicant.unique("badid" + Math.abs(id.hashCode()));
+            a.address = NAIROBI;
+            a.idNumber = id;
+
+            mvc.perform(multipartRequest(a, allWith(validPdf()))).andExpect(status().isBadRequest());
+            assertThat(exists(a)).isFalse();
+        }
+    }
+
+    private static final String NAIROBI = """
+            {"street":"12 Moi Avenue","city":"Nairobi","province":"Nairobi County","country":"KE"}""";
+
+    @Test
+    void acceptsAnApplicantInAnotherCountryWithNoSuburbOrPostcodeAndANonSouthAfricanId() throws Exception {
+        Applicant a = Applicant.unique("nairobi");
+        a.address = NAIROBI;
+        a.idNumber = "A1234567";
+        a.phone = "0712 345 678";
+
+        submit(a, validPdf()).andExpect(status().isAccepted());
+
+        TechnicianApplication saved = find(a);
+        assertThat(saved.getAddress().getCountry().name()).isEqualTo("KE");
+        assertThat(saved.getAddress().getProvince()).isEqualTo("Nairobi County");
+        assertThat(saved.getAddress().getSuburb()).isNull();
+        assertThat(saved.getAddress().getPostalCode()).isNull();
+        assertThat(saved.getIdNumber()).isEqualTo("A1234567");
+        assertThat(saved.getPhoneNormalized()).startsWith("254712");
+    }
+
+    @Test
+    void aSouthAfricanApplicantStillNeedsARealSouthAfricanId() throws Exception {
+        Applicant a = Applicant.unique("badza");
+        a.idNumber = "A1234567";
+
+        mvc.perform(multipartRequest(a, allWith(validPdf())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value(
+                        org.hamcrest.Matchers.containsString("South African ID")));
+
+        assertThat(exists(a)).isFalse();
+    }
+
+    @Test
+    void theSamePersonCannotReapplyFromTheirOwnCountryByWritingTheNumberAnotherWay() throws Exception {
+        Applicant first = Applicant.unique("kenya-a");
+        first.address = NAIROBI;
+        first.idNumber = "K" + (long) (Math.random() * 9_000_000) + 1_000_000;
+        first.phone = "+254 722 111 222";
+        submit(first, validPdf()).andExpect(status().isAccepted());
+        long before = applications.count();
+
+        Applicant again = Applicant.unique("kenya-b");
+        again.address = NAIROBI;
+        again.idNumber = "K" + (long) (Math.random() * 9_000_000) + 2_000_000;
+        again.phone = "0722 111 222";
+        submit(again, validPdf()).andExpect(status().isAccepted());
+
+        assertThat(applications.count()).as("quietly discarded: same number written locally")
+                .isEqualTo(before);
+        assertThat(exists(again)).isFalse();
+    }
+
+    private static final String ACCRA = """
+            {"street":"4 Ring Road","city":"Accra","province":"Greater Accra","country":"GH"}""";
+
+    @Test
+    void anIdNumberIsUniqueWithinItsCountryNotAcrossTheWorld() throws Exception {
+        String number = "AB" + (long) (Math.random() * 90_000_000L + 10_000_000L);
+
+        Applicant kenyan = Applicant.unique("id-ke");
+        kenyan.address = NAIROBI;
+        kenyan.idNumber = number;
+        submit(kenyan, validPdf()).andExpect(status().isAccepted());
+
+        // The same string issued by another country is a different person, not a repeat.
+        Applicant ghanaian = Applicant.unique("id-gh");
+        ghanaian.address = ACCRA;
+        ghanaian.idNumber = number;
+        submit(ghanaian, validPdf()).andExpect(status().isAccepted());
+        assertThat(exists(kenyan)).isTrue();
+        assertThat(exists(ghanaian)).as("not discarded as a repeat of the Kenyan").isTrue();
+
+        // Within one country it is a repeat, whatever else was changed.
+        Applicant again = Applicant.unique("id-ke-again");
+        again.address = NAIROBI;
+        again.idNumber = number;
+        submit(again, validPdf()).andExpect(status().isAccepted());
+        assertThat(exists(again)).as("quietly discarded: same number, same country").isFalse();
+    }
+
+    @Test
+    void anInvalidProvinceForSouthAfricaOrAMalformedPostcodeIsRefused() throws Exception {
+        Applicant a = Applicant.unique("badprovince");
+        a.address = """
+                {"street":"1 Test Street","suburb":"Umhlanga","city":"Durban",
+                 "province":"ATLANTIS","postalCode":"4001"}""";
+
+        mvc.perform(multipartRequest(a, allWith(validPdf()))).andExpect(status().isBadRequest());
+
+        Applicant b = Applicant.unique("badpostcode");
+        b.address = """
+                {"street":"1 St","city":"Accra","province":"Greater Accra","postalCode":"<script>","country":"GH"}""";
+        mvc.perform(multipartRequest(b, allWith(validPdf()))).andExpect(status().isBadRequest());
+
+        assertThat(exists(a)).isFalse();
+        assertThat(exists(b)).isFalse();
     }
 
     @Test
@@ -667,11 +807,18 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
     /** The three documents every application must carry. */
     private static List<Part> requiredDocuments() {
         return List.of(
-                file("ID document", "ID_DOCUMENT", "id.pdf", "application/pdf", TestFiles.pdf()),
-                file("Matric certificate", "MATRIC_CERTIFICATE", "matric.pdf", "application/pdf",
+                file("Identification document", "ID_DOCUMENT", "id.pdf", "application/pdf",
+                        TestFiles.pdf()),
+                file("High school diploma", "MATRIC_CERTIFICATE", "matric.pdf", "application/pdf",
                         TestFiles.pdf()),
                 file("Proof of residence", "PROOF_OF_RESIDENCE", "residence.pdf",
                         "application/pdf", TestFiles.pdf()));
+    }
+
+    private static List<Part> allWith(Part... extra) {
+        List<Part> all = new java.util.ArrayList<>(requiredDocuments());
+        all.addAll(List.of(extra));
+        return all;
     }
 
     /** Submits the three required documents followed by whatever extra parts the test gives. */
@@ -760,6 +907,10 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         String experience = "Eight years installing and maintaining network and CCTV systems.";
         boolean consent = true;
         String website = "";
+        /** Replaced by tests that apply from somewhere other than Durban. */
+        String address = """
+                {"street":"1 Test Street","suburb":"Umhlanga","city":"Durban",
+                 "province":"KWAZULU_NATAL","postalCode":"4001"}""";
 
         static Applicant unique(String prefix) {
             Applicant a = new Applicant();
@@ -773,12 +924,12 @@ class TechnicianApplicationIntegrationTest extends AbstractPostgresIntegrationTe
         String toJson(String documents) {
             return """
                     {"firstName":"%s","lastName":"%s","email":"%s","phone":"%s","idNumber":"%s",
-                     "address":{"street":"1 Test Street","suburb":"Umhlanga","city":"Durban",
-                                "province":"KWAZULU_NATAL","postalCode":"4001"},
+                     "address":%s,
                      "experienceSummary":"%s","skills":"CCTV, structured cabling",
                      "documents":[%s],"consent":%s,"website":"%s"}"""
                     .formatted(firstName, lastName, email.replace("\r", "\\r").replace("\n", "\\n"),
-                            phone, idNumber, experience.replace("\u0000", "\\u0000").replace("\u001b", "\\u001b"),
+                            phone, idNumber, address,
+                            experience.replace("\u0000", "\\u0000").replace("\u001b", "\\u001b"),
                             documents, consent, website);
         }
     }

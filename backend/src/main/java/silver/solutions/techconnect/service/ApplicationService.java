@@ -94,14 +94,24 @@ public class ApplicationService {
 
         String email = request.email().trim();
         String emailKey = ApplicantIdentity.normalizeEmail(email);
-        String phoneKey = ApplicantIdentity.normalizePhone(request.phone());
+        // The ID is compared in one form: no spaces, upper case. For a South African applicant it
+        // must be a real ID number (13 digits and a valid check digit); elsewhere any national
+        // ID or passport number of a plausible shape is accepted.
+        String idNumber = request.idNumber().replaceAll("\\s+", "").toUpperCase(java.util.Locale.ROOT);
+        if (request.address().countryOrDefault() == silver.solutions.techconnect.entity.Country.ZA
+                && !silver.solutions.techconnect.util.SouthAfricanId.isValid(idNumber)) {
+            throw ApiException.badRequest("Enter a valid 13-digit South African ID number.");
+        }
+
+        String phoneKey = ApplicantIdentity.normalizePhone(
+                request.phone(), request.address().countryOrDefault().dialCode());
 
         if (phoneKey.length() < 9) {
             throw ApiException.badRequest("Enter a valid phone number.");
         }
 
         // Checked before anything is uploaded, so repeat/blocked submissions cost no storage.
-        if (isKnown(email, emailKey, phoneKey, request.idNumber())) {
+        if (isKnown(email, emailKey, phoneKey, idNumber, request.address().countryOrDefault())) {
             log.info("Application discarded: applicant already known");
             pause();
             return;
@@ -114,13 +124,13 @@ public class ApplicationService {
                 uploaded.add(file.key());
             }
             transaction.executeWithoutResult(status ->
-                    save(request, email, emailKey, phoneKey, prepared));
+                    save(request, email, emailKey, phoneKey, idNumber, prepared));
         } catch (DataIntegrityViolationException e) {
             cleanUp(uploaded);
             // The unique indexes are the real guard: two simultaneous submissions both pass the
             // check above, and the database lets exactly one through. Anything else that trips a
             // constraint is a genuine bug and must not be silently swallowed.
-            if (isKnown(email, emailKey, phoneKey, request.idNumber())) {
+            if (isKnown(email, emailKey, phoneKey, idNumber, request.address().countryOrDefault())) {
                 log.info("Application discarded: lost a race with an identical submission");
                 pause();
                 return;
@@ -180,8 +190,9 @@ public class ApplicationService {
     }
 
     /**
-     * Every application carries exactly one ID document, one matric certificate and one proof of
-     * residence. Certifications are optional and there can be several.
+     * Every application carries an identification document, a high school diploma and a proof of
+     * residence, each of one file or several (both sides of an ID, every page of a bill, up to
+     * {@link DocumentKind#MAX_PER_REQUIRED}). Certifications are optional and there can be several.
      */
     private void requireIdentityDocuments(List<DocumentMeta> metas) {
         List<DocumentKind> missing = new ArrayList<>();
@@ -189,8 +200,9 @@ public class ApplicationService {
             long count = metas.stream().filter(meta -> meta.kind() == kind).count();
             if (count == 0) {
                 missing.add(kind);
-            } else if (count > 1) {
-                throw ApiException.badRequest("Attach only one " + kind.label() + ".");
+            } else if (count > DocumentKind.MAX_PER_REQUIRED) {
+                throw ApiException.badRequest("Attach at most " + DocumentKind.MAX_PER_REQUIRED
+                        + " files for your " + kind.label() + ".");
             }
         }
         if (!missing.isEmpty()) {
@@ -204,8 +216,10 @@ public class ApplicationService {
                 + ".";
     }
 
-    private boolean isKnown(String email, String emailKey, String phoneKey, String idNumber) {
-        return applications.existsByEmailNormalizedOrPhoneNormalizedOrIdNumber(emailKey, phoneKey, idNumber)
+    private boolean isKnown(
+            String email, String emailKey, String phoneKey, String idNumber,
+            silver.solutions.techconnect.entity.Country country) {
+        return applications.existsByAnyIdentifier(emailKey, phoneKey, idNumber, country)
                 || users.existsByEmailIgnoreCase(email);
     }
 
@@ -216,6 +230,7 @@ public class ApplicationService {
             String email,
             String emailKey,
             String phoneKey,
+            String idNumber,
             List<Prepared> prepared) {
 
         TechnicianApplication application = new TechnicianApplication();
@@ -225,7 +240,7 @@ public class ApplicationService {
         application.setEmailNormalized(emailKey);
         application.setPhone(request.phone().trim());
         application.setPhoneNormalized(phoneKey);
-        application.setIdNumber(request.idNumber());
+        application.setIdNumber(idNumber);
         application.setAddress(addressMapper.toEntity(request.address()));
         application.setExperienceSummary(Strings.cleanText(request.experienceSummary()));
         application.setSkills(Strings.blankToNull(Strings.cleanText(request.skills())));

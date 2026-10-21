@@ -1,5 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  ViewEncapsulation,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormBuilder,
@@ -10,7 +19,14 @@ import {
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-import { PROVINCES, PROVINCE_LABELS, Province } from '../../core/address.models';
+import { bindAddressRules } from '../../core/address-rules';
+import {
+  COUNTRIES,
+  DEFAULT_COUNTRY,
+  PROVINCES,
+  PROVINCE_LABELS,
+  isSouthAfrica,
+} from '../../core/address.models';
 import { AccountService, Profile } from '../../core/auth/account.service';
 import { trimStrings } from '../../shared/form-text';
 import { Skeleton } from '../../shared/skeleton/skeleton';
@@ -20,19 +36,25 @@ import { TrimOnBlur } from '../../shared/trim-on-blur';
 /**
  * Unlike the admin portal's onboarding and edit forms, a Manager's own address is optional
  * here: leaving every field blank is fine (they may never have set one), but a partial
- * address is not — either all five fields are present and valid, or none are.
+ * address is not. The country is always set, so it is not what "blank" is judged by.
+ *
+ * <p>Street, city and region must all be filled in. Suburb and a four-digit postcode are also
+ * required in South Africa; elsewhere they are optional (the postcode's shape is checked by
+ * the field itself).
  */
 function completeOrEmptyAddress(group: AbstractControl): ValidationErrors | null {
-  const controls = group.value as Record<string, string>;
-  const values = Object.values(controls).map((v) => (v ?? '').trim());
+  const value = group.value as Record<string, string>;
+  const text = (key: string): string => (value[key] ?? '').trim();
 
-  if (values.every((v) => v === '')) {
+  const always = ['street', 'city', 'province'];
+  const sa = isSouthAfrica(value['country']);
+  const required = sa ? [...always, 'suburb', 'postalCode'] : always;
+  const filled = ['street', 'suburb', 'city', 'province', 'postalCode'].some((k) => text(k) !== '');
+
+  if (!filled) {
     return null;
   }
-  if (values.some((v) => v === '')) {
-    return { incomplete: true };
-  }
-  return /^\d{4}$/.test(controls['postalCode']) ? null : { incomplete: true };
+  return required.every((k) => text(k) !== '') ? null : { incomplete: true };
 }
 
 @Component({
@@ -53,6 +75,8 @@ export class ProfileDialog implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialogRef = inject(MatDialogRef<ProfileDialog, Profile | undefined>);
 
+  private readonly destroyRef = inject(DestroyRef);
+  readonly countries = COUNTRIES;
   readonly provinces = PROVINCES;
   readonly provinceLabels = PROVINCE_LABELS;
 
@@ -66,17 +90,24 @@ export class ProfileDialog implements OnInit {
     phone: ['', [Validators.maxLength(32)]],
     address: this.fb.nonNullable.group(
       {
+        country: [DEFAULT_COUNTRY],
         street: ['', [Validators.maxLength(255)]],
         suburb: ['', [Validators.maxLength(120)]],
         city: ['', [Validators.maxLength(120)]],
-        province: ['' as Province | ''],
-        postalCode: ['', [Validators.maxLength(4)]],
+        province: [''],
+        postalCode: [''],
       },
       { validators: completeOrEmptyAddress },
     ),
   });
 
+  readonly country = toSignal(this.form.controls.address.controls.country.valueChanges, {
+    initialValue: this.form.controls.address.controls.country.value,
+  });
+  readonly inSouthAfrica = computed(() => isSouthAfrica(this.country()));
+
   ngOnInit(): void {
+    bindAddressRules(this.form.controls.address, this.destroyRef, { required: false });
     this.account.me().subscribe({
       next: (profile) => {
         this.profile.set(profile);
@@ -84,10 +115,11 @@ export class ProfileDialog implements OnInit {
           name: profile.name,
           phone: profile.phone ?? '',
           address: {
+            country: profile.address?.country ?? DEFAULT_COUNTRY,
             street: profile.address?.street ?? '',
             suburb: profile.address?.suburb ?? '',
             city: profile.address?.city ?? '',
-            province: (profile.address?.province ?? '') as Province | '',
+            province: profile.address?.province ?? '',
             postalCode: profile.address?.postalCode ?? '',
           },
         });
@@ -123,16 +155,15 @@ export class ProfileDialog implements OnInit {
     this.errorMessage.set(null);
 
     const { name, phone, address } = this.form.getRawValue();
-    const addressProvided = Object.values(address).some((v) => v.trim() !== '');
+    const { country, ...parts } = address;
+    const addressProvided = Object.values(parts).some((v) => v.trim() !== '');
 
     this.account
       .updateProfile(
         trimStrings({
           name,
           phone: phone.trim() || null,
-          address: addressProvided
-            ? { ...address, province: address.province as Province }
-            : undefined,
+          address: addressProvided ? { ...address, country } : undefined,
         }),
       )
       .subscribe({

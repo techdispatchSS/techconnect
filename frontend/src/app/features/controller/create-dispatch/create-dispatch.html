@@ -28,6 +28,16 @@
       >
     </div>
 
+    @if (lockMessage(); as message) {
+      <div class="controller-card cd-lock" role="alert">
+        <span class="cd-lock-title">Someone else is dispatching this</span>
+        <span class="cd-lock-text">{{ message }}</span>
+        <a routerLink="/incidents/queue" class="controller-btn controller-btn-secondary"
+          >Back to queue</a
+        >
+      </div>
+    }
+
     <div class="cd-body">
       <section class="controller-card cd-details" [formGroup]="form">
         <h6 class="cd-section-title">Dispatch details</h6>
@@ -285,7 +295,7 @@
           <button
             type="button"
             class="controller-btn controller-btn-primary"
-            [disabled]="selectedIds().size === 0 || submitting()"
+            [disabled]="selectedIds().size === 0 || submitting() || !!lockMessage()"
             (click)="submit()"
           >
             {{

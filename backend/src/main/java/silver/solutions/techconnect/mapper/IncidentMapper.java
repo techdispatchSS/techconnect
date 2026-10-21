@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 import silver.solutions.techconnect.dto.response.controller.DispatchResponseEntry;
 import silver.solutions.techconnect.dto.response.controller.DispatchSummary;
+import silver.solutions.techconnect.dto.response.controller.IncidentLock;
 import silver.solutions.techconnect.dto.response.controller.IncidentProgressResponse;
 import silver.solutions.techconnect.dto.response.controller.IncidentResponse;
 import silver.solutions.techconnect.entity.Dispatch;
@@ -48,7 +49,17 @@ public class IncidentMapper {
                 incident.getCreatedAt(),
                 latestDispatch == null ? List.of() : splitCsv(latestDispatch.getRequiredSkills()),
                 latestDispatch != null,
-                latestDispatch == null ? null : summarise(latestDispatch, responses, technicianNamesById));
+                latestDispatch == null ? null : summarise(latestDispatch, responses, technicianNamesById),
+                lockOf(incident, technicianNamesById));
+    }
+
+    /** The live dispatch lock, named from {@code namesById} (which carries the holder's name). */
+    private static IncidentLock lockOf(Incident incident, Map<UUID, String> namesById) {
+        UUID holder = incident.liveLockHolder(java.time.Instant.now());
+        return holder == null
+                ? null
+                : new IncidentLock(holder, namesById.getOrDefault(holder, "Another controller"),
+                        incident.getLockExpiresAt());
     }
 
     /** "Sent to 3 technicians, 1 has declined, 2 are still to answer." */

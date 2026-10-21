@@ -32,6 +32,26 @@
         <legend>About you</legend>
 
         <div class="ap-grid">
+          <div class="field ap-span2" formGroupName="address">
+            <label for="ap-country">Country you are based in</label>
+            <select id="ap-country" class="input" formControlName="country" autocomplete="country">
+              <option value="" disabled>Select your country…</option>
+              @for (c of countries; track c.code) {
+                <option [value]="c.code">{{ c.name }}</option>
+              }
+            </select>
+            @if (
+              form.controls.address.controls.country.touched &&
+              form.controls.address.controls.country.invalid
+            ) {
+              <p class="field-error">Choose the country you are based in</p>
+            } @else {
+              <p class="field-hint">
+                We use it to check your ID and phone number, and to match you with jobs near you.
+              </p>
+            }
+          </div>
+
           <div class="field">
             <label for="ap-first">First name</label>
             <input
@@ -101,17 +121,24 @@
               type="tel"
               formControlName="phone"
               autocomplete="tel"
-              placeholder="082 000 0000"
+              [placeholder]="
+                inSouthAfrica() ? '082 000 0000' : dialCode() ? '+' + dialCode() + ' …' : ''
+              "
               maxlength="20"
+              aria-describedby="ap-phone-hint"
             />
             @if (form.controls.phone.touched && form.controls.phone.invalid) {
               <p class="field-error">Enter a valid phone number</p>
+            } @else if (dialCode() && !inSouthAfrica()) {
+              <p id="ap-phone-hint" class="field-hint">
+                Start with +{{ dialCode() }}, or the number as you dial it locally.
+              </p>
             }
           </div>
 
           <div class="field ap-span2">
             <label for="ap-id">{{
-              inSouthAfrica() ? 'South African ID number' : 'ID or passport number'
+              inSouthAfrica() ? 'South African ID number' : 'Identification number'
             }}</label>
             <input
               appTrimOnBlur
@@ -127,7 +154,7 @@
               @if (inSouthAfrica()) {
                 13 digits.
               } @else {
-                Your national ID or passport number.
+                Your national ID or passport number, as it is written on the document.
               }
               Used only to check your application and shown only to managers.
             </p>
@@ -138,7 +165,7 @@
                 } @else if (inSouthAfrica()) {
                   Enter a valid 13-digit South African ID number
                 } @else {
-                  Enter your ID or passport number (letters, digits, spaces, / and -)
+                  Enter your ID or passport number (letters, digits and / - . : # ( ) _)
                 }
               </p>
             }
@@ -158,22 +185,13 @@
         </p>
 
         <div class="ap-grid">
-          <div class="field ap-span2">
-            <label for="ap-country">Country</label>
-            <select id="ap-country" class="input" formControlName="country" autocomplete="country">
-              @for (c of countries; track c.code) {
-                <option [value]="c.code">{{ c.name }}</option>
-              }
-            </select>
-          </div>
-
           <div class="field ap-span2 ap-street">
             <label for="ap-street">Street</label>
             <app-street-input
               inputId="ap-street"
               inputClass="input"
               placeholder="Start typing your street address"
-              [country]="country()"
+              [country]="country() || null"
               [control]="form.controls.address.controls.street"
               (picked)="applyPlace($event)"
             />
@@ -357,44 +375,63 @@
       <fieldset class="ap-section">
         <legend>Your documents</legend>
         <p class="field-hint">
-          All three are required. PDF, JPG or PNG, up to {{ maxFileSize }} each. A clear scan or
-          photo is fine.
+          All three are required, and you can upload more than one file for each: both sides of an
+          ID card, or every page of a bank statement. PDF, JPG or PNG, up to {{ maxFileSize }} each.
+          A clear scan or photo is fine.
+          <strong class="ap-count">{{ documents().length }} of {{ maxFiles }} files added.</strong>
         </p>
 
         <ul class="ap-required">
           @for (item of required; track item.kind) {
-            @let doc = requiredDocs().get(item.kind);
+            @let docs = requiredDocs().get(item.kind) ?? [];
             @let missing = missingKinds().includes(item.kind);
-            <li class="ap-req" [class.ap-req--done]="doc" [class.ap-req--error]="missing">
+            <li
+              class="ap-req"
+              [class.ap-req--done]="docs.length > 0"
+              [class.ap-req--error]="missing"
+            >
               <div class="ap-req-text">
                 <span class="ap-req-label">{{ item.label }}</span>
                 <span class="ap-req-hint">{{ item.hint }}</span>
               </div>
 
-              @if (doc) {
-                <div class="ap-req-file">
-                  <span class="ap-req-tick" aria-hidden="true">✓</span>
-                  <span class="ap-file-name">{{ doc.file.name }}</span>
-                  <span class="ap-file-size">{{ formatBytes(doc.file.size) }}</span>
-                  <label class="ap-file-remove ap-req-replace">
-                    Replace
+              @if (docs.length > 0) {
+                <ul class="ap-req-files">
+                  @for (doc of docs; track doc.key) {
+                    <li class="ap-req-file">
+                      <span class="ap-req-tick" aria-hidden="true">✓</span>
+                      <span class="ap-file-name">{{ doc.file.name }}</span>
+                      <span class="ap-file-size">{{ formatBytes(doc.file.size) }}</span>
+                      <button
+                        type="button"
+                        class="ap-file-remove"
+                        (click)="removeDocument(doc.key)"
+                        [attr.aria-label]="'Remove ' + doc.file.name"
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  }
+                </ul>
+                @if (canAddTo(item.kind)) {
+                  <label
+                    class="ap-add-more"
+                    [class.ap-drop--active]="dragging() === item.kind"
+                    (dragover)="onDragOver($event, item.kind)"
+                    (dragleave)="dragging.set(null)"
+                    (drop)="onDropRequired($event, item.kind)"
+                  >
+                    + Add another file
                     <input
                       type="file"
+                      multiple
                       class="ap-drop-input"
                       [accept]="accept"
-                      [attr.aria-label]="'Replace your ' + item.short"
+                      [attr.aria-label]="'Add another file to your ' + item.short"
                       (change)="onRequiredChosen(item.kind, $event)"
                     />
                   </label>
-                  <button
-                    type="button"
-                    class="ap-file-remove"
-                    (click)="removeDocument(doc.key)"
-                    [attr.aria-label]="'Remove ' + doc.file.name"
-                  >
-                    Remove
-                  </button>
-                </div>
+                }
               } @else {
                 <label
                   class="ap-drop"
@@ -406,14 +443,22 @@
                 >
                   <input
                     type="file"
+                    multiple
                     class="ap-drop-input"
                     [accept]="accept"
                     [attr.aria-label]="'Upload your ' + item.short"
                     (change)="onRequiredChosen(item.kind, $event)"
                   />
                   <span class="ap-drop-title">Click here to upload your {{ item.short }}</span>
-                  <span class="ap-drop-sub">PDF, JPG or PNG, or drop it here</span>
+                  <span class="ap-drop-sub"
+                    >PDF, JPG or PNG. Pick more than one file if it has several pages or sides, or
+                    drop them here.</span
+                  >
                 </label>
+              }
+
+              @for (problem of requiredProblems()[item.kind] ?? []; track problem) {
+                <p class="field-error" role="alert">{{ problem }}</p>
               }
 
               @if (missing) {
@@ -427,8 +472,9 @@
       <fieldset class="ap-section">
         <legend>Certifications <span class="ap-optional">optional</span></legend>
         <p class="field-hint">
-          Trade or vendor certificates, such as a CCNA, CompTIA or Hikvision course. Upload each
-          one, then tell us what it is called so the reviewer knows what they are looking at.
+          Trade or vendor certificates, such as a CCNA, CompTIA or Hikvision course. You can add as
+          many as you like: upload each one, then tell us what it is called so the reviewer knows
+          what they are looking at.
         </p>
 
         <label

@@ -3,19 +3,22 @@ import { AddressRequest } from '../../core/address.models';
 export type DocumentKind =
   'ID_DOCUMENT' | 'MATRIC_CERTIFICATE' | 'PROOF_OF_RESIDENCE' | 'CERTIFICATE' | 'QUALIFICATION';
 
+// The kinds keep their stored names (ID_DOCUMENT, MATRIC_CERTIFICATE) so nothing on record
+// changes; only how they read does. A matric certificate is South Africa's, a high school
+// diploma is anyone's.
 export const DOCUMENT_KIND_LABELS: Record<DocumentKind, string> = {
-  ID_DOCUMENT: 'ID document',
-  MATRIC_CERTIFICATE: 'Matric certificate',
+  ID_DOCUMENT: 'Identification document',
+  MATRIC_CERTIFICATE: 'High school diploma',
   PROOF_OF_RESIDENCE: 'Proof of residence',
   CERTIFICATE: 'Certification',
   QUALIFICATION: 'Qualification',
 };
 
-/** The three documents every application must carry, one of each. */
+/** The three documents every application must carry, each of one or more files. */
 export interface RequiredDocument {
   readonly kind: DocumentKind;
   readonly label: string;
-  /** How it reads in a sentence: "Click here to upload your ID document". */
+  /** How it reads in a sentence: "Click here to upload your identification document". */
   readonly short: string;
   readonly hint: string;
 }
@@ -23,21 +26,21 @@ export interface RequiredDocument {
 export const REQUIRED_DOCUMENTS: readonly RequiredDocument[] = [
   {
     kind: 'ID_DOCUMENT',
-    label: 'ID document',
-    short: 'ID document',
-    hint: 'A clear copy of your South African ID card or ID book.',
+    label: 'Identification document',
+    short: 'identification document',
+    hint: 'Your national ID card, passport or driver’s licence. Add both sides, or every page.',
   },
   {
     kind: 'MATRIC_CERTIFICATE',
-    label: 'Matric certificate',
-    short: 'matric certificate',
-    hint: 'Your National Senior Certificate, or an equivalent.',
+    label: 'High school diploma',
+    short: 'high school diploma',
+    hint: 'Your high school diploma or leaving certificate, or an equivalent.',
   },
   {
     kind: 'PROOF_OF_RESIDENCE',
     label: 'Proof of residence',
     short: 'proof of residence',
-    hint: 'A utility bill, bank statement or lease, no more than three months old.',
+    hint: 'A utility bill, bank statement or lease, no more than three months old. Add every page.',
   },
 ];
 
@@ -46,6 +49,8 @@ export const REQUIRED_DOCUMENTS: readonly RequiredDocument[] = [
  * of them (and more, by reading the file's actual bytes), so none of this is a security control.
  */
 export const MAX_FILES = 10;
+/** Of those, how many one required document may take (both sides of an ID, every page of a bill). */
+export const MAX_FILES_PER_REQUIRED = 4;
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const ACCEPTED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png'] as const;
 export const ACCEPT_ATTRIBUTE = '.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png';
@@ -56,7 +61,7 @@ export interface SubmitApplicationRequest {
   lastName: string;
   email: string;
   phone: string;
-  /** South African ID number, digits only. */
+  /** National ID or passport number, without spaces. */
   idNumber: string;
   address: AddressRequest;
   experienceSummary: string;

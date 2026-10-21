@@ -34,6 +34,26 @@
   font-size: 14.5px;
   color: var(--controller-color-emphasis);
 }
+.cd-lock {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-left: 2px solid var(--controller-color-accent);
+}
+.cd-lock-title {
+  font-family: var(--controller-font-heading);
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--controller-color-emphasis);
+}
+.cd-lock-text {
+  font-size: 12.5px;
+  color: var(--controller-color-muted);
+  margin-right: auto;
+}
+
 .cd-meta-back {
   margin-left: auto;
   flex: none;

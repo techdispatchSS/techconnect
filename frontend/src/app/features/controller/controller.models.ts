@@ -16,6 +16,13 @@ export interface PageResponse<T> {
   totalPages: number;
 }
 
+/** Who is dispatching an incident right now, and until when their hold lasts unrenewed. */
+export interface IncidentLock {
+  byId: string;
+  byName: string;
+  expiresAt: string;
+}
+
 export interface Incident {
   id: string;
   ticketRef: string;
@@ -40,6 +47,8 @@ export interface Incident {
   hasDispatch: boolean;
   /** Where the latest dispatch stands — who it went to and who has answered. Null if none sent. */
   dispatch: DispatchSummary | null;
+  /** The controller dispatching it right now; null when nobody is. */
+  lock: IncidentLock | null;
 }
 
 /** Mirrors the backend `DispatchSummary`: the state a ticket shows after a dispatch goes out. */

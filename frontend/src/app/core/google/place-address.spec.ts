@@ -72,6 +72,6 @@ describe('addressFromComponents', () => {
   });
 
   it('ignores a country the app does not serve', () => {
-    expect(addressFromComponents([country('France', 'FR')]).country).toBe('');
+    expect(addressFromComponents([country('Antarctica', 'AQ')]).country).toBe('');
   });
 });

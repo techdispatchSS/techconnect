@@ -54,6 +54,9 @@ describe('Apply', () => {
   }
 
   function fillValidForm(): void {
+    // Nobody is assumed to be South African: the country is chosen, and the form follows it.
+    fixture.componentInstance.form.controls.address.controls.country.setValue('ZA');
+    fixture.detectChanges();
     type('#ap-first', 'Nomsa');
     type('#ap-last', 'Khumalo');
     type('#ap-email', 'nomsa@example.com');
@@ -74,7 +77,7 @@ describe('Apply', () => {
     await fixture.whenStable();
   }
 
-  /** The upload area for a required document, by position: ID, matric, proof of residence. */
+  /** The upload area for a required document, by position: ID, diploma, proof of residence. */
   function requiredInput(index: number): HTMLInputElement {
     return el
       .querySelectorAll<HTMLInputElement>('.ap-req')
@@ -104,8 +107,8 @@ describe('Apply', () => {
     await send();
 
     expect(submit).not.toHaveBeenCalled();
-    expect(el.textContent).toContain('Upload your ID document');
-    expect(el.textContent).toContain('Upload your matric certificate');
+    expect(el.textContent).toContain('Upload your identification document');
+    expect(el.textContent).toContain('Upload your high school diploma');
     expect(el.textContent).toContain('Upload your proof of residence');
     expect(el.textContent).toContain('First name is required');
   });
@@ -116,7 +119,7 @@ describe('Apply', () => {
     await send();
 
     expect(submit).not.toHaveBeenCalled();
-    expect(el.textContent).toContain('Upload your ID document');
+    expect(el.textContent).toContain('Upload your identification document');
   });
 
   it('names the one document still missing', async () => {
@@ -128,7 +131,7 @@ describe('Apply', () => {
 
     expect(submit).not.toHaveBeenCalled();
     expect(el.textContent).toContain('Upload your proof of residence');
-    expect(el.textContent).not.toContain('Upload your ID document');
+    expect(el.textContent).not.toContain('Upload your identification document');
   });
 
   it('does not let a certification stand in for a required document', async () => {
@@ -139,7 +142,7 @@ describe('Apply', () => {
     await send();
 
     expect(submit).not.toHaveBeenCalled();
-    expect(el.textContent).toContain('Upload your ID document');
+    expect(el.textContent).toContain('Upload your identification document');
   });
 
   it('will not send an ID number with a bad checksum, and says why', async () => {
@@ -252,8 +255,8 @@ describe('Apply', () => {
       postalCode: '4001',
     });
     expect(request.documents).toEqual([
-      { kind: 'ID_DOCUMENT', title: 'ID document' },
-      { kind: 'MATRIC_CERTIFICATE', title: 'Matric certificate' },
+      { kind: 'ID_DOCUMENT', title: 'Identification document' },
+      { kind: 'MATRIC_CERTIFICATE', title: 'High school diploma' },
       { kind: 'PROOF_OF_RESIDENCE', title: 'Proof of residence' },
       { kind: 'CERTIFICATE', title: 'CCNA Routing' },
     ]);
@@ -269,8 +272,8 @@ describe('Apply', () => {
       t.textContent!.trim(),
     );
     expect(tiles).toEqual([
-      'Click here to upload your ID document',
-      'Click here to upload your matric certificate',
+      'Click here to upload your identification document',
+      'Click here to upload your high school diploma',
       'Click here to upload your proof of residence',
     ]);
 
@@ -282,15 +285,53 @@ describe('Apply', () => {
     expect(first.querySelector('.ap-drop')).toBeNull();
   });
 
-  it('replaces a required document rather than adding a second one', async () => {
+  it('takes more than one file for a required document, like both sides of an ID', async () => {
     await setup();
-    await chooseIn(requiredInput(0), [pdf('first.pdf')]);
-
-    await chooseIn(requiredInput(0), [pdf('second.pdf')]);
+    await chooseIn(requiredInput(0), [pdf('front.pdf')]);
 
     const first = el.querySelectorAll('.ap-req')[0];
-    expect(first.textContent).toContain('second.pdf');
-    expect(first.textContent).not.toContain('first.pdf');
+    expect(first.textContent).toContain('+ Add another file');
+
+    await chooseIn(requiredInput(0), [pdf('back.pdf')]);
+
+    expect(first.textContent).toContain('front.pdf');
+    expect(first.textContent).toContain('back.pdf');
+    expect(first.querySelectorAll('.ap-req-file')).toHaveLength(2);
+    expect(el.textContent).toContain('2 of 10 files added');
+  });
+
+  it('takes several files picked at once for one required document', async () => {
+    await setup();
+    await chooseIn(requiredInput(2), [pdf('bill-1.pdf'), pdf('bill-2.pdf'), pdf('bill-3.pdf')]);
+
+    expect(el.querySelectorAll('.ap-req')[2].querySelectorAll('.ap-req-file')).toHaveLength(3);
+  });
+
+  it('stops offering more once a required document has all it may take', async () => {
+    await setup();
+    await chooseIn(requiredInput(0), [pdf('1.pdf'), pdf('2.pdf'), pdf('3.pdf'), pdf('4.pdf')]);
+    const first = el.querySelectorAll('.ap-req')[0];
+    expect(first.textContent).not.toContain('+ Add another file');
+
+    await chooseIn(
+      el.querySelectorAll<HTMLInputElement>('.ap-req .ap-drop input[type="file"]')[0],
+      [pdf('m1.pdf'), pdf('m2.pdf'), pdf('m3.pdf'), pdf('m4.pdf'), pdf('m5.pdf')],
+    );
+    expect(el.textContent).toContain('You can add up to 4 files');
+  });
+
+  it('removes one of several files without losing the rest', async () => {
+    await setup();
+    await chooseIn(requiredInput(0), [pdf('front.pdf'), pdf('back.pdf')]);
+
+    el.querySelectorAll<HTMLButtonElement>('.ap-req')[0]
+      .querySelector<HTMLButtonElement>('.ap-file-remove')!
+      .click();
+    await fixture.whenStable();
+
+    const first = el.querySelectorAll('.ap-req')[0];
+    expect(first.textContent).not.toContain('front.pdf');
+    expect(first.textContent).toContain('back.pdf');
   });
 
   it('puts a certification on the page unnamed, prompts for its name and focuses it', async () => {
@@ -429,18 +470,76 @@ describe('Apply', () => {
       });
     });
 
-    it('swaps the province list for a text box and says what is optional', async () => {
+    it('assumes no country: the country comes first and has to be chosen', async () => {
       await setup();
+
+      const country = el.querySelector<HTMLSelectElement>('#ap-country')!;
+      expect(country.value).toBe('');
+      expect(el.querySelector('select#ap-province')).toBeNull();
+      expect(el.textContent).toContain('Identification number');
+      expect(el.textContent).not.toContain('South African ID number');
+
+      await send();
+      expect(el.textContent).toContain('Choose the country you are based in');
+    });
+
+    it('offers every country, not only Africa', async () => {
+      await setup();
+      const names = Array.from(el.querySelectorAll<HTMLOptionElement>('#ap-country option')).map(
+        (o) => o.textContent!.trim(),
+      );
+      for (const wanted of ['South Africa', 'Kenya', 'United Kingdom', 'United States', 'India']) {
+        expect(names).toContain(wanted);
+      }
+      expect(names.length).toBeGreaterThan(200);
+    });
+
+    it('swaps the province list for a text box once the country is not South Africa', async () => {
+      await setup();
+      choose('#ap-country', 'ZA');
+      await fixture.whenStable();
       expect(el.querySelector('select#ap-province')).not.toBeNull();
       expect(el.querySelector('#ap-region')).toBeNull();
+      expect(el.textContent).toContain('South African ID number');
 
       choose('#ap-country', 'NG');
       await fixture.whenStable();
 
       expect(el.querySelector('select#ap-province')).toBeNull();
       expect(el.querySelector('#ap-region')).not.toBeNull();
-      expect(el.textContent).toContain('ID or passport number');
+      expect(el.textContent).toContain('Identification number');
       expect(el.textContent).toContain('Postal code (optional)');
+    });
+
+    it('asks for the phone number with the chosen country’s calling code', async () => {
+      await setup();
+      choose('#ap-country', 'GB');
+      await fixture.whenStable();
+
+      expect(el.querySelector<HTMLInputElement>('#ap-phone')!.placeholder).toContain('+44');
+      expect(el.textContent).toContain('Start with +44');
+    });
+
+    it('accepts identification numbers with slashes, dots, hyphens and spaces', async () => {
+      for (const id of ['63-123456 A 12', 'AB/1234/56', 'A.123.456-7', 'GHA-123456789-0']) {
+        TestBed.resetTestingModule();
+        await inKenya();
+        type('#ap-id', id);
+        await send();
+
+        expect(submit, id).toHaveBeenCalledTimes(1);
+        const [request] = submit.mock.calls[0] as [SubmitApplicationRequest, File[]];
+        expect(request.idNumber).toBe(id.replace(/\s+/g, ''));
+      }
+    });
+
+    it('still refuses an identification number that is markup', async () => {
+      await inKenya();
+      type('#ap-id', '<script>alert(1)');
+      await send();
+
+      expect(submit).not.toHaveBeenCalled();
+      expect(el.textContent).toContain('Enter your ID or passport number');
     });
 
     it('accepts a postcode that is not four digits', async () => {
@@ -464,6 +563,8 @@ describe('Apply', () => {
 
     it('forgets a South African province when the country changes', async () => {
       await setup();
+      choose('#ap-country', 'ZA');
+      await fixture.whenStable();
       choose('#ap-province', 'GAUTENG');
       choose('#ap-country', 'KE');
       await fixture.whenStable();

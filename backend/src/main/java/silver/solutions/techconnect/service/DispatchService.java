@@ -66,6 +66,7 @@ public class DispatchService {
     private final DispatchMapper dispatchMapper;
     private final JdbcTemplate jdbcTemplate;
     private final NotificationService notifications;
+    private final IncidentLockService locks;
 
     public DispatchService(
             IncidentRepository incidents,
@@ -76,7 +77,8 @@ public class DispatchService {
             TechnicianSkillRepository technicianSkills,
             DispatchMapper dispatchMapper,
             JdbcTemplate jdbcTemplate,
-            NotificationService notifications) {
+            NotificationService notifications,
+            IncidentLockService locks) {
         this.incidents = incidents;
         this.dispatches = dispatches;
         this.dispatchResponses = dispatchResponses;
@@ -86,6 +88,7 @@ public class DispatchService {
         this.dispatchMapper = dispatchMapper;
         this.jdbcTemplate = jdbcTemplate;
         this.notifications = notifications;
+        this.locks = locks;
     }
 
     @Transactional(readOnly = true)
@@ -136,6 +139,9 @@ public class DispatchService {
         if (request.technicianIds().isEmpty()) {
             throw ApiException.badRequest("Select at least one technician.");
         }
+        // Someone else is part-way through dispatching this one: let them finish, so the same
+        // fault is not sent to different technicians by two controllers.
+        locks.requireNotHeldByAnother(incident, actorId);
         if (incident.getStatus() == IncidentStatus.CLOSED) {
             throw ApiException.conflict("This incident is closed and can't be dispatched.");
         }
@@ -184,8 +190,9 @@ public class DispatchService {
 
         if (incident.getStatus() == IncidentStatus.NEW) {
             incident.setStatus(IncidentStatus.IN_PROGRESS);
-            incidents.save(incident);
         }
+        locks.clear(incident);
+        incidents.save(incident);
 
         // The first notification goes out with the dispatch; it is counted so the Controller
         // can see it, and sent only once the dispatch is safely committed.

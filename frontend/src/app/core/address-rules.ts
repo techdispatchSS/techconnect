@@ -3,7 +3,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 
 import { requiredTrimmed } from '../shared/form-text';
-import { isSouthAfrica } from './address.models';
 
 const SA_POSTCODE = /^\d{4}$/;
 /** Letters, digits, space and hyphen cover every postcode format in use. */
@@ -18,6 +17,9 @@ function onTrimmed(validator: ValidatorFn): ValidatorFn {
     } as AbstractControl);
   };
 }
+
+/** Only a country that has been chosen, and is South Africa, gets South Africa's rules. */
+const isSouthAfrica = (code: string | null | undefined): boolean => code === 'ZA';
 
 function set(control: AbstractControl | null, validators: ValidatorFn[]): void {
   control?.setValidators(validators);

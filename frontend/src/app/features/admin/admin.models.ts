@@ -145,8 +145,8 @@ export type ApplicationDocumentKind =
   'ID_DOCUMENT' | 'MATRIC_CERTIFICATE' | 'PROOF_OF_RESIDENCE' | 'CERTIFICATE' | 'QUALIFICATION';
 
 export const DOCUMENT_KIND_LABELS: Record<ApplicationDocumentKind, string> = {
-  ID_DOCUMENT: 'ID document',
-  MATRIC_CERTIFICATE: 'Matric certificate',
+  ID_DOCUMENT: 'Identification document',
+  MATRIC_CERTIFICATE: 'High school diploma',
   PROOF_OF_RESIDENCE: 'Proof of residence',
   CERTIFICATE: 'Certification',
   QUALIFICATION: 'Qualification',

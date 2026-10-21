@@ -25,6 +25,8 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
 
     boolean existsByRole(UserRole role);
 
+    List<User> findByRole(UserRole role);
+
     /** The controller dashboard's dispatch-candidate pool (FR-04). */
     List<User> findByRoleAndStatus(UserRole role, UserStatus status);
 }

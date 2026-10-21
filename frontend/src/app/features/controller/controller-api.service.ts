@@ -13,10 +13,18 @@ import {
   IncidentListFilters,
   IncidentLock,
   IncidentProgress,
+  JobCounts,
+  JobDetail,
+  JobStage,
+  JobStatus,
+  JobSummary,
   PageResponse,
+  Report,
   ResendResult,
   SimulatedTicket,
+  TechnicianAvailability,
   TechnicianCandidate,
+  TechnicianRosterEntry,
 } from './controller.models';
 
 /** Client for the CONTROLLER-only `/api/v1/controller` endpoints (FR-02–FR-04). */
@@ -98,6 +106,78 @@ export class ControllerApiService {
   /** Logs an incident the Controller took by phone; it joins the queue as NEW. */
   createIncident(request: CreateIncidentRequest): Observable<Incident> {
     return this.http.post<Incident>('v1/controller/incidents', request);
+  }
+
+  // --- jobs (FR-05–FR-07) ------------------------------------------------------------------
+
+  listJobs(
+    stage: JobStage,
+    q: string,
+    page: number,
+    size: number,
+  ): Observable<PageResponse<JobSummary>> {
+    let params = new HttpParams().set('stage', stage).set('page', page).set('size', size);
+    if (q.trim()) {
+      params = params.set('q', q.trim());
+    }
+    return this.http.get<PageResponse<JobSummary>>('v1/controller/jobs', { params });
+  }
+
+  jobCounts(): Observable<JobCounts> {
+    return this.http.get<JobCounts>('v1/controller/jobs/counts');
+  }
+
+  getJob(id: string): Observable<JobDetail> {
+    return this.http.get<JobDetail>(`v1/controller/jobs/${id}`);
+  }
+
+  /** Signs off a submitted job; its incident closes with it. 409 unless it is submitted. */
+  closeJob(id: string, closingNotes: string | null): Observable<JobDetail> {
+    return this.http.post<JobDetail>(`v1/controller/jobs/${id}/close`, { closingNotes });
+  }
+
+  /** Demo only: moves a job on as the technician who holds it. */
+  simulateJobStatus(id: string, status: JobStatus, reason: string | null): Observable<JobDetail> {
+    return this.http.post<JobDetail>(`v1/controller/simulation/jobs/${id}/status`, {
+      status,
+      reason,
+    });
+  }
+
+  /** Demo only: submits a plausible report for a completed job, as its technician. */
+  simulateJobReport(id: string): Observable<JobDetail> {
+    return this.http.post<JobDetail>(`v1/controller/simulation/jobs/${id}/report`, null);
+  }
+
+  // --- reports and roster -------------------------------------------------------------------
+
+  report(from: string, to: string, zone: string): Observable<Report> {
+    const params = new HttpParams().set('from', from).set('to', to).set('zone', zone);
+    return this.http.get<Report>('v1/controller/reports/summary', { params });
+  }
+
+  /** The CSV as a file; the bearer token rides on the request, so this is not a plain link. */
+  reportCsv(from: string, to: string, zone: string): Observable<Blob> {
+    const params = new HttpParams().set('from', from).set('to', to).set('zone', zone);
+    return this.http.get('v1/controller/reports/incidents.csv', { params, responseType: 'blob' });
+  }
+
+  listTechnicians(
+    q: string,
+    availability: TechnicianAvailability | '',
+    page: number,
+    size: number,
+  ): Observable<PageResponse<TechnicianRosterEntry>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (q.trim()) {
+      params = params.set('q', q.trim());
+    }
+    if (availability) {
+      params = params.set('availability', availability);
+    }
+    return this.http.get<PageResponse<TechnicianRosterEntry>>('v1/controller/technicians', {
+      params,
+    });
   }
 
   freshdeskStatus(): Observable<FreshdeskStatus> {

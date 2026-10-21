@@ -77,6 +77,10 @@ public class Incident {
     @Column(name = "sla_due_at")
     private Instant slaDueAt;
 
+    /** When it was closed, from the job being closed out here or the ticket resolving in Freshdesk. */
+    @Column(name = "closed_at")
+    private Instant closedAt;
+
     /** The controller currently dispatching this incident; only meaningful until lockExpiresAt. */
     @Column(name = "locked_by")
     private UUID lockedBy;

@@ -1,0 +1,281 @@
+@if (notFound()) {
+  <p class="jd-empty">
+    This job doesn't exist. <a routerLink="/incidents/jobs">Back to active jobs</a>
+  </p>
+} @else if (loadFailed()) {
+  <p class="jd-empty">Couldn't load this job. Try again shortly.</p>
+} @else if (detail(); as d) {
+  @let job = d.job;
+  <div class="jd">
+    <div class="controller-card jd-meta">
+      <span class="jd-meta-item"
+        ><span>Ticket</span><strong>{{ job.ticketRef }}</strong></span
+      >
+      <span class="jd-meta-item"
+        ><span>Client</span><strong>{{ job.clientName }}</strong></span
+      >
+      <span class="jd-meta-item"
+        ><span>Site</span><strong>{{ job.siteAddress ?? '—' }}</strong></span
+      >
+      <span class="jd-meta-item"
+        ><span>Technician</span><strong>{{ job.technicianName }}</strong></span
+      >
+      @if (job.priority) {
+        <span class="jd-meta-item"
+          ><span>Priority</span><strong>{{ priorityLabels[job.priority] }}</strong></span
+        >
+      }
+      <span class="jd-meta-actions">
+        <a
+          [routerLink]="['/incidents/progress', job.incidentId]"
+          class="controller-btn controller-btn-secondary"
+          >Dispatch</a
+        >
+        <a
+          [routerLink]="
+            isClosed() || job.status === 'SUBMITTED' ? '/incidents/review' : '/incidents/jobs'
+          "
+          class="controller-btn controller-btn-secondary"
+          >Back to list</a
+        >
+      </span>
+    </div>
+
+    <div class="controller-card jd-status jd-status--{{ tone() }}">
+      <div class="jd-status-row">
+        <span class="jd-status-title">{{ statusLabels[job.status] }}</span>
+        @if (sla(); as sla) {
+          <span class="jd-status-sla" [class.jd-status-sla--overdue]="sla.overdue">{{
+            sla.text
+          }}</span>
+        }
+        <span class="jd-status-time">On this job for {{ timeOnJob() }}</span>
+      </div>
+      <div
+        class="jd-bar"
+        role="progressbar"
+        [attr.aria-valuenow]="progress()"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-label="Job progress"
+      >
+        <span class="jd-bar-fill" [style.width.%]="progress()"></span>
+      </div>
+      @if (job.status === 'ON_HOLD') {
+        <p class="jd-status-note">
+          Held: {{ d.history[d.history.length - 1].reason ?? 'no reason given' }}
+        </p>
+      }
+    </div>
+
+    @if (simulation() && !isClosed() && job.status !== 'SUBMITTED') {
+      <div class="jd-sim" role="group" aria-label="Demo controls">
+        <span class="jd-sim-tag">Demo</span>
+        <span class="jd-sim-text"
+          >The technician app isn't built yet. Take the technician's next step for them.</span
+        >
+        @if (canHold()) {
+          <input
+            class="controller-input jd-sim-reason"
+            [formControl]="holdReason"
+            aria-label="Reason for putting the job on hold"
+            maxlength="500"
+          />
+          <button
+            type="button"
+            class="controller-btn controller-btn-secondary"
+            [disabled]="simBusy()"
+            (click)="hold()"
+          >
+            Put on hold
+          </button>
+        }
+        @if (demoStep(); as step) {
+          <button
+            type="button"
+            class="controller-btn controller-btn-primary"
+            [disabled]="simBusy()"
+            (click)="advance()"
+          >
+            {{ step.label }}
+          </button>
+        }
+        @if (simError(); as message) {
+          <span class="jd-sim-error" role="alert">{{ message }}</span>
+        }
+      </div>
+    }
+
+    <div class="jd-body">
+      <section class="controller-card jd-section">
+        <h6 class="jd-title">The job</h6>
+        <dl class="jd-facts">
+          <div>
+            <dt>Issue</dt>
+            <dd>{{ d.issueType ?? '—' }}</dd>
+          </div>
+          @if (d.jobType) {
+            <div>
+              <dt>Job type</dt>
+              <dd>{{ d.jobType }}</dd>
+            </div>
+          }
+          <div>
+            <dt>Site contact</dt>
+            <dd>
+              {{ d.contactName ?? '—' }}
+              @if (d.contactPhone) {
+                <span class="jd-muted"> · {{ d.contactPhone }}</span>
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Accepted</dt>
+            <dd>{{ job.acceptedAt | date: 'd MMM, HH:mm' }}</dd>
+          </div>
+          @if (job.arrivedAt) {
+            <div>
+              <dt>Arrived</dt>
+              <dd>{{ job.arrivedAt | date: 'd MMM, HH:mm' }}</dd>
+            </div>
+          }
+          @if (job.completedAt) {
+            <div>
+              <dt>Work completed</dt>
+              <dd>{{ job.completedAt | date: 'd MMM, HH:mm' }}</dd>
+            </div>
+          }
+        </dl>
+        @if (d.description) {
+          <p class="jd-text">{{ d.description }}</p>
+        }
+        @if (d.notesForTechnician) {
+          <h6 class="jd-title">Notes sent to the technician</h6>
+          <p class="jd-text">{{ d.notesForTechnician }}</p>
+        }
+      </section>
+
+      <section class="controller-card jd-section">
+        <h6 class="jd-title">Timeline</h6>
+        <ol class="jd-timeline">
+          @for (entry of d.history; track entry.changedAt + entry.status) {
+            <li>
+              <span class="jd-dot"></span>
+              <span class="jd-tl-main">
+                <strong>{{ statusLabels[entry.status] }}</strong>
+                <span class="jd-muted"
+                  >{{ entry.changedAt | date: 'd MMM, HH:mm' }} · {{ entry.changedByName }}</span
+                >
+                @if (entry.reason) {
+                  <span class="jd-tl-reason">{{ entry.reason }}</span>
+                }
+              </span>
+            </li>
+          }
+        </ol>
+      </section>
+    </div>
+
+    @if (d.resolutionNotes) {
+      <section class="controller-card jd-section jd-report">
+        <h6 class="jd-title">Technician's report</h6>
+        <div class="jd-report-grid">
+          <div>
+            <h6 class="jd-sub">What was done</h6>
+            <p class="jd-text">{{ d.resolutionNotes }}</p>
+          </div>
+          @if (d.rootCause) {
+            <div>
+              <h6 class="jd-sub">Root cause</h6>
+              <p class="jd-text">{{ d.rootCause }}</p>
+            </div>
+          }
+          @if (d.recommendations) {
+            <div>
+              <h6 class="jd-sub">Recommendations</h6>
+              <p class="jd-text">{{ d.recommendations }}</p>
+            </div>
+          }
+          <div>
+            <h6 class="jd-sub">Labour</h6>
+            <p class="jd-text">{{ d.labourHours }} hours</p>
+          </div>
+        </div>
+        @if (d.parts.length > 0) {
+          <h6 class="jd-sub">Parts used</h6>
+          <table class="controller-table jd-parts">
+            <thead>
+              <tr>
+                <th>Part</th>
+                <th>Serial number</th>
+                <th style="text-align: right">Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (part of d.parts; track part.name + (part.serialNumber ?? '')) {
+                <tr>
+                  <td>{{ part.name }}</td>
+                  <td>{{ part.serialNumber ?? '—' }}</td>
+                  <td style="text-align: right">{{ part.quantity }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
+    }
+
+    @if (d.canClose) {
+      <section class="controller-card jd-section jd-close">
+        <h6 class="jd-title">Review and close</h6>
+        <p class="jd-text">
+          Closing the job signs off the technician's report and closes the incident. This can't be
+          undone.
+        </p>
+        <label class="controller-field">
+          <span>Closing notes (optional)</span>
+          <textarea
+            class="controller-input"
+            rows="3"
+            maxlength="2000"
+            [formControl]="closingNotes"
+          ></textarea>
+        </label>
+        @if (closeError(); as message) {
+          <p class="jd-error" role="alert">{{ message }}</p>
+        }
+        <div>
+          <button
+            type="button"
+            class="controller-btn controller-btn-primary"
+            [disabled]="closing()"
+            (click)="close()"
+          >
+            {{ closing() ? 'Closing…' : 'Close job' }}
+          </button>
+        </div>
+      </section>
+    } @else if (isClosed()) {
+      <section class="controller-card jd-section">
+        <h6 class="jd-title">Closed</h6>
+        <p class="jd-text">
+          Closed by {{ d.closedByName ?? 'a controller' }}
+          @if (job.closedAt) {
+            on {{ job.closedAt | date: 'd MMM yyyy, HH:mm' }}
+          }
+          .
+        </p>
+        @if (d.closingNotes) {
+          <p class="jd-text">{{ d.closingNotes }}</p>
+        }
+      </section>
+    }
+  </div>
+} @else {
+  <div class="jd" aria-busy="true" aria-label="Loading job">
+    <div class="controller-card jd-meta">
+      <app-skeleton width="40rem" height="36px" />
+    </div>
+    <div class="controller-card jd-section"><app-skeleton width="100%" height="120px" /></div>
+  </div>
+}

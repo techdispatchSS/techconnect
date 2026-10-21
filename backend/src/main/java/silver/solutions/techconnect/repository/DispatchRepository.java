@@ -19,6 +19,8 @@ public interface DispatchRepository extends JpaRepository<Dispatch, UUID> {
 
     List<Dispatch> findByIncidentIdIn(Collection<UUID> incidentIds);
 
+    List<Dispatch> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(Instant from, Instant to);
+
     /**
      * True while the incident has a dispatch that has been taken, or one still inside its
      * response window. A PENDING row whose window has passed does not count even if the expiry

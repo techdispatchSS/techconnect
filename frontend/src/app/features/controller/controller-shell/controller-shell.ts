@@ -29,6 +29,7 @@ import { ChangePasswordDialog } from '../../../layout/change-password-dialog/cha
 import { ProfileDialog } from '../../../layout/profile-dialog/profile-dialog';
 import { PRIORITY_LABELS } from '../controller.models';
 import { FreshdeskStatusService } from '../freshdesk-status.service';
+import { JobCountsService } from '../job-counts.service';
 import { IncidentAlert, NewIncidentNotifierService } from '../new-incident-notifier.service';
 import { InstallButton } from '../../../shared/install-button/install-button';
 import { Logo } from '../../../shared/logo/logo';
@@ -75,6 +76,7 @@ export class ControllerShell implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   readonly notifier = inject(NewIncidentNotifierService);
   private readonly freshdesk = inject(FreshdeskStatusService);
+  private readonly jobCounts = inject(JobCountsService);
 
   readonly priorityLabels = PRIORITY_LABELS;
 
@@ -118,6 +120,9 @@ export class ControllerShell implements OnInit {
   /** New-incident count badges the "Incident queue" nav entry, matching the design mockup —
    * sourced live from `notifier`, the same poll that drives the toast alerts below. */
   readonly newCount = this.notifier.newCount;
+  /** Jobs being worked, and reports waiting for sign-off, for the sidebar badges. */
+  readonly activeJobs = computed(() => this.jobCounts.counts()?.active || null);
+  readonly reviewJobs = computed(() => this.jobCounts.counts()?.review || null);
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -170,6 +175,7 @@ export class ControllerShell implements OnInit {
     this.account.me().subscribe({ error: () => undefined });
     this.notifier.start(this.destroyRef);
     this.freshdesk.start(this.destroyRef);
+    this.jobCounts.start(this.destroyRef);
   }
 
   /** Sends the Controller to the queue with this incident selected — new incidents always

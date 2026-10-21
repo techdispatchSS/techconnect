@@ -66,6 +66,8 @@ function progress(
     responses,
     acceptedTechnicianName:
       responses.find((r) => r.response === 'ACCEPTED')?.technicianName ?? null,
+    jobId: status === 'ACCEPTED' ? 'j1' : null,
+    jobStatus: status === 'ACCEPTED' ? 'EN_ROUTE' : null,
   };
 }
 

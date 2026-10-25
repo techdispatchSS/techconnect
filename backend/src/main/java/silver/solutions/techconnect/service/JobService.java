@@ -98,7 +98,7 @@ public class JobService {
     }
 
     /** Statuses in which the technician is committed to this job (and so not free for another). */
-    private static final Set<JobStatus> TECHNICIAN_OCCUPIED = EnumSet.of(
+    static final Set<JobStatus> TECHNICIAN_OCCUPIED = EnumSet.of(
             JobStatus.EN_ROUTE, JobStatus.ON_SITE, JobStatus.WORK_STARTED,
             JobStatus.ON_HOLD, JobStatus.WORK_RESUMED);
 

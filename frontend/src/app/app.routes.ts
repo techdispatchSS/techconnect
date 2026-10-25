@@ -84,14 +84,12 @@ export const routes: Routes = [
           import('./features/errors/forbidden/forbidden').then((m) => m.Forbidden),
         title: 'Not available · TechConnect',
       },
-      // Placeholder until the technician app exists. Without it this role home matched
-      // nothing, fell through to `**`, and bounced straight back into the role redirect.
-      // (The controller's /incidents is the real dashboard above.)
+      // The technician's home. (The controller's /incidents is the real dashboard above.)
       {
         path: 'jobs',
         loadComponent: () =>
-          import('./features/under-construction/under-construction').then(
-            (m) => m.UnderConstruction,
+          import('./features/technician/technician-home/technician-home').then(
+            (m) => m.TechnicianHome,
           ),
         canActivate: [roleGuard],
         data: { roles: ['TECHNICIAN'] },

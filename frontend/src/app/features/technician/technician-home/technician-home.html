@@ -1,0 +1,64 @@
+<section class="th-page" aria-labelledby="th-title">
+  @if (name(); as who) {
+    <p class="th-greeting">Hi {{ who }}</p>
+  }
+
+  @if (availability(); as current) {
+    <div
+      class="th-card"
+      [class.th-card--on]="current.status === 'AVAILABLE'"
+      [class.th-card--job]="current.onJob || current.status === 'ON_JOB'"
+    >
+      <p class="th-status">
+        <span class="th-dot" aria-hidden="true"></span>
+        {{ current.status === 'ON_JOB' ? 'On a job' : current.status === 'AVAILABLE' ? 'Available' : 'Offline' }}
+      </p>
+      <h1 id="th-title" class="th-title">{{ headline() }}</h1>
+      <p class="th-lead">
+        @if (current.onJob) {
+          Finish the job you're on and you'll be available for the next one.
+        } @else if (current.status === 'AVAILABLE') {
+          Controllers can send you jobs. Go off duty when you stop for the day.
+        } @else {
+          Controllers won't send you jobs until you go on duty.
+        }
+      </p>
+
+      <button
+        type="button"
+        class="th-toggle"
+        [class.th-toggle--off]="onDuty()"
+        [disabled]="saving() || current.onJob"
+        [attr.aria-pressed]="current.status === 'AVAILABLE'"
+        (click)="toggle()"
+      >
+        {{ saving() ? 'Saving…' : onDuty() ? 'Go off duty' : 'Go on duty' }}
+      </button>
+
+      @if (error(); as message) {
+        <p class="th-error" role="alert">{{ message }}</p>
+      }
+    </div>
+
+    <p class="th-location" aria-live="polite">
+      @if (locationState() === 'blocked') {
+        Location is off. Allow location for TechConnect so controllers can see how far away you
+        are.
+      } @else if (current.lastLocationAt) {
+        Location shared {{ current.lastLocationAt | date: 'shortTime' }}.
+      } @else {
+        Sharing your location…
+      }
+    </p>
+
+    <p class="th-next">Job offers and the jobs you've accepted will appear here.</p>
+  } @else if (loadFailed()) {
+    <div class="th-card">
+      <h1 id="th-title" class="th-title">Couldn't load your status</h1>
+      <p class="th-lead">Check your connection and try again.</p>
+      <button type="button" class="th-toggle" (click)="load()">Try again</button>
+    </div>
+  } @else {
+    <p class="th-loading" id="th-title">Loading…</p>
+  }
+</section>

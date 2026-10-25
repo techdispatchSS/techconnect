@@ -11,7 +11,13 @@
     >
       <p class="th-status">
         <span class="th-dot" aria-hidden="true"></span>
-        {{ current.status === 'ON_JOB' ? 'On a job' : current.status === 'AVAILABLE' ? 'Available' : 'Offline' }}
+        {{
+          current.status === 'ON_JOB'
+            ? 'On a job'
+            : current.status === 'AVAILABLE'
+              ? 'Available'
+              : 'Offline'
+        }}
       </p>
       <h1 id="th-title" class="th-title">{{ headline() }}</h1>
       <p class="th-lead">
@@ -42,8 +48,7 @@
 
     <p class="th-location" aria-live="polite">
       @if (locationState() === 'blocked') {
-        Location is off. Allow location for TechConnect so controllers can see how far away you
-        are.
+        Location is off. Allow location for TechConnect so controllers can see how far away you are.
       } @else if (current.lastLocationAt) {
         Location shared {{ current.lastLocationAt | date: 'shortTime' }}.
       } @else {
@@ -51,7 +56,10 @@
       }
     </p>
 
-    <p class="th-next">Job offers and the jobs you've accepted will appear here.</p>
+    <!-- Accepting puts them on a job, so re-read their status. -->
+    <app-dispatch-offers (accepted)="load()" />
+
+    <p class="th-next">The jobs you've accepted will appear here.</p>
   } @else if (loadFailed()) {
     <div class="th-card">
       <h1 id="th-title" class="th-title">Couldn't load your status</h1>

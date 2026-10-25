@@ -15,3 +15,31 @@ export interface Coordinates {
   readonly latitude: number;
   readonly longitude: number;
 }
+
+export type DispatchType = 'BROADCAST' | 'ASSIGN';
+export type IncidentPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+
+/** `GET /api/v1/technician/dispatches` — a job offered to me, waiting on my answer (FR-04). */
+export interface DispatchOffer {
+  readonly dispatchId: string;
+  /** BROADCAST went to several technicians: the first to accept gets it. */
+  readonly dispatchType: DispatchType;
+  readonly expiresAt: string;
+  readonly ticketRef: string | null;
+  readonly clientName: string;
+  readonly siteAddress: string | null;
+  readonly priority: IncidentPriority | null;
+  readonly sla: string | null;
+  readonly issueType: string | null;
+  readonly description: string | null;
+  readonly jobType: string | null;
+  readonly requiredSkills: string | null;
+  readonly notesForTechnician: string | null;
+  /** From my last shared location; null if either end has no position. */
+  readonly distanceKm: number | null;
+}
+
+export interface DispatchAnswer {
+  readonly dispatchId: string;
+  readonly outcome: 'ACCEPTED' | 'DECLINED';
+}

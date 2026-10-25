@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { Coordinates, MyAvailability } from './technician.models';
+import { Coordinates, DispatchAnswer, DispatchOffer, MyAvailability } from './technician.models';
 
 /**
  * Client for the TECHNICIAN-only `/api/v1/technician` endpoints. Every call is about the
@@ -24,5 +24,19 @@ export class TechnicianApiService {
   /** FR-05: sent when the app opens or comes back to the foreground. */
   reportLocation(coordinates: Coordinates): Observable<MyAvailability> {
     return this.http.put<MyAvailability>('/v1/technician/location', coordinates);
+  }
+
+  /** Offers still inside their window that I haven't answered, soonest to lapse first. */
+  offers(): Observable<DispatchOffer[]> {
+    return this.http.get<DispatchOffer[]>('/v1/technician/dispatches');
+  }
+
+  /** 409 with a reason when it was taken, has lapsed, or was already answered. */
+  accept(dispatchId: string): Observable<DispatchAnswer> {
+    return this.http.post<DispatchAnswer>(`/v1/technician/dispatches/${dispatchId}/accept`, null);
+  }
+
+  decline(dispatchId: string): Observable<DispatchAnswer> {
+    return this.http.post<DispatchAnswer>(`/v1/technician/dispatches/${dispatchId}/decline`, null);
   }
 }

@@ -4,19 +4,21 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { DeviceLocationService } from '../device-location.service';
+import { DispatchOffers } from '../dispatch-offers/dispatch-offers';
 import { TechnicianApiService } from '../technician-api.service';
 import { MyAvailability } from '../technician.models';
 
 type LocationState = 'unknown' | 'shared' | 'blocked';
 
 /**
- * The technician's home: going on and off duty (T-14), and sharing where they are so the
- * controller can see how far away they are when dispatching (FR-05). The location goes up
- * when the page opens and again whenever the app comes back to the foreground.
+ * The technician's home: going on and off duty (T-14), sharing where they are so the
+ * controller can see how far away they are when dispatching (FR-05), and the job offers
+ * waiting on their answer (FR-04). The location goes up when the page opens and again
+ * whenever the app comes back to the foreground.
  */
 @Component({
   selector: 'app-technician-home',
-  imports: [DatePipe],
+  imports: [DatePipe, DispatchOffers],
   templateUrl: './technician-home.html',
   styleUrl: './technician-home.scss',
 })
@@ -52,9 +54,7 @@ export class TechnicianHome {
       }
     };
     document.addEventListener('visibilitychange', onVisible);
-    inject(DestroyRef).onDestroy(() =>
-      document.removeEventListener('visibilitychange', onVisible),
-    );
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('visibilitychange', onVisible));
   }
 
   load(): void {

@@ -1,0 +1,87 @@
+<section class="do-section" aria-labelledby="do-title">
+  <h2 id="do-title" class="do-title">
+    Job offers
+    @if (offers().length > 0) {
+      <span class="do-count">{{ offers().length }}</span>
+    }
+  </h2>
+
+  @if (notice(); as message) {
+    <p
+      class="do-notice"
+      [class.do-notice--error]="message.kind === 'error'"
+      [attr.role]="message.kind === 'error' ? 'alert' : 'status'"
+    >
+      {{ message.text }}
+    </p>
+  }
+
+  @for (offer of offers(); track offer.dispatchId) {
+    <article class="do-card" [class.do-card--high]="offer.priority === 'HIGH'">
+      <header class="do-head">
+        <div>
+          <h3 class="do-client">{{ offer.clientName }}</h3>
+          @if (offer.siteAddress) {
+            <p class="do-address">{{ offer.siteAddress }}</p>
+          }
+        </div>
+        <p class="do-timer" [attr.aria-label]="'Time left to answer: ' + left(offer)">
+          {{ left(offer) }}
+        </p>
+      </header>
+
+      <ul class="do-facts">
+        @if (offer.priority) {
+          <li class="do-priority">{{ offer.priority | titlecase }} priority</li>
+        }
+        @if (offer.distanceKm !== null) {
+          <li>{{ offer.distanceKm }} km away</li>
+        }
+        @if (offer.issueType) {
+          <li>{{ offer.issueType }}</li>
+        }
+        @if (offer.sla) {
+          <li>SLA {{ offer.sla }}</li>
+        }
+        @if (offer.ticketRef) {
+          <li>Ticket #{{ offer.ticketRef }}</li>
+        }
+      </ul>
+
+      @if (offer.description) {
+        <p class="do-description">{{ offer.description }}</p>
+      }
+      @if (offer.notesForTechnician) {
+        <p class="do-notes"><strong>From the controller:</strong> {{ offer.notesForTechnician }}</p>
+      }
+      @if (offer.dispatchType === 'BROADCAST') {
+        <p class="do-hint">Also offered to other technicians. The first to accept gets it.</p>
+      }
+
+      <div class="do-actions">
+        <button
+          type="button"
+          class="do-button do-button--decline"
+          [disabled]="answering() !== null"
+          (click)="decline(offer)"
+        >
+          Decline
+        </button>
+        <button
+          type="button"
+          class="do-button do-button--accept"
+          [disabled]="answering() !== null"
+          (click)="accept(offer)"
+        >
+          {{ answering() === offer.dispatchId ? 'Sending…' : 'Accept' }}
+        </button>
+      </div>
+    </article>
+  } @empty {
+    <p class="do-empty">
+      {{
+        loaded() ? 'No job offers right now. New ones show up here.' : 'Checking for job offers…'
+      }}
+    </p>
+  }
+</section>

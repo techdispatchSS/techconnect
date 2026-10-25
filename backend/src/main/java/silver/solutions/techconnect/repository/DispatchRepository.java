@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import silver.solutions.techconnect.entity.Dispatch;
+import silver.solutions.techconnect.entity.DispatchResponseStatus;
 import silver.solutions.techconnect.entity.DispatchStatus;
 
 public interface DispatchRepository extends JpaRepository<Dispatch, UUID> {
@@ -35,6 +36,23 @@ public interface DispatchRepository extends JpaRepository<Dispatch, UUID> {
     boolean hasLiveDispatch(
             @Param("incidentId") UUID incidentId,
             @Param("accepted") DispatchStatus accepted,
+            @Param("pending") DispatchStatus pending,
+            @Param("now") Instant now);
+
+    /**
+     * The dispatches still waiting on this technician's answer: open, inside the window, and not
+     * yet answered by them. Soonest to lapse first.
+     */
+    @Query("""
+            select d from Dispatch d, DispatchResponse r
+            where r.dispatchId = d.id and r.technicianId = :technicianId
+              and r.response = :unanswered
+              and d.status = :pending and d.expiresAt > :now
+            order by d.expiresAt asc
+            """)
+    List<Dispatch> findAwaitingAnswerFrom(
+            @Param("technicianId") UUID technicianId,
+            @Param("unanswered") DispatchResponseStatus unanswered,
             @Param("pending") DispatchStatus pending,
             @Param("now") Instant now);
 

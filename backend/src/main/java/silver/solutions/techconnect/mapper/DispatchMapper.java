@@ -71,7 +71,8 @@ public class DispatchMapper {
         return (int) Math.round(Math.min(100, skillPoints + availabilityPoints + proximityPoints));
     }
 
-    private Double distanceBetween(BigDecimal lat1, BigDecimal lng1, BigDecimal lat2, BigDecimal lng2) {
+    /** Straight-line km to one decimal, or null when either end has no position. */
+    public static Double distanceBetween(BigDecimal lat1, BigDecimal lng1, BigDecimal lat2, BigDecimal lng2) {
         if (lat1 == null || lng1 == null || lat2 == null || lng2 == null) {
             return null;
         }

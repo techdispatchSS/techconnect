@@ -27,6 +27,7 @@ describe('TechnicianHome', () => {
     availability: ReturnType<typeof vi.fn>;
     setAvailable: ReturnType<typeof vi.fn>;
     reportLocation: ReturnType<typeof vi.fn>;
+    offers: ReturnType<typeof vi.fn>;
   };
   let locate: ReturnType<typeof vi.fn>;
 
@@ -61,6 +62,7 @@ describe('TechnicianHome', () => {
       reportLocation: vi.fn((c: Coordinates) =>
         of(availability({ lastLatitude: c.latitude, lastLongitude: c.longitude })),
       ),
+      offers: vi.fn(() => of([])),
     };
     locate = vi.fn(() => Promise.resolve(HERE));
   });

@@ -9,6 +9,7 @@ import {
   DispatchResponseEntry,
   FreshdeskStatus,
   Incident,
+  IncidentEvent,
   IncidentProgress,
 } from '../controller.models';
 import { FreshdeskStatusService } from '../freshdesk-status.service';
@@ -88,7 +89,7 @@ describe('TicketProgress', () => {
 
   async function setup(
     first: IncidentProgress,
-    options: { simulation?: boolean } = {},
+    options: { simulation?: boolean; history?: IncidentEvent[] } = {},
   ): Promise<void> {
     // Only the interval is faked: Angular's own stability tracking needs the real setTimeout.
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
@@ -110,7 +111,12 @@ describe('TicketProgress', () => {
         },
         {
           provide: ControllerApiService,
-          useValue: { getIncidentProgress, simulateTechnicianResponse, resendDispatch },
+          useValue: {
+            getIncidentProgress,
+            simulateTechnicianResponse,
+            resendDispatch,
+            getIncidentEvents: () => of(options.history ?? []),
+          },
         },
         {
           provide: FreshdeskStatusService,
@@ -208,6 +214,42 @@ describe('TicketProgress', () => {
     expect(resendDispatch).toHaveBeenCalledWith('d1');
     expect(el.textContent).toContain('sent again to 1 technician.');
     expect(getIncidentProgress.mock.calls.length).toBeGreaterThan(callsBefore);
+  });
+
+  describe('history', () => {
+    const history: IncidentEvent[] = [
+      {
+        id: 'e1',
+        type: 'DISPATCH_SENT',
+        actorName: 'Nomsa Controller',
+        summary: 'Broadcast to Tech t1, Tech t2',
+        at: NOW,
+      },
+      {
+        id: 'e2',
+        type: 'DISPATCH_EXPIRED',
+        actorName: null,
+        summary: 'Nobody accepted in time',
+        at: NOW,
+      },
+    ];
+
+    it('lists who did what, and calls the system "System"', async () => {
+      await setup(progress('PENDING', [entry('t1', 'PENDING')]), { history });
+
+      const rows = Array.from(el.querySelectorAll('.tp-history-item')).map((r) =>
+        r.textContent!.replace(/\s+/g, ' ').trim(),
+      );
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toContain('Nomsa Controller Broadcast to Tech t1, Tech t2');
+      expect(rows[1]).toContain('System Nobody accepted in time');
+    });
+
+    it('shows no history heading when there is none to show', async () => {
+      await setup(progress('PENDING', [entry('t1', 'PENDING')]));
+
+      expect(el.querySelector('.tp-history')).toBeNull();
+    });
   });
 
   it('offers no resend once the job has been taken', async () => {

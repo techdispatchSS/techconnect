@@ -12,6 +12,7 @@ import {
   IncidentKpis,
   IncidentListFilters,
   IncidentLock,
+  IncidentEvent,
   IncidentProgress,
   JobCounts,
   JobDetail,
@@ -65,6 +66,11 @@ export class ControllerApiService {
    * responded so far — the ticket progress view. */
   getIncidentProgress(id: string): Observable<IncidentProgress> {
     return this.http.get<IncidentProgress>(`v1/controller/incidents/${id}/progress`);
+  }
+
+  /** The ticket's history, oldest first: who logged, dispatched, nudged, answered and closed it. */
+  getIncidentEvents(id: string): Observable<IncidentEvent[]> {
+    return this.http.get<IncidentEvent[]>(`v1/controller/incidents/${id}/events`);
   }
 
   /** Ranked by skill match, availability and proximity — the ranking itself happens

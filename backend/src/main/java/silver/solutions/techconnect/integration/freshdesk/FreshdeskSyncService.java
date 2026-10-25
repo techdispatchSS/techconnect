@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import silver.solutions.techconnect.entity.Incident;
+import silver.solutions.techconnect.entity.IncidentEventType;
 import silver.solutions.techconnect.entity.IncidentStatus;
 import silver.solutions.techconnect.repository.IncidentRepository;
+import silver.solutions.techconnect.service.IncidentEventService;
 
 /**
  * Pulls tickets from Freshdesk and turns them into incidents (PRD FR-02). Safe to run as often
@@ -39,6 +41,7 @@ public class FreshdeskSyncService {
 
     private final FreshdeskClient client;
     private final IncidentRepository incidents;
+    private final IncidentEventService events;
     private final TransactionTemplate transactions;
     private final ReentrantLock running = new ReentrantLock();
 
@@ -50,10 +53,12 @@ public class FreshdeskSyncService {
     public FreshdeskSyncService(
             ObjectProvider<FreshdeskClient> client,
             IncidentRepository incidents,
+            IncidentEventService events,
             PlatformTransactionManager transactionManager) {
         // Absent until a Freshdesk (simulated or live) is configured; the sync is then a no-op.
         this.client = client.getIfAvailable();
         this.incidents = incidents;
+        this.events = events;
         this.transactions = new TransactionTemplate(transactionManager);
     }
 
@@ -155,6 +160,8 @@ public class FreshdeskSyncService {
                 incident.setCreatedAt(ticket.createdAt());
             }
             incidents.saveAndFlush(incident);
+            events.record(incident.getId(), IncidentEventType.INCIDENT_RECEIVED, null, null,
+                    "Received from Freshdesk (" + ticket.id() + ")");
             return Change.CREATED;
         }
 
@@ -165,6 +172,8 @@ public class FreshdeskSyncService {
             existing.setStatus(IncidentStatus.CLOSED);
             existing.setClosedAt(java.time.Instant.now());
             incidents.save(existing);
+            events.record(existing.getId(), IncidentEventType.INCIDENT_CLOSED, null, null,
+                    "Closed: the Freshdesk ticket (" + ticket.id() + ") was resolved");
             return Change.CLOSED;
         }
 

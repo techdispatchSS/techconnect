@@ -1,0 +1,60 @@
+[
+  {
+    "cc_emails": [
+      "ops@example.com"
+    ],
+    "fwd_emails": [],
+    "reply_cc_emails": [
+      "ops@example.com"
+    ],
+    "ticket_cc_emails": [
+      "ops@example.com"
+    ],
+    "ticket_bcc_emails": [],
+    "fr_escalated": false,
+    "spam": false,
+    "email_config_id": 68000031053,
+    "group_id": null,
+    "priority": 2,
+    "requester_id": 68000000001,
+    "responder_id": null,
+    "source": 1,
+    "company_id": 68000000900,
+    "status": 5,
+    "subject": "FSE Request - Example Retail Rosebank",
+    "association_type": null,
+    "support_email": "help@example.freshdesk.com",
+    "to_emails": [
+      "help@example.freshdesk.com"
+    ],
+    "product_id": 68000029520,
+    "id": 203,
+    "type": "Incident",
+    "due_by": "2026-10-20T17:00:00Z",
+    "fr_due_by": "2026-10-20T17:00:00Z",
+    "is_escalated": false,
+    "custom_fields": {
+      "cf_reference_number": null
+    },
+    "created_at": "2026-10-20T09:00:00Z",
+    "updated_at": "2026-10-20T09:30:00Z",
+    "associated_tickets_count": null,
+    "tags": [],
+    "source_info": null,
+    "description": "<div>Printer jammed; fixed on site.</div>",
+    "description_text": "Printer jammed; fixed on site.",
+    "requester": {
+      "contact_type": "contact",
+      "first_seen": null,
+      "last_seen": null,
+      "id": 68000000001,
+      "name": "Thabo Nkosi",
+      "email": "thabo@example.com",
+      "mobile": "082 555 0101",
+      "phone": null
+    },
+    "structured_description": null,
+    "nr_due_by": null,
+    "nr_escalated": false
+  }
+]

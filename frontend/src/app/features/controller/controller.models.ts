@@ -175,11 +175,34 @@ export interface CreateIncidentRequest {
 
 /** How the Freshdesk connection stands. `simulation` also gates the demo-only controls. */
 export interface FreshdeskStatus {
-  mode: 'SIMULATED' | 'NOT_CONNECTED';
+  mode: 'LIVE' | 'SIMULATED' | 'NOT_CONNECTED';
   simulation: boolean;
   lastSyncAt: string | null;
   lastSuccessAt: string | null;
   lastError: string | null;
+  /** What happens to updates for Freshdesk tickets: DEMO records and shows them, never sends. */
+  pushMode: FreshdeskPushMode;
+}
+
+export type FreshdeskPushMode = 'OFF' | 'DEMO' | 'LIVE';
+
+/** One update for an incident's Freshdesk ticket: a private note, or resolving the ticket. */
+export interface FreshdeskUpdate {
+  id: number;
+  event:
+    | 'DISPATCH_SENT'
+    | 'DISPATCH_ACCEPTED'
+    | 'DISPATCH_EXPIRED'
+    | 'JOB_PROGRESS'
+    | 'REPORT_SUBMITTED'
+    | 'JOB_CLOSED';
+  action: 'NOTE' | 'RESOLVE';
+  body: string | null;
+  /** DEMO: recorded only, never sent to Freshdesk. */
+  delivery: 'DEMO' | 'PENDING' | 'SENT' | 'FAILED';
+  lastError: string | null;
+  createdAt: string;
+  sentAt: string | null;
 }
 
 export interface SimulatedTicket {

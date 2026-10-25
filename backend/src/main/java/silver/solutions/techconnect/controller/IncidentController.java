@@ -1,6 +1,7 @@
 package silver.solutions.techconnect.controller;
 
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -17,12 +18,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import silver.solutions.techconnect.dto.request.controller.CreateIncidentRequest;
 import silver.solutions.techconnect.dto.response.common.PageResponse;
+import silver.solutions.techconnect.dto.response.controller.FreshdeskUpdateResponse;
 import silver.solutions.techconnect.dto.response.controller.IncidentKpiResponse;
 import silver.solutions.techconnect.dto.response.controller.IncidentProgressResponse;
 import silver.solutions.techconnect.dto.response.controller.IncidentResponse;
 import silver.solutions.techconnect.entity.IncidentPriority;
 import silver.solutions.techconnect.entity.IncidentStatus;
 import silver.solutions.techconnect.dto.response.controller.IncidentLock;
+import silver.solutions.techconnect.integration.freshdesk.FreshdeskUpdateService;
 import silver.solutions.techconnect.security.AuthenticatedUser;
 import silver.solutions.techconnect.service.IncidentLockService;
 import silver.solutions.techconnect.service.IncidentService;
@@ -39,10 +42,13 @@ public class IncidentController {
 
     private final IncidentService incidentService;
     private final IncidentLockService locks;
+    private final FreshdeskUpdateService freshdesk;
 
-    public IncidentController(IncidentService incidentService, IncidentLockService locks) {
+    public IncidentController(
+            IncidentService incidentService, IncidentLockService locks, FreshdeskUpdateService freshdesk) {
         this.incidentService = incidentService;
         this.locks = locks;
+        this.freshdesk = freshdesk;
     }
 
     /** Filtering and paging happen in the database, not the browser. */
@@ -101,5 +107,15 @@ public class IncidentController {
     @GetMapping("/{id}/progress")
     public IncidentProgressResponse progress(@PathVariable UUID id) {
         return incidentService.progress(id);
+    }
+
+    /**
+     * What the incident's Freshdesk ticket has been told (or, in demo mode, would have been told),
+     * oldest first. Empty for an incident with no ticket.
+     */
+    @GetMapping("/{id}/freshdesk-updates")
+    public List<FreshdeskUpdateResponse> freshdeskUpdates(@PathVariable UUID id) {
+        incidentService.get(id);
+        return freshdesk.forIncident(id).stream().map(FreshdeskUpdateResponse::of).toList();
     }
 }

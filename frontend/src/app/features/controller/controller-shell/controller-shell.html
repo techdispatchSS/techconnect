@@ -241,6 +241,7 @@
       <span
         class="controller-shell-sync-badge"
         [class.controller-shell-sync-badge--off]="freshdeskState() !== 'live'"
+        [attr.title]="freshdeskPushTitle()"
         role="status"
       >
         <span class="controller-shell-sync-dot"></span>

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import silver.solutions.techconnect.dto.response.controller.ResendDispatchResponse;
+import silver.solutions.techconnect.integration.freshdesk.FreshdeskUpdateService;
 import silver.solutions.techconnect.mapper.IncidentMapper;
 import silver.solutions.techconnect.dto.request.controller.CreateDispatchRequest;
 import silver.solutions.techconnect.dto.response.controller.DispatchCreateResponse;
@@ -67,6 +68,7 @@ public class DispatchService {
     private final JdbcTemplate jdbcTemplate;
     private final NotificationService notifications;
     private final IncidentLockService locks;
+    private final FreshdeskUpdateService freshdesk;
 
     public DispatchService(
             IncidentRepository incidents,
@@ -78,7 +80,8 @@ public class DispatchService {
             DispatchMapper dispatchMapper,
             JdbcTemplate jdbcTemplate,
             NotificationService notifications,
-            IncidentLockService locks) {
+            IncidentLockService locks,
+            FreshdeskUpdateService freshdesk) {
         this.incidents = incidents;
         this.dispatches = dispatches;
         this.dispatchResponses = dispatchResponses;
@@ -89,6 +92,7 @@ public class DispatchService {
         this.jdbcTemplate = jdbcTemplate;
         this.notifications = notifications;
         this.locks = locks;
+        this.freshdesk = freshdesk;
     }
 
     @Transactional(readOnly = true)
@@ -193,6 +197,7 @@ public class DispatchService {
         }
         locks.clear(incident);
         incidents.save(incident);
+        freshdesk.dispatchSent(incident, dispatch, technicians);
 
         // The first notification goes out with the dispatch; it is counted so the Controller
         // can see it, and sent only once the dispatch is safely committed.

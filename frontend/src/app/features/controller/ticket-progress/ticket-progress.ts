@@ -6,7 +6,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { interval } from 'rxjs';
 
 import { ControllerApiService } from '../controller-api.service';
-import { DispatchResponseEntry, IncidentProgress, PRIORITY_LABELS } from '../controller.models';
+import {
+  DispatchResponseEntry,
+  FreshdeskUpdate,
+  IncidentProgress,
+  PRIORITY_LABELS,
+} from '../controller.models';
 import { canResend, dispatchState } from '../dispatch-state';
 import { FreshdeskStatusService } from '../freshdesk-status.service';
 import { Skeleton } from '../../../shared/skeleton/skeleton';
@@ -43,6 +48,10 @@ export class TicketProgress implements OnInit {
   private readonly incidentId = this.route.snapshot.paramMap.get('incidentId')!;
 
   readonly progress = signal<IncidentProgress | null>(null);
+  /** What the Freshdesk ticket has been told; empty for an incident raised by hand. */
+  readonly freshdeskUpdates = signal<FreshdeskUpdate[]>([]);
+  /** Updates are recorded but not sent: say so plainly, so nobody thinks Freshdesk has them. */
+  readonly pushDemo = computed(() => this.freshdesk.status()?.pushMode !== 'LIVE');
   readonly loadFailed = signal(false);
   readonly notFound = signal(false);
 
@@ -162,6 +171,11 @@ export class TicketProgress implements OnInit {
   }
 
   private load(): void {
+    this.api.getFreshdeskUpdates(this.incidentId).subscribe({
+      next: (updates) => this.freshdeskUpdates.set(updates),
+      // Secondary to the page: keep whatever was shown last.
+      error: () => undefined,
+    });
     this.api.getIncidentProgress(this.incidentId).subscribe({
       next: (progress) => {
         this.progress.set(progress);
@@ -229,6 +243,23 @@ export class TicketProgress implements OnInit {
         return 'controller-pill controller-pill--low';
       default:
         return 'controller-pill controller-pill--high';
+    }
+  }
+
+  updateText(update: FreshdeskUpdate): string {
+    return update.action === 'RESOLVE' ? 'Ticket set to Resolved' : (update.body ?? '');
+  }
+
+  deliveryLabel(update: FreshdeskUpdate): string {
+    switch (update.delivery) {
+      case 'DEMO':
+        return 'Demo · not sent';
+      case 'PENDING':
+        return 'Sending…';
+      case 'SENT':
+        return 'Sent';
+      default:
+        return 'Failed';
     }
   }
 

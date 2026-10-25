@@ -220,6 +220,32 @@
           On-site progress (en route, on site, work complete) will show up here once the technician
           app is live.
         </p>
+
+        @if (freshdeskUpdates().length > 0) {
+          <h6 class="tp-section-title tp-fd-title">Freshdesk ticket updates</h6>
+          @if (pushDemo()) {
+            <p class="tp-sim-note">
+              <span class="tp-sim-tag">Demo</span>
+              What TechConnect would add to the Freshdesk ticket. Nothing has been sent.
+            </p>
+          }
+          <ol class="controller-card tp-fd-list">
+            @for (u of freshdeskUpdates(); track u.id) {
+              <li class="tp-fd-item">
+                <span class="tp-fd-time">{{ u.createdAt | date: 'HH:mm' }}</span>
+                <span class="tp-fd-text" [class.tp-fd-text--resolve]="u.action === 'RESOLVE'">{{
+                  updateText(u)
+                }}</span>
+                <span
+                  class="tp-fd-delivery"
+                  [class]="'tp-fd-delivery tp-fd-delivery--' + u.delivery.toLowerCase()"
+                  [attr.title]="u.lastError"
+                  >{{ deliveryLabel(u) }}</span
+                >
+              </li>
+            }
+          </ol>
+        }
       </section>
     </div>
   </div>

@@ -42,5 +42,8 @@ public abstract class AbstractPostgresIntegrationTest {
         // The dispatch-expiry sweep and Freshdesk poll are driven explicitly by the tests that
         // cover them; a live timer would race the fixtures.
         registry.add("techconnect.scheduling.enabled", () -> "false");
+        // Never the real Freshdesk, whatever FRESHDESK_* the developer has set; updates are demo.
+        registry.add("techconnect.freshdesk.domain", () -> "");
+        registry.add("techconnect.freshdesk.push.mode", () -> "DEMO");
     }
 }

@@ -16,6 +16,7 @@ const SIMULATED: FreshdeskStatus = {
   lastSyncAt: null,
   lastSuccessAt: null,
   lastError: null,
+  pushMode: 'DEMO',
 };
 
 function detail(status: JobStatus, overrides: Partial<JobDetail> = {}): JobDetail {

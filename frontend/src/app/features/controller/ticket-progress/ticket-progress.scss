@@ -335,3 +335,51 @@
   flex-direction: column;
   gap: 16px;
 }
+
+// Freshdesk ticket updates (see FreshdeskUpdateService on the backend). In demo mode they are only
+// recorded, and every row says so.
+.tp-fd-title {
+  margin-top: 8px;
+}
+.tp-fd-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tp-fd-item {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  border-top: 1px solid var(--controller-color-divider);
+  &:first-child {
+    border-top: none;
+  }
+}
+.tp-fd-time {
+  color: var(--controller-color-muted);
+  font-variant-numeric: tabular-nums;
+}
+.tp-fd-text {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.tp-fd-text--resolve {
+  font-weight: 600;
+}
+.tp-fd-delivery {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--controller-color-muted);
+}
+.tp-fd-delivery--demo {
+  color: var(--controller-color-accent-text);
+}
+.tp-fd-delivery--failed {
+  color: var(--controller-color-emphasis);
+  font-weight: 600;
+}

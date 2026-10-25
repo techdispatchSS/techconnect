@@ -1,6 +1,7 @@
 package silver.solutions.techconnect.controller;
 
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import silver.solutions.techconnect.dto.request.controller.CreateIncidentRequest;
 import silver.solutions.techconnect.dto.response.common.PageResponse;
+import silver.solutions.techconnect.dto.response.controller.IncidentEventResponse;
 import silver.solutions.techconnect.dto.response.controller.IncidentKpiResponse;
 import silver.solutions.techconnect.dto.response.controller.IncidentProgressResponse;
 import silver.solutions.techconnect.dto.response.controller.IncidentResponse;
@@ -24,6 +26,7 @@ import silver.solutions.techconnect.entity.IncidentPriority;
 import silver.solutions.techconnect.entity.IncidentStatus;
 import silver.solutions.techconnect.dto.response.controller.IncidentLock;
 import silver.solutions.techconnect.security.AuthenticatedUser;
+import silver.solutions.techconnect.service.IncidentEventService;
 import silver.solutions.techconnect.service.IncidentLockService;
 import silver.solutions.techconnect.service.IncidentService;
 
@@ -39,10 +42,13 @@ public class IncidentController {
 
     private final IncidentService incidentService;
     private final IncidentLockService locks;
+    private final IncidentEventService events;
 
-    public IncidentController(IncidentService incidentService, IncidentLockService locks) {
+    public IncidentController(
+            IncidentService incidentService, IncidentLockService locks, IncidentEventService events) {
         this.incidentService = incidentService;
         this.locks = locks;
+        this.events = events;
     }
 
     /** Filtering and paging happen in the database, not the browser. */
@@ -65,8 +71,11 @@ public class IncidentController {
 
     /** A Controller logging a fault they took by phone; it joins the queue as NEW. */
     @PostMapping
-    public ResponseEntity<IncidentResponse> create(@Valid @RequestBody CreateIncidentRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(incidentService.create(request));
+    public ResponseEntity<IncidentResponse> create(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @Valid @RequestBody CreateIncidentRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(incidentService.create(principal.id(), request));
     }
 
     @GetMapping("/kpis")
@@ -101,5 +110,11 @@ public class IncidentController {
     @GetMapping("/{id}/progress")
     public IncidentProgressResponse progress(@PathVariable UUID id) {
         return incidentService.progress(id);
+    }
+
+    /** The ticket's history, oldest first: who logged, dispatched, nudged, answered and closed it. */
+    @GetMapping("/{id}/events")
+    public List<IncidentEventResponse> events(@PathVariable UUID id) {
+        return events.timeline(id);
     }
 }

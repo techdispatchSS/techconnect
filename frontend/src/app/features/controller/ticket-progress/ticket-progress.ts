@@ -6,7 +6,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { interval } from 'rxjs';
 
 import { ControllerApiService } from '../controller-api.service';
-import { DispatchResponseEntry, IncidentProgress, PRIORITY_LABELS } from '../controller.models';
+import {
+  DispatchResponseEntry,
+  IncidentEvent,
+  IncidentProgress,
+  PRIORITY_LABELS,
+} from '../controller.models';
 import { canResend, dispatchState } from '../dispatch-state';
 import { FreshdeskStatusService } from '../freshdesk-status.service';
 import { Skeleton } from '../../../shared/skeleton/skeleton';
@@ -45,6 +50,8 @@ export class TicketProgress implements OnInit {
   readonly progress = signal<IncidentProgress | null>(null);
   readonly loadFailed = signal(false);
   readonly notFound = signal(false);
+  /** Who did what to this ticket, oldest first. Empty (not an error) if it can't be read. */
+  readonly history = signal<IncidentEvent[]>([]);
 
   readonly sortedResponses = computed(() => {
     const p = this.progress();
@@ -162,6 +169,11 @@ export class TicketProgress implements OnInit {
   }
 
   private load(): void {
+    this.api.getIncidentEvents(this.incidentId).subscribe({
+      next: (events) => this.history.set(events),
+      // The history is secondary to the dispatch itself: keep what we had rather than fail the page.
+      error: () => undefined,
+    });
     this.api.getIncidentProgress(this.incidentId).subscribe({
       next: (progress) => {
         this.progress.set(progress);

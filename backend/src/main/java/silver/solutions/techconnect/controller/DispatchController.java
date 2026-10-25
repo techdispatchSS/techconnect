@@ -47,8 +47,9 @@ public class DispatchController {
      * or create a new dispatch; refused (409) once answered, expired, or sent a moment ago.
      */
     @PostMapping("/dispatches/{id}/resend")
-    public ResendDispatchResponse resend(@PathVariable UUID id) {
-        return dispatchService.resend(id);
+    public ResendDispatchResponse resend(
+            @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
+        return dispatchService.resend(principal.id(), id);
     }
 
     @PostMapping("/dispatches")

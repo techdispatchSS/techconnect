@@ -168,6 +168,31 @@
   color: var(--controller-color-emphasis);
   font-weight: 500;
 }
+.tp-history {
+  list-style: none;
+  margin: 0;
+  padding: 6px 16px;
+}
+.tp-history-item {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 12px;
+  padding: 9px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--controller-color-divider-soft);
+}
+.tp-history-item:last-child {
+  border-bottom: 0;
+}
+.tp-history-when {
+  color: var(--controller-color-muted);
+  font-size: 12px;
+}
+.tp-history-who {
+  color: var(--controller-color-emphasis);
+  font-weight: 500;
+  margin-right: 6px;
+}
 .tp-roadmap-note {
   margin: 0;
   font-size: 11.5px;

@@ -27,6 +27,7 @@ import silver.solutions.techconnect.entity.DispatchResponseStatus;
 import silver.solutions.techconnect.entity.DispatchStatus;
 import silver.solutions.techconnect.entity.DispatchType;
 import silver.solutions.techconnect.entity.Incident;
+import silver.solutions.techconnect.entity.IncidentEventType;
 import silver.solutions.techconnect.entity.IncidentStatus;
 import silver.solutions.techconnect.entity.TechnicianProfile;
 import silver.solutions.techconnect.entity.TechnicianSkill;
@@ -67,6 +68,7 @@ public class DispatchService {
     private final JdbcTemplate jdbcTemplate;
     private final NotificationService notifications;
     private final IncidentLockService locks;
+    private final IncidentEventService events;
 
     public DispatchService(
             IncidentRepository incidents,
@@ -78,7 +80,8 @@ public class DispatchService {
             DispatchMapper dispatchMapper,
             JdbcTemplate jdbcTemplate,
             NotificationService notifications,
-            IncidentLockService locks) {
+            IncidentLockService locks,
+            IncidentEventService events) {
         this.incidents = incidents;
         this.dispatches = dispatches;
         this.dispatchResponses = dispatchResponses;
@@ -89,6 +92,7 @@ public class DispatchService {
         this.jdbcTemplate = jdbcTemplate;
         this.notifications = notifications;
         this.locks = locks;
+        this.events = events;
     }
 
     @Transactional(readOnly = true)
@@ -200,6 +204,9 @@ public class DispatchService {
         dispatch.setLastNotifiedAt(Instant.now());
         dispatches.save(dispatch);
         notifyAfterCommit(incident, dispatch, technicians, false);
+        events.record(incident.getId(), IncidentEventType.DISPATCH_SENT, actorId, dispatch.getId(),
+                (request.dispatchType() == DispatchType.ASSIGN ? "Assigned to " : "Broadcast to ")
+                        + names(technicians));
 
         log.info("Dispatch {} ({}) created for incident {} by {} — {} technician(s) invited",
                 dispatch.getId(), dispatch.getDispatchType(), incident.getId(), actorId,
@@ -214,7 +221,7 @@ public class DispatchService {
      * new dispatch.
      */
     @Transactional
-    public ResendDispatchResponse resend(UUID dispatchId) {
+    public ResendDispatchResponse resend(UUID actorId, UUID dispatchId) {
         Dispatch dispatch = dispatches.findByIdForUpdate(dispatchId)
                 .orElseThrow(() -> ApiException.notFound("Dispatch not found"));
         Instant now = Instant.now();
@@ -250,6 +257,8 @@ public class DispatchService {
         dispatch.setLastNotifiedAt(now);
         dispatches.save(dispatch);
         notifyAfterCommit(incident, dispatch, recipients, true);
+        events.record(incident.getId(), IncidentEventType.DISPATCH_RESENT, actorId, dispatchId,
+                "Notified again: " + names(recipients));
 
         log.info("Dispatch {} resent to {} technician(s) (notification #{})",
                 dispatchId, recipients.size(), dispatch.getNotificationCount());
@@ -296,6 +305,10 @@ public class DispatchService {
         } else {
             send.run();
         }
+    }
+
+    private static String names(List<User> technicians) {
+        return technicians.stream().map(User::getName).sorted().collect(Collectors.joining(", "));
     }
 
     private String join(List<String> values) {

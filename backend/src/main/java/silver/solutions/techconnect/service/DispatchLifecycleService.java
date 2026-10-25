@@ -16,6 +16,7 @@ import silver.solutions.techconnect.entity.DispatchResponse;
 import silver.solutions.techconnect.entity.DispatchResponseStatus;
 import silver.solutions.techconnect.entity.DispatchStatus;
 import silver.solutions.techconnect.entity.Incident;
+import silver.solutions.techconnect.entity.IncidentEventType;
 import silver.solutions.techconnect.entity.IncidentStatus;
 import silver.solutions.techconnect.exception.ApiException;
 import silver.solutions.techconnect.repository.DispatchRepository;
@@ -35,6 +36,8 @@ public class DispatchLifecycleService {
 
     private static final Logger log = LoggerFactory.getLogger(DispatchLifecycleService.class);
 
+    private static final String WINDOW_PASSED = "Nobody accepted in time";
+
     /** What a technician's accept or decline amounted to. */
     public enum Outcome {
         ACCEPTED,
@@ -51,6 +54,7 @@ public class DispatchLifecycleService {
     private final DispatchResponseRepository responses;
     private final IncidentRepository incidents;
     private final JobService jobs;
+    private final IncidentEventService events;
     private final TransactionTemplate transactions;
 
     public DispatchLifecycleService(
@@ -58,11 +62,13 @@ public class DispatchLifecycleService {
             DispatchResponseRepository responses,
             IncidentRepository incidents,
             JobService jobs,
+            IncidentEventService events,
             PlatformTransactionManager transactionManager) {
         this.dispatches = dispatches;
         this.responses = responses;
         this.incidents = incidents;
         this.jobs = jobs;
+        this.events = events;
         this.transactions = new TransactionTemplate(transactionManager);
     }
 
@@ -104,7 +110,7 @@ public class DispatchLifecycleService {
             return Outcome.EXPIRED;
         }
         if (!dispatch.getExpiresAt().isAfter(Instant.now())) {
-            expire(dispatch);
+            expire(dispatch, WINDOW_PASSED);
             return Outcome.EXPIRED;
         }
         if (mine.getResponse() != DispatchResponseStatus.PENDING) {
@@ -121,6 +127,8 @@ public class DispatchLifecycleService {
             dispatches.save(dispatch);
             // The work now has an owner and a job to follow, in the same transaction as the accept.
             jobs.openFor(dispatch, technicianId);
+            events.record(dispatch.getIncidentId(), IncidentEventType.DISPATCH_ACCEPTED,
+                    technicianId, dispatchId, "Accepted the job");
             // The job is gone for everyone else; they will not be answering it.
             lapsePending(dispatchId);
             log.info("Dispatch {} accepted by technician {}", dispatchId, technicianId);
@@ -129,11 +137,13 @@ public class DispatchLifecycleService {
 
         mine.setResponse(DispatchResponseStatus.DECLINED);
         responses.save(mine);
+        events.record(dispatch.getIncidentId(), IncidentEventType.DISPATCH_DECLINED,
+                technicianId, dispatchId, "Declined the job");
         boolean anyoneLeft = responses.findByDispatchId(dispatchId).stream()
                 .anyMatch(r -> r.getResponse() == DispatchResponseStatus.PENDING);
         if (!anyoneLeft) {
             // Nobody who was asked can still take it — no point holding the window open.
-            expire(dispatch);
+            expire(dispatch, "Everyone declined");
         }
         log.info("Dispatch {} declined by technician {}", dispatchId, technicianId);
         return Outcome.DECLINED;
@@ -155,7 +165,7 @@ public class DispatchLifecycleService {
                         .filter(d -> d.getStatus() == DispatchStatus.PENDING
                                 && !d.getExpiresAt().isAfter(Instant.now()))
                         .map(d -> {
-                            expire(d);
+                            expire(d, WINDOW_PASSED);
                             return true;
                         })
                         .orElse(false));
@@ -170,10 +180,12 @@ public class DispatchLifecycleService {
     }
 
     /** Marks the dispatch lapsed, closes out whoever never answered, and re-queues the incident. */
-    private void expire(Dispatch dispatch) {
+    private void expire(Dispatch dispatch, String reason) {
         dispatch.setStatus(DispatchStatus.EXPIRED);
         dispatches.save(dispatch);
         lapsePending(dispatch.getId());
+        events.record(dispatch.getIncidentId(), IncidentEventType.DISPATCH_EXPIRED,
+                null, dispatch.getId(), reason);
         requeueIfUnstaffed(dispatch.getIncidentId());
         log.info("Dispatch {} expired for incident {}", dispatch.getId(), dispatch.getIncidentId());
     }

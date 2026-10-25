@@ -216,6 +216,23 @@
           <p class="tp-sim-error" role="alert">{{ message }}</p>
         }
 
+        @if (history().length > 0) {
+          <h6 class="tp-section-title">History</h6>
+          <ol class="controller-card tp-history" aria-label="Ticket history">
+            @for (event of history(); track event.id) {
+              <li class="tp-history-item">
+                <time class="tp-history-when" [attr.datetime]="event.at">{{
+                  event.at | date: 'd MMM, HH:mm'
+                }}</time>
+                <span class="tp-history-what">
+                  <strong class="tp-history-who">{{ event.actorName ?? 'System' }}</strong>
+                  {{ event.summary }}
+                </span>
+              </li>
+            }
+          </ol>
+        }
+
         <p class="tp-roadmap-note">
           On-site progress (en route, on site, work complete) will show up here once the technician
           app is live.

@@ -83,6 +83,12 @@ services:
       # local stack; set to false in .env to see the dashboard as it will be with nothing
       # connected. Must stay off anywhere real operations run — it makes up incidents.
       TECHCONNECT_SIMULATION_ENABLED: ${TECHCONNECT_SIMULATION_ENABLED:-true}
+      # Live Freshdesk (read-only). Blank = not connected; needs simulation set to false.
+      FRESHDESK_DOMAIN: ${FRESHDESK_DOMAIN:-}
+      FRESHDESK_API_KEY: ${FRESHDESK_API_KEY:-}
+      # Ticket updates back to Freshdesk: DEMO (shown, never sent), LIVE or OFF.
+      FRESHDESK_PUSH_MODE: ${FRESHDESK_PUSH_MODE:-DEMO}
+      FRESHDESK_PUSH_EVENTS: ${FRESHDESK_PUSH_EVENTS:-DISPATCH_SENT,DISPATCH_ACCEPTED,DISPATCH_EXPIRED,JOB_PROGRESS,REPORT_SUBMITTED,JOB_CLOSED}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     healthcheck:

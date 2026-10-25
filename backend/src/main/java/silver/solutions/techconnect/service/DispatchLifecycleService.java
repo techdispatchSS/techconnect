@@ -19,6 +19,7 @@ import silver.solutions.techconnect.entity.Incident;
 import silver.solutions.techconnect.entity.IncidentEventType;
 import silver.solutions.techconnect.entity.IncidentStatus;
 import silver.solutions.techconnect.exception.ApiException;
+import silver.solutions.techconnect.integration.freshdesk.FreshdeskUpdateService;
 import silver.solutions.techconnect.repository.DispatchRepository;
 import silver.solutions.techconnect.repository.DispatchResponseRepository;
 import silver.solutions.techconnect.repository.IncidentRepository;
@@ -54,6 +55,7 @@ public class DispatchLifecycleService {
     private final DispatchResponseRepository responses;
     private final IncidentRepository incidents;
     private final JobService jobs;
+    private final FreshdeskUpdateService freshdesk;
     private final IncidentEventService events;
     private final TransactionTemplate transactions;
 
@@ -62,12 +64,14 @@ public class DispatchLifecycleService {
             DispatchResponseRepository responses,
             IncidentRepository incidents,
             JobService jobs,
+            FreshdeskUpdateService freshdesk,
             IncidentEventService events,
             PlatformTransactionManager transactionManager) {
         this.dispatches = dispatches;
         this.responses = responses;
         this.incidents = incidents;
         this.jobs = jobs;
+        this.freshdesk = freshdesk;
         this.events = events;
         this.transactions = new TransactionTemplate(transactionManager);
     }
@@ -187,6 +191,7 @@ public class DispatchLifecycleService {
         events.record(dispatch.getIncidentId(), IncidentEventType.DISPATCH_EXPIRED,
                 null, dispatch.getId(), reason);
         requeueIfUnstaffed(dispatch.getIncidentId());
+        freshdesk.dispatchExpired(dispatch.getIncidentId());
         log.info("Dispatch {} expired for incident {}", dispatch.getId(), dispatch.getIncidentId());
     }
 

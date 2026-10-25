@@ -8,6 +8,7 @@ import {
   DispatchAnswer,
   DispatchCreateResponse,
   FreshdeskStatus,
+  FreshdeskUpdate,
   Incident,
   IncidentKpis,
   IncidentListFilters,
@@ -66,6 +67,11 @@ export class ControllerApiService {
    * responded so far — the ticket progress view. */
   getIncidentProgress(id: string): Observable<IncidentProgress> {
     return this.http.get<IncidentProgress>(`v1/controller/incidents/${id}/progress`);
+  }
+
+  /** What the incident's Freshdesk ticket has been told (or, in demo mode, would be told). */
+  getFreshdeskUpdates(id: string): Observable<FreshdeskUpdate[]> {
+    return this.http.get<FreshdeskUpdate[]>(`v1/controller/incidents/${id}/freshdesk-updates`);
   }
 
   /** The ticket's history, oldest first: who logged, dispatched, nudged, answered and closed it. */

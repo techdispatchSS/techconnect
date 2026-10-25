@@ -8,6 +8,7 @@ import { interval } from 'rxjs';
 import { ControllerApiService } from '../controller-api.service';
 import {
   DispatchResponseEntry,
+  FreshdeskUpdate,
   IncidentEvent,
   IncidentProgress,
   PRIORITY_LABELS,
@@ -48,6 +49,10 @@ export class TicketProgress implements OnInit {
   private readonly incidentId = this.route.snapshot.paramMap.get('incidentId')!;
 
   readonly progress = signal<IncidentProgress | null>(null);
+  /** What the Freshdesk ticket has been told; empty for an incident raised by hand. */
+  readonly freshdeskUpdates = signal<FreshdeskUpdate[]>([]);
+  /** Updates are recorded but not sent: say so plainly, so nobody thinks Freshdesk has them. */
+  readonly pushDemo = computed(() => this.freshdesk.status()?.pushMode !== 'LIVE');
   readonly loadFailed = signal(false);
   readonly notFound = signal(false);
   /** Who did what to this ticket, oldest first. Empty (not an error) if it can't be read. */
@@ -169,6 +174,11 @@ export class TicketProgress implements OnInit {
   }
 
   private load(): void {
+    this.api.getFreshdeskUpdates(this.incidentId).subscribe({
+      next: (updates) => this.freshdeskUpdates.set(updates),
+      // Secondary to the page: keep whatever was shown last.
+      error: () => undefined,
+    });
     this.api.getIncidentEvents(this.incidentId).subscribe({
       next: (events) => this.history.set(events),
       // The history is secondary to the dispatch itself: keep what we had rather than fail the page.
@@ -241,6 +251,23 @@ export class TicketProgress implements OnInit {
         return 'controller-pill controller-pill--low';
       default:
         return 'controller-pill controller-pill--high';
+    }
+  }
+
+  updateText(update: FreshdeskUpdate): string {
+    return update.action === 'RESOLVE' ? 'Ticket set to Resolved' : (update.body ?? '');
+  }
+
+  deliveryLabel(update: FreshdeskUpdate): string {
+    switch (update.delivery) {
+      case 'DEMO':
+        return 'Demo · not sent';
+      case 'PENDING':
+        return 'Sending…';
+      case 'SENT':
+        return 'Sent';
+      default:
+        return 'Failed';
     }
   }
 

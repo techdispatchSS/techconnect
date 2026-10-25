@@ -166,7 +166,23 @@ export class ControllerShell implements OnInit {
       return 'Freshdesk sync problem';
     }
     const name = status.mode === 'SIMULATED' ? 'Freshdesk simulated' : 'Freshdesk sync live';
-    return status.lastSuccessAt ? `${name} · ${ago(status.lastSuccessAt)}` : name;
+    const label = status.lastSuccessAt ? `${name} · ${ago(status.lastSuccessAt)}` : name;
+    // Writing to the real tickets is the one thing worth always having in view.
+    return status.pushMode === 'LIVE' ? `${label} · updates live` : label;
+  });
+
+  /** Hover text: whether TechConnect's updates reach the Freshdesk tickets or are only shown. */
+  readonly freshdeskPushTitle = computed(() => {
+    switch (this.freshdesk.status()?.pushMode) {
+      case 'LIVE':
+        return 'Ticket updates are sent to Freshdesk';
+      case 'DEMO':
+        return 'Ticket updates are demo: shown on each ticket, never sent to Freshdesk';
+      case 'OFF':
+        return 'Ticket updates to Freshdesk are off';
+      default:
+        return null;
+    }
   });
 
   ngOnInit(): void {

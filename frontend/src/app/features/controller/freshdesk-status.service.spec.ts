@@ -12,6 +12,7 @@ const STATUS: FreshdeskStatus = {
   lastSyncAt: null,
   lastSuccessAt: null,
   lastError: null,
+  pushMode: 'DEMO',
 };
 
 describe('FreshdeskStatusService', () => {

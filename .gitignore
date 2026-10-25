@@ -26,3 +26,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Real Freshdesk payloads (customer data)
+/scripts/freshdesk/captures/

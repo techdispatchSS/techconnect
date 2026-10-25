@@ -35,6 +35,7 @@ import silver.solutions.techconnect.entity.TechnicianProfile;
 import silver.solutions.techconnect.entity.TechnicianStatus;
 import silver.solutions.techconnect.entity.User;
 import silver.solutions.techconnect.exception.ApiException;
+import silver.solutions.techconnect.integration.freshdesk.FreshdeskUpdateService;
 import silver.solutions.techconnect.mapper.IncidentMapper;
 import silver.solutions.techconnect.repository.DispatchRepository;
 import silver.solutions.techconnect.repository.IncidentRepository;
@@ -108,6 +109,7 @@ public class JobService {
     private final DispatchRepository dispatches;
     private final UserRepository users;
     private final TechnicianProfileRepository profiles;
+    private final FreshdeskUpdateService freshdesk;
     private final IncidentEventService events;
 
     public JobService(
@@ -118,6 +120,7 @@ public class JobService {
             DispatchRepository dispatches,
             UserRepository users,
             TechnicianProfileRepository profiles,
+            FreshdeskUpdateService freshdesk,
             IncidentEventService events) {
         this.jobs = jobs;
         this.history = history;
@@ -126,6 +129,7 @@ public class JobService {
         this.dispatches = dispatches;
         this.users = users;
         this.profiles = profiles;
+        this.freshdesk = freshdesk;
         this.events = events;
     }
 
@@ -363,6 +367,8 @@ public class JobService {
         entry.setReason(reason);
         entry.setChangedBy(by);
         history.save(entry);
+        // Every transition is also a line on the Freshdesk ticket (sent, or only recorded in demo).
+        freshdesk.jobChanged(job, previous, status, reason, by);
     }
 
     private void setIncidentStatus(UUID incidentId, IncidentStatus status) {

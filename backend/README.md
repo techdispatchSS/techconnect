@@ -178,33 +178,65 @@ many are yet to answer, declined, who accepted, notification count) so the queue
 passes, whatever stage it is at, so the "Overdue" tab, its KPI and each row's flag all come from
 the clock. (`status = OVERDUE` is never written; a row that has it still counts.)
 
-### Freshdesk — simulated until the owners confirm the account
+### Freshdesk
 
-There is no live Freshdesk integration yet. Everything the dashboard needs from it goes through
-`FreshdeskClient`, and the only implementation is `SimulatedFreshdeskClient`, an in-memory stand-in
-that is active only when `techconnect.simulation.enabled=true` (the `dev` profile default; off
-elsewhere unless `TECHCONNECT_SIMULATION_ENABLED=true`).
+Everything the dashboard reads from Freshdesk goes through `FreshdeskClient`, which has two
+implementations, never both at once (startup fails if both are configured):
 
-- Tickets reach the queue through the real path: `FreshdeskSyncService` polls (every 30s,
-  `techconnect.freshdesk.poll-interval`), matches a ticket to its incident by Freshdesk ticket id,
-  and upserts. A repeat pass changes nothing; a resolved ticket closes its incident; an edit in
-  Freshdesk updates details but never undoes TechConnect's own workflow status.
-- Simulated tickets are numbered `SIM-…` so they cannot be mistaken for real ones.
-- With simulation on, the Controller dashboard shows a "Demo" strip to raise a ticket (or an
-  already-overdue one), and the ticket progress page can answer a dispatch as an invited
-  technician. Both are `404` — not merely forbidden — when simulation is off, and the header badge
-  then reads "Freshdesk not connected".
-- The status the header shows comes from `GET /v1/controller/integrations/freshdesk`; it never
-  claims a connection that does not exist.
+- **`SimulatedFreshdeskClient`**, an in-memory stand-in, active only when
+  `techconnect.simulation.enabled=true` (the `dev` profile default; off elsewhere unless
+  `TECHCONNECT_SIMULATION_ENABLED=true`). Tickets are numbered `SIM-…`. With simulation on, the
+  dashboard shows a "Demo" strip to raise a ticket, and the ticket progress page can answer a
+  dispatch as an invited technician; both are `404` when simulation is off.
+- **`LiveFreshdeskClient`**, the real account, active when `FRESHDESK_DOMAIN` and
+  `FRESHDESK_API_KEY` are set. **Read-only:** every request passes an interceptor that refuses
+  anything but GET. It calls `GET /api/v2/tickets?updated_since=…&order_by=updated_at
+  &order_type=asc&include=requester,description`, looks up company names once each (the list
+  does not carry them), reaches back at most `FRESHDESK_INITIAL_LOOKBACK` (default a day) after
+  a start, and reads at most 5 pages of 100 per pass. The account's rate limit is shared with
+  everything else using it, so a pass stops paging once half the minute's budget is gone and
+  fails on a 429 instead of retrying.
 
-**To connect the real Freshdesk** a second `FreshdeskClient` is needed (`GET /api/v2/tickets
-?updated_since=…&include=requester,company`). Before that is built the owners need to confirm:
-the Freshdesk domain and an API key; which custom fields carry the site address and its
-coordinates (`FreshdeskIncidentMapper` assumes `cf_site_address`, `cf_site_latitude`,
-`cf_site_longitude`); how Freshdesk priorities and statuses map (assumed: 1/2/3/4 → low/medium/
-high/high; resolved or closed → incident closed); and whether TechConnect must write back to
-Freshdesk (status, notes) — one-way import is all that exists.
+Either way, `FreshdeskSyncService` polls every 30s (`techconnect.freshdesk.poll-interval`),
+matches a ticket to its incident by Freshdesk ticket id, and upserts. A repeat pass changes
+nothing; a resolved or closed ticket closes its incident; any other status (including the
+account's own 6/7/9000) counts as open; an edit updates details but never undoes TechConnect's
+own workflow status. The header badge comes from `GET /v1/controller/integrations/freshdesk`
+(`LIVE`, `SIMULATED` or `NOT_CONNECTED`).
 
+**Updates back to Freshdesk** (`FreshdeskUpdateService`). As the work moves along, the incident's
+ticket gets a private note: dispatch sent, accepted, expired, on site, work started, on hold
+(with the reason), resumed, complete, the technician's report, and closed. Closing the job also
+resolves the ticket. Each update is written to `freshdesk_updates` in the same transaction as the
+change it reports, and listed on the ticket progress page
+(`GET /v1/controller/incidents/{id}/freshdesk-updates`). What happens to it depends on
+`FRESHDESK_PUSH_MODE`:
+
+| Mode | Effect |
+|---|---|
+| `DEMO` (default) | Recorded and shown as "Demo · not sent". Freshdesk is never touched. |
+| `LIVE` | `FreshdeskUpdateSender` sends them every 15s, oldest first. Needs the live connection; without it, behaves as `DEMO`. |
+| `OFF` | Nothing is recorded or sent. |
+
+`FRESHDESK_PUSH_EVENTS` turns each kind on or off (`DISPATCH_SENT`, `DISPATCH_ACCEPTED`,
+`DISPATCH_EXPIRED`, `JOB_PROGRESS`, `REPORT_SUBMITTED`, `JOB_CLOSED`; all by default). The sender
+can only `POST /api/v2/tickets/{id}/notes` and `PUT /api/v2/tickets/{id}`, enforced before a
+request leaves. Notes are private. Updates to one ticket go in order: if one cannot be delivered
+yet, later ones for that ticket wait. A 4xx fails an update for good (the reason is kept and shown
+on hover); a 5xx or network error is retried up to 5 times; a 429 ends the pass. Simulated
+(`SIM-`) tickets are always demo, and incidents raised by hand have no ticket and get no updates.
+
+**Before switching updates to `LIVE`,** check with the owners: resolving a ticket may trigger
+Freshdesk's own "ticket resolved" email to the client, depending on their automations.
+
+**Still to confirm with the owners:** where the site address and coordinates live. The real
+account has no such fields today (its only custom field is `cf_reference_number`), so
+`FreshdeskIncidentMapper`'s assumed `cf_site_address` / `cf_site_latitude` / `cf_site_longitude`
+come back empty. Also which tickets should become incidents: most tickets in the account are
+automated alerts, reports and email threads, and today the sync imports every open one.
+
+`scripts/freshdesk/capture.py` records real API payloads (GET only) for building against; its
+output is gitignored because it holds customer data.
 
 ## Migrations
 

@@ -487,11 +487,20 @@ textarea.admin-input {
   display: flex;
   flex-direction: column;
   padding: 24px 0 18px;
+  // Pinned to the viewport so the account button stays in the bottom-left corner while the
+  // page scrolls, instead of sitting at the foot of a rail as tall as the whole page. If the
+  // navigation ever outgrows a short window, the rail scrolls rather than clipping.
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .admin-shell--handset .admin-shell-sidebar {
   position: fixed;
   inset: 0 auto 0 0;
+  height: auto;
   z-index: 21;
   width: 240px;
   transform: translateX(-100%);

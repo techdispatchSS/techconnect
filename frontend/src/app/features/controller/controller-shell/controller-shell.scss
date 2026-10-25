@@ -80,11 +80,13 @@
   line-height: 1.15;
 }
 
-.controller-shell a:not(.controller-btn) {
+// Links in the page are orange. The rail's navigation is not: it is grey, and goes orange only
+// for the page you are on (see `.controller-shell-nav-item` below).
+.controller-shell a:not(.controller-btn, .controller-shell-nav-item) {
   color: var(--controller-color-accent-text);
   text-decoration: none;
 }
-.controller-shell a:not(.controller-btn):hover {
+.controller-shell a:not(.controller-btn, .controller-shell-nav-item):hover {
   color: var(--controller-color-accent-text-soft);
   text-decoration: underline;
 }
@@ -272,10 +274,18 @@ textarea.controller-input {
   display: flex;
   flex-direction: column;
   padding: 22px 0 18px;
+  // Pinned to the viewport, so the account button stays in the bottom-left corner however far
+  // the page scrolls. If the navigation outgrows a short window the rail scrolls instead.
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  overflow-y: auto;
 }
 .controller-shell--handset .controller-shell-sidebar {
   position: fixed;
   inset: 0 auto 0 0;
+  height: auto;
   z-index: 21;
   width: 240px;
   transform: translateX(-100%);
@@ -340,8 +350,11 @@ textarea.controller-input {
 }
 .controller-shell-nav-item--active {
   background: rgba(240, 130, 33, 0.13);
-  color: var(--controller-chrome-emphasis);
+  color: var(--controller-color-accent-text);
   border-left-color: var(--controller-color-accent);
+}
+.controller-shell-nav-item--active:hover {
+  color: var(--controller-color-accent-text-soft);
 }
 .controller-shell-nav-item--disabled {
   cursor: not-allowed;
@@ -358,7 +371,8 @@ textarea.controller-input {
 }
 .controller-shell-nav-item-count {
   font-size: 11px;
-  color: var(--controller-color-accent-text);
+  color: inherit;
+  opacity: 0.8;
 }
 
 .controller-shell-elsewhere {

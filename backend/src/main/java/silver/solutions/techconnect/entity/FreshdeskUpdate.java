@@ -16,7 +16,7 @@ import lombok.Setter;
 
 /**
  * One update for an incident's Freshdesk ticket, sent or (in demo mode) only recorded. See
- * V15__freshdesk_updates.sql. Ids are sequential so updates to a ticket go out in the order they
+ * V16__freshdesk_updates.sql. Ids are sequential so updates to a ticket go out in the order they
  * happened.
  */
 @Entity

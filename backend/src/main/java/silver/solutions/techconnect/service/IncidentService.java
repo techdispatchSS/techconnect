@@ -21,6 +21,7 @@ import silver.solutions.techconnect.entity.DispatchResponse;
 import silver.solutions.techconnect.entity.DispatchResponseStatus;
 import silver.solutions.techconnect.entity.DispatchStatus;
 import silver.solutions.techconnect.entity.Incident;
+import silver.solutions.techconnect.entity.IncidentEventType;
 import silver.solutions.techconnect.entity.IncidentPriority;
 import silver.solutions.techconnect.entity.IncidentStatus;
 import silver.solutions.techconnect.entity.User;
@@ -47,6 +48,7 @@ public class IncidentService {
     private final UserRepository users;
     private final IncidentMapper incidentMapper;
     private final JobRepository jobs;
+    private final IncidentEventService events;
 
     public IncidentService(
             IncidentRepository incidents,
@@ -54,13 +56,15 @@ public class IncidentService {
             DispatchResponseRepository dispatchResponses,
             UserRepository users,
             IncidentMapper incidentMapper,
-            JobRepository jobs) {
+            JobRepository jobs,
+            IncidentEventService events) {
         this.incidents = incidents;
         this.dispatches = dispatches;
         this.dispatchResponses = dispatchResponses;
         this.users = users;
         this.incidentMapper = incidentMapper;
         this.jobs = jobs;
+        this.events = events;
     }
 
     @Transactional(readOnly = true)
@@ -91,7 +95,7 @@ public class IncidentService {
      * that arrives from Freshdesk, with no ticket id (it shows as {@code INC-xxxxxxxx}).
      */
     @Transactional
-    public IncidentResponse create(CreateIncidentRequest request) {
+    public IncidentResponse create(UUID actorId, CreateIncidentRequest request) {
         if ((request.siteLatitude() == null) != (request.siteLongitude() == null)) {
             throw ApiException.badRequest("Provide both a latitude and a longitude, or neither.");
         }
@@ -119,6 +123,8 @@ public class IncidentService {
         incident.setSlaDueAt(incident.getCreatedAt().plus(Duration.ofHours(slaHours)));
         incident.setStatus(IncidentStatus.NEW);
         incidents.save(incident);
+        events.record(incident.getId(), IncidentEventType.INCIDENT_LOGGED, actorId, null,
+                "Logged by phone");
 
         return incidentMapper.toIncidentResponse(incident, null, List.of(), Map.of());
     }

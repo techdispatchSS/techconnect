@@ -9,6 +9,7 @@ import { ControllerApiService } from '../controller-api.service';
 import {
   DispatchResponseEntry,
   FreshdeskUpdate,
+  IncidentEvent,
   IncidentProgress,
   PRIORITY_LABELS,
 } from '../controller.models';
@@ -54,6 +55,8 @@ export class TicketProgress implements OnInit {
   readonly pushDemo = computed(() => this.freshdesk.status()?.pushMode !== 'LIVE');
   readonly loadFailed = signal(false);
   readonly notFound = signal(false);
+  /** Who did what to this ticket, oldest first. Empty (not an error) if it can't be read. */
+  readonly history = signal<IncidentEvent[]>([]);
 
   readonly sortedResponses = computed(() => {
     const p = this.progress();
@@ -174,6 +177,11 @@ export class TicketProgress implements OnInit {
     this.api.getFreshdeskUpdates(this.incidentId).subscribe({
       next: (updates) => this.freshdeskUpdates.set(updates),
       // Secondary to the page: keep whatever was shown last.
+      error: () => undefined,
+    });
+    this.api.getIncidentEvents(this.incidentId).subscribe({
+      next: (events) => this.history.set(events),
+      // The history is secondary to the dispatch itself: keep what we had rather than fail the page.
       error: () => undefined,
     });
     this.api.getIncidentProgress(this.incidentId).subscribe({

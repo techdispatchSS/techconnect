@@ -13,6 +13,7 @@ import {
   IncidentKpis,
   IncidentListFilters,
   IncidentLock,
+  IncidentEvent,
   IncidentProgress,
   JobCounts,
   JobDetail,
@@ -71,6 +72,11 @@ export class ControllerApiService {
   /** What the incident's Freshdesk ticket has been told (or, in demo mode, would be told). */
   getFreshdeskUpdates(id: string): Observable<FreshdeskUpdate[]> {
     return this.http.get<FreshdeskUpdate[]>(`v1/controller/incidents/${id}/freshdesk-updates`);
+  }
+
+  /** The ticket's history, oldest first: who logged, dispatched, nudged, answered and closed it. */
+  getIncidentEvents(id: string): Observable<IncidentEvent[]> {
+    return this.http.get<IncidentEvent[]>(`v1/controller/incidents/${id}/events`);
   }
 
   /** Ranked by skill match, availability and proximity — the ranking itself happens

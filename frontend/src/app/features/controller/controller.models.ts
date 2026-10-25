@@ -157,6 +157,23 @@ export interface IncidentProgress {
   jobStatus: JobStatus | null;
 }
 
+/** One line of a ticket's history (FR-09). `actorName` is null when the system did it. */
+export interface IncidentEvent {
+  id: string;
+  type:
+    | 'INCIDENT_LOGGED'
+    | 'INCIDENT_RECEIVED'
+    | 'DISPATCH_SENT'
+    | 'DISPATCH_RESENT'
+    | 'DISPATCH_ACCEPTED'
+    | 'DISPATCH_DECLINED'
+    | 'DISPATCH_EXPIRED'
+    | 'INCIDENT_CLOSED';
+  actorName: string | null;
+  summary: string;
+  at: string;
+}
+
 /** An incident the Controller logs by hand (a phone call). Mirrors `CreateIncidentRequest`. */
 export interface CreateIncidentRequest {
   clientName: string;

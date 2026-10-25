@@ -25,6 +25,7 @@ import silver.solutions.techconnect.dto.response.controller.JobDetailResponse;
 import silver.solutions.techconnect.dto.response.controller.JobSummaryResponse;
 import silver.solutions.techconnect.entity.Dispatch;
 import silver.solutions.techconnect.entity.Incident;
+import silver.solutions.techconnect.entity.IncidentEventType;
 import silver.solutions.techconnect.entity.IncidentStatus;
 import silver.solutions.techconnect.entity.Job;
 import silver.solutions.techconnect.entity.JobStatus;
@@ -109,6 +110,7 @@ public class JobService {
     private final UserRepository users;
     private final TechnicianProfileRepository profiles;
     private final FreshdeskUpdateService freshdesk;
+    private final IncidentEventService events;
 
     public JobService(
             JobRepository jobs,
@@ -118,7 +120,8 @@ public class JobService {
             DispatchRepository dispatches,
             UserRepository users,
             TechnicianProfileRepository profiles,
-            FreshdeskUpdateService freshdesk) {
+            FreshdeskUpdateService freshdesk,
+            IncidentEventService events) {
         this.jobs = jobs;
         this.history = history;
         this.parts = parts;
@@ -127,6 +130,7 @@ public class JobService {
         this.users = users;
         this.profiles = profiles;
         this.freshdesk = freshdesk;
+        this.events = events;
     }
 
     // --- writes -------------------------------------------------------------------------------
@@ -256,6 +260,8 @@ public class JobService {
                 incident.setStatus(IncidentStatus.CLOSED);
                 incident.setClosedAt(now);
                 incidents.save(incident);
+                events.record(incident.getId(), IncidentEventType.INCIDENT_CLOSED, controllerId,
+                        job.getDispatchId(), "Closed after review");
             }
         });
         return job;

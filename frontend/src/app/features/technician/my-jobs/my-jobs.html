@@ -1,0 +1,44 @@
+<section class="mj-section" aria-labelledby="mj-title">
+  <h2 id="mj-title" class="mj-title">My jobs</h2>
+
+  @if (loadFailed()) {
+    <p class="mj-empty">
+      Couldn't load your jobs.
+      <button type="button" class="mj-retry" (click)="reload()">Try again</button>
+    </p>
+  } @else {
+    @for (job of inHand(); track job.id) {
+      <a
+        class="mj-card"
+        [routerLink]="['/jobs', job.id]"
+        [class.mj-card--held]="job.status === 'ON_HOLD'"
+      >
+        <span class="mj-main">
+          <strong class="mj-client">{{ job.clientName }}</strong>
+          @if (job.siteAddress) {
+            <span class="mj-address">{{ job.siteAddress }}</span>
+          }
+        </span>
+        <span class="mj-status">{{ labels[job.status] }}</span>
+      </a>
+    } @empty {
+      <p class="mj-empty">
+        {{ loaded() ? 'Nothing in hand. Jobs you accept show up here.' : 'Loading your jobs…' }}
+      </p>
+    }
+
+    @if (finished().length > 0) {
+      <h3 class="mj-subtitle">Recently finished</h3>
+      <ul class="mj-finished">
+        @for (job of finished(); track job.id) {
+          <li>
+            <a [routerLink]="['/jobs', job.id]">{{ job.clientName }}</a>
+            <span class="mj-when">
+              {{ labels[job.status] }} · {{ job.submittedAt ?? job.acceptedAt | date: 'd MMM' }}
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

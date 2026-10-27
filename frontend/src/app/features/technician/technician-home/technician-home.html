@@ -56,10 +56,8 @@
       }
     </p>
 
-    <!-- Accepting puts them on a job, so re-read their status. -->
-    <app-dispatch-offers (accepted)="load()" />
-
-    <p class="th-next">The jobs you've accepted will appear here.</p>
+    <app-dispatch-offers (accepted)="onAccepted()" />
+    <app-my-jobs />
   } @else if (loadFailed()) {
     <div class="th-card">
       <h1 id="th-title" class="th-title">Couldn't load your status</h1>

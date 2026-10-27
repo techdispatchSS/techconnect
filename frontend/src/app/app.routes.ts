@@ -95,6 +95,16 @@ export const routes: Routes = [
         data: { roles: ['TECHNICIAN'] },
         title: 'My jobs · TechConnect',
       },
+      {
+        path: 'jobs/:id',
+        loadComponent: () =>
+          import('./features/technician/technician-job/technician-job').then(
+            (m) => m.TechnicianJob,
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['TECHNICIAN'] },
+        title: 'Job · TechConnect',
+      },
       // Root redirects by role, which is resolved at navigation time rather than baked in.
       {
         path: '',

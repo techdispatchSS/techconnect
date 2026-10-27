@@ -2,7 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { Coordinates, DispatchAnswer, DispatchOffer, MyAvailability } from './technician.models';
+import { JobStatus, JobSummary } from '../controller/controller.models';
+import {
+  Coordinates,
+  DispatchAnswer,
+  DispatchOffer,
+  MyAvailability,
+  MyJob,
+} from './technician.models';
 
 /**
  * Client for the TECHNICIAN-only `/api/v1/technician` endpoints. Every call is about the
@@ -38,5 +45,19 @@ export class TechnicianApiService {
 
   decline(dispatchId: string): Observable<DispatchAnswer> {
     return this.http.post<DispatchAnswer>(`/v1/technician/dispatches/${dispatchId}/decline`, null);
+  }
+
+  /** Everything in hand, then the most recent finished ones. */
+  myJobs(): Observable<JobSummary[]> {
+    return this.http.get<JobSummary[]>('/v1/technician/jobs');
+  }
+
+  myJob(jobId: string): Observable<MyJob> {
+    return this.http.get<MyJob>(`/v1/technician/jobs/${jobId}`);
+  }
+
+  /** One step on. 409 if it isn't allowed from where the job is; ON_HOLD needs a reason. */
+  updateJobStatus(jobId: string, status: JobStatus, reason?: string): Observable<MyJob> {
+    return this.http.put<MyJob>(`/v1/technician/jobs/${jobId}/status`, { status, reason });
   }
 }

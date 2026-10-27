@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -28,6 +29,7 @@ describe('TechnicianHome', () => {
     setAvailable: ReturnType<typeof vi.fn>;
     reportLocation: ReturnType<typeof vi.fn>;
     offers: ReturnType<typeof vi.fn>;
+    myJobs: ReturnType<typeof vi.fn>;
   };
   let locate: ReturnType<typeof vi.fn>;
 
@@ -37,6 +39,7 @@ describe('TechnicianHome', () => {
       imports: [TechnicianHome],
       providers: [
         provideZonelessChangeDetection(),
+        provideRouter([]),
         { provide: TechnicianApiService, useValue: api },
         { provide: DeviceLocationService, useValue: { current: locate } },
         { provide: AuthService, useValue: { displayName: signal('Thandi') } },
@@ -63,6 +66,7 @@ describe('TechnicianHome', () => {
         of(availability({ lastLatitude: c.latitude, lastLongitude: c.longitude })),
       ),
       offers: vi.fn(() => of([])),
+      myJobs: vi.fn(() => of([])),
     };
     locate = vi.fn(() => Promise.resolve(HERE));
   });

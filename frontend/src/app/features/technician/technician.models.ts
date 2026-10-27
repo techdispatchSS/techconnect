@@ -1,3 +1,5 @@
+import { JobDetail, JobStatus } from '../controller/controller.models';
+
 /** PRD §8.5 — ON_JOB is set by the system on accepting a dispatch, never by the technician. */
 export type TechnicianStatus = 'AVAILABLE' | 'ON_JOB' | 'OFFLINE';
 
@@ -42,4 +44,10 @@ export interface DispatchOffer {
 export interface DispatchAnswer {
   readonly dispatchId: string;
   readonly outcome: 'ACCEPTED' | 'DECLINED';
+}
+
+/** `GET /api/v1/technician/jobs/{id}` — my job, and the steps the server will accept from here. */
+export interface MyJob {
+  readonly detail: JobDetail;
+  readonly nextSteps: readonly JobStatus[];
 }

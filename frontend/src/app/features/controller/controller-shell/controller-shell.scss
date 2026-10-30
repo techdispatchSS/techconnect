@@ -285,7 +285,12 @@ textarea.controller-input {
 .controller-shell--handset .controller-shell-sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  height: auto;
+  // The desktop rail's `align-self: start` still applies to a fixed box, and would shrink
+  // the drawer to the height of its links. Stretch it, and size it to the visible screen
+  // (dvh tracks the phone's collapsing address bar, where 100vh runs off the bottom).
+  align-self: stretch;
+  height: 100vh;
+  height: 100dvh;
   z-index: 21;
   width: 240px;
   transform: translateX(-100%);

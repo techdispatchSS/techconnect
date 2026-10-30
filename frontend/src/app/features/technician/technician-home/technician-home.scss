@@ -1,0 +1,110 @@
+:host {
+  display: block;
+  --th-accent: #f08221;
+  --th-on: #1f9d55;
+  --th-ink: var(--mat-sys-on-surface, #17181c);
+  --th-muted: var(--mat-sys-on-surface-variant, #5b5e66);
+  --th-surface: var(--mat-sys-surface, #ffffff);
+  --th-soft: var(--mat-sys-surface-container, #f1f2f4);
+  --th-line: var(--mat-sys-outline-variant, #e3e4e8);
+  --th-error: var(--mat-sys-error, #b3261e);
+}
+
+.th-page {
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  color: var(--th-ink);
+}
+
+.th-greeting {
+  margin: 0 0 0.75rem;
+  color: var(--th-muted);
+  font-size: 1rem;
+}
+
+.th-card {
+  --th-state: var(--th-muted);
+  padding: 1.5rem 1.25rem;
+  border: 1px solid var(--th-line);
+  border-top: 4px solid var(--th-state);
+  border-radius: 14px;
+  background: var(--th-surface);
+}
+.th-card--on {
+  --th-state: var(--th-on);
+}
+.th-card--job {
+  --th-state: var(--th-accent);
+}
+
+.th-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--th-state);
+}
+
+.th-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: var(--th-state);
+}
+
+.th-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+.th-lead {
+  margin: 0 0 1.25rem;
+  color: var(--th-muted);
+  line-height: 1.5;
+}
+
+.th-toggle {
+  width: 100%;
+  min-height: 3rem;
+  border: 0;
+  border-radius: 10px;
+  background: var(--th-on);
+  color: #ffffff;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+  &:focus-visible {
+    outline: 3px solid var(--th-accent);
+    outline-offset: 2px;
+  }
+}
+.th-toggle--off {
+  background: var(--th-soft);
+  color: var(--th-ink);
+  border: 1px solid var(--th-line);
+}
+
+.th-error {
+  margin: 0.75rem 0 0;
+  color: var(--th-error);
+}
+
+.th-location,
+.th-loading {
+  margin: 1rem 0 0;
+  color: var(--th-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}

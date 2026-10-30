@@ -1,6 +1,7 @@
 package silver.solutions.techconnect.service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -98,7 +99,7 @@ public class JobService {
     }
 
     /** Statuses in which the technician is committed to this job (and so not free for another). */
-    private static final Set<JobStatus> TECHNICIAN_OCCUPIED = EnumSet.of(
+    static final Set<JobStatus> TECHNICIAN_OCCUPIED = EnumSet.of(
             JobStatus.EN_ROUTE, JobStatus.ON_SITE, JobStatus.WORK_STARTED,
             JobStatus.ON_HOLD, JobStatus.WORK_RESUMED);
 
@@ -332,6 +333,39 @@ public class JobService {
                                 h.getChangedAt()))
                         .toList(),
                 job.getStatus() == JobStatus.SUBMITTED);
+    }
+
+    /** How many finished jobs a technician's list carries, after everything still in hand. */
+    private static final int RECENT_FINISHED = 20;
+
+    /**
+     * A technician's own jobs: everything not yet submitted, then their most recent finished
+     * ones. Newest first within each.
+     */
+    @Transactional(readOnly = true)
+    public List<JobSummaryResponse> forTechnician(UUID technicianId) {
+        List<Job> mine = jobs.findByTechnicianIdOrderByCreatedAtDesc(technicianId);
+        List<Job> shown = new ArrayList<>(mine.stream()
+                .filter(j -> Stage.ACTIVE.statuses().contains(j.getStatus())).toList());
+        mine.stream()
+                .filter(j -> !Stage.ACTIVE.statuses().contains(j.getStatus()))
+                .limit(RECENT_FINISHED)
+                .forEach(shown::add);
+        Lookups lookups = lookups(shown);
+        return shown.stream().map(j -> summary(j, lookups)).toList();
+    }
+
+    /** The full job, for the technician who holds it. Anyone else's is "not found". */
+    @Transactional(readOnly = true)
+    public JobDetailResponse detailFor(UUID jobId, UUID technicianId) {
+        Job job = jobs.findById(jobId).orElseThrow(() -> ApiException.notFound("Job not found"));
+        requireHolder(job, technicianId);
+        return detail(jobId);
+    }
+
+    /** Where the technician can take a job from this status, in the order to offer them. */
+    public static List<JobStatus> nextSteps(JobStatus from) {
+        return List.copyOf(NEXT.getOrDefault(from, Set.of()));
     }
 
     /** The job itself, for callers acting on a technician's behalf (the demo strip). */

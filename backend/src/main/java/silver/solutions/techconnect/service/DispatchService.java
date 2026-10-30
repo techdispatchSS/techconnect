@@ -71,6 +71,7 @@ public class DispatchService {
     private final IncidentLockService locks;
     private final FreshdeskUpdateService freshdesk;
     private final IncidentEventService events;
+    private final TechnicianAvailabilityService availability;
 
     public DispatchService(
             IncidentRepository incidents,
@@ -84,7 +85,8 @@ public class DispatchService {
             NotificationService notifications,
             IncidentLockService locks,
             FreshdeskUpdateService freshdesk,
-            IncidentEventService events) {
+            IncidentEventService events,
+            TechnicianAvailabilityService availability) {
         this.incidents = incidents;
         this.dispatches = dispatches;
         this.dispatchResponses = dispatchResponses;
@@ -97,6 +99,7 @@ public class DispatchService {
         this.locks = locks;
         this.freshdesk = freshdesk;
         this.events = events;
+        this.availability = availability;
     }
 
     @Transactional(readOnly = true)
@@ -172,6 +175,14 @@ public class DispatchService {
         }
         if (request.dispatchType() == DispatchType.ASSIGN && request.technicianIds().size() != 1) {
             throw ApiException.badRequest("Assign a job to exactly one technician.");
+        }
+        // FR-04: someone still working a job can't be sent another, whatever their toggle says.
+        Set<UUID> busy = availability.busy(request.technicianIds());
+        if (!busy.isEmpty()) {
+            String names = technicians.stream().filter(u -> busy.contains(u.getId()))
+                    .map(User::getName).sorted().collect(Collectors.joining(", "));
+            throw ApiException.conflict(names + (busy.size() == 1 ? " is" : " are")
+                    + " already on a job and can't be dispatched.");
         }
 
         Dispatch dispatch = new Dispatch();

@@ -1,0 +1,128 @@
+<section class="tj-page" aria-labelledby="tj-title">
+  <a class="tj-back" routerLink="/jobs">← My jobs</a>
+
+  @if (job(); as current) {
+    <header class="tj-head">
+      <p class="tj-status">{{ labels[current.detail.job.status] }}</p>
+      <h1 id="tj-title" class="tj-title">{{ current.detail.job.clientName }}</h1>
+      @if (current.detail.job.siteAddress) {
+        <p class="tj-address">{{ current.detail.job.siteAddress }}</p>
+      }
+      <ul class="tj-facts">
+        @if (current.detail.job.priority) {
+          <li>{{ current.detail.job.priority | titlecase }} priority</li>
+        }
+        @if (current.detail.job.ticketRef) {
+          <li>Ticket {{ current.detail.job.ticketRef }}</li>
+        }
+        @if (current.detail.job.slaDueAt) {
+          <li [class.tj-overdue]="current.detail.job.overdue">
+            SLA {{ current.detail.job.overdue ? 'passed' : 'due' }}
+            {{ current.detail.job.slaDueAt | date: 'shortTime' }}
+          </li>
+        }
+      </ul>
+    </header>
+
+    @if (steps().length > 0) {
+      <div class="tj-actions">
+        @if (pending(); as step) {
+          <div class="tj-confirm">
+            @if (step === 'ON_HOLD') {
+              <label class="tj-label" for="tj-reason">Why is the job on hold?</label>
+              <textarea
+                id="tj-reason"
+                class="tj-reason"
+                rows="3"
+                maxlength="500"
+                [value]="reason()"
+                (input)="reason.set($any($event.target).value)"
+              ></textarea>
+              <p class="tj-hint">The controller sees this.</p>
+            } @else {
+              <p class="tj-label">Mark the work as complete? You can't undo this.</p>
+            }
+            <div class="tj-buttons">
+              <button type="button" class="tj-button tj-button--quiet" (click)="cancel()">
+                Cancel
+              </button>
+              <button type="button" class="tj-button" [disabled]="saving()" (click)="confirm()">
+                {{ saving() ? 'Saving…' : stepLabels[step] }}
+              </button>
+            </div>
+          </div>
+        } @else {
+          @for (step of steps(); track step; let first = $first) {
+            <button
+              type="button"
+              class="tj-button"
+              [class.tj-button--quiet]="!first"
+              [disabled]="saving()"
+              (click)="tap(step)"
+            >
+              {{ saving() ? 'Saving…' : stepLabels[step] }}
+            </button>
+          }
+        }
+        @if (error(); as message) {
+          <p class="tj-error" role="alert">{{ message }}</p>
+        }
+      </div>
+    } @else if (current.detail.job.status === 'COMPLETE') {
+      <p class="tj-next">Work complete. The job report comes next.</p>
+    }
+
+    <dl class="tj-details">
+      @if (current.detail.contactName || current.detail.contactPhone) {
+        <dt>Site contact</dt>
+        <dd>
+          {{ current.detail.contactName }}
+          @if (current.detail.contactPhone) {
+            <a class="tj-link" [href]="'tel:' + current.detail.contactPhone">
+              {{ current.detail.contactPhone }}
+            </a>
+          }
+        </dd>
+      }
+      @if (directions(); as url) {
+        <dt>Directions</dt>
+        <dd><a class="tj-link" [href]="url" target="_blank" rel="noopener">Open in maps</a></dd>
+      }
+      @if (current.detail.issueType) {
+        <dt>Issue</dt>
+        <dd>{{ current.detail.issueType }}</dd>
+      }
+      @if (current.detail.description) {
+        <dt>Description</dt>
+        <dd>{{ current.detail.description }}</dd>
+      }
+      @if (current.detail.notesForTechnician) {
+        <dt>From the controller</dt>
+        <dd>{{ current.detail.notesForTechnician }}</dd>
+      }
+    </dl>
+
+    <h2 class="tj-subtitle">History</h2>
+    <ol class="tj-history">
+      @for (entry of current.detail.history; track $index) {
+        <li>
+          <span class="tj-when">{{ entry.changedAt | date: 'd MMM, HH:mm' }}</span>
+          <span>
+            <strong>{{ labels[entry.status] }}</strong>
+            @if (entry.reason) {
+              <span class="tj-why">{{ entry.reason }}</span>
+            }
+          </span>
+        </li>
+      }
+    </ol>
+  } @else if (loadFailed() === 'missing') {
+    <h1 id="tj-title" class="tj-title">Job not found</h1>
+    <p class="tj-next">It isn't one of your jobs, or it no longer exists.</p>
+  } @else if (loadFailed() === 'error') {
+    <h1 id="tj-title" class="tj-title">Couldn't load this job</h1>
+    <button type="button" class="tj-button" (click)="load()">Try again</button>
+  } @else {
+    <p class="tj-next" id="tj-title">Loading…</p>
+  }
+</section>

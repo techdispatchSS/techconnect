@@ -5,14 +5,31 @@ import { provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
 import { JobDetail, JobStatus } from '../../controller/controller.models';
-import { jobSummary } from '../my-jobs/my-jobs.spec';
 import { TechnicianApiService } from '../technician-api.service';
 import { MyJob } from '../technician.models';
 import { TechnicianJob } from './technician-job';
 
 function myJob(status: JobStatus, nextSteps: JobStatus[]): MyJob {
   const detail: JobDetail = {
-    job: jobSummary({ status }),
+    job: {
+      id: 'j1',
+      incidentId: 'i1',
+      ticketRef: 'FD-1042',
+      clientName: 'Acme Mining',
+      siteAddress: '12 Main Rd, Sandton',
+      priority: 'HIGH',
+      slaDueAt: null,
+      overdue: false,
+      technicianId: 't1',
+      technicianName: 'Thandi',
+      status,
+      acceptedAt: '2026-10-25T08:00:00Z',
+      arrivedAt: null,
+      startedAt: null,
+      completedAt: null,
+      submittedAt: null,
+      closedAt: null,
+    },
     contactName: 'Sipho',
     contactPhone: '+27 82 000 0000',
     issueType: 'CCTV',

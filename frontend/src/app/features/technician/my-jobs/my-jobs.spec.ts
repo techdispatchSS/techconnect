@@ -7,7 +7,7 @@ import { JobSummary } from '../../controller/controller.models';
 import { TechnicianApiService } from '../technician-api.service';
 import { MyJobs } from './my-jobs';
 
-export function jobSummary(overrides: Partial<JobSummary> = {}): JobSummary {
+function jobSummary(overrides: Partial<JobSummary> = {}): JobSummary {
   return {
     id: 'j1',
     incidentId: 'i1',

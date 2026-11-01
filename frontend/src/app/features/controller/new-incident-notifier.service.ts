@@ -2,6 +2,7 @@ import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, interval, merge, startWith, switchMap } from 'rxjs';
 
+import { RealtimeService } from '../../core/realtime/realtime.service';
 import { ControllerApiService } from './controller-api.service';
 import { Incident } from './controller.models';
 
@@ -29,6 +30,7 @@ const AUTO_DISMISS_MS = 12_000;
 @Injectable({ providedIn: 'root' })
 export class NewIncidentNotifierService {
   private readonly api = inject(ControllerApiService);
+  private readonly realtime = inject(RealtimeService);
 
   readonly newCount = signal<number | null>(null);
   readonly alerts = signal<IncidentAlert[]>([]);
@@ -47,7 +49,12 @@ export class NewIncidentNotifierService {
     this.alerts.set([]);
     this.newCount.set(null);
 
-    merge(interval(POLL_INTERVAL_MS).pipe(startWith(0)), this.refreshRequests)
+    merge(
+      interval(POLL_INTERVAL_MS).pipe(startWith(0)),
+      this.refreshRequests,
+      // Sending a dispatch or one lapsing moves an incident out of NEW, or back into it.
+      this.realtime.on('DISPATCH_CHANGED'),
+    )
       .pipe(
         switchMap(() => this.api.listIncidents({ status: 'NEW', q: '', page: 0, size: 50 })),
         takeUntilDestroyed(destroyRef),

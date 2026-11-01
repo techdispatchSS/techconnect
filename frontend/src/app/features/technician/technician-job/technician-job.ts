@@ -1,8 +1,11 @@
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { filter } from 'rxjs';
 
+import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { JOB_STATUS_LABELS, JobStatus } from '../../controller/controller.models';
 import { CONFIRM_STEPS, STEP_LABELS, directionsUrl, orderSteps } from '../job-steps';
 import { TechnicianApiService } from '../technician-api.service';
@@ -21,6 +24,8 @@ import { MyJob } from '../technician.models';
 })
 export class TechnicianJob implements OnInit {
   private readonly api = inject(TechnicianApiService);
+  private readonly realtime = inject(RealtimeService);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** The route's `:id`, bound by the router. */
   readonly id = input.required<string>();
@@ -40,6 +45,14 @@ export class TechnicianJob implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    // The controller may close it while it's on screen.
+    this.realtime
+      .on('JOB_CHANGED')
+      .pipe(
+        filter((event) => event.jobId === this.id()),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => this.load());
   }
 
   load(): void {

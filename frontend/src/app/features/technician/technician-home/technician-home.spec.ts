@@ -2,7 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
+import { RealtimeEvent, RealtimeService } from '../../../core/realtime/realtime.service';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { DeviceLocationService } from '../device-location.service';
@@ -24,6 +25,7 @@ function availability(overrides: Partial<MyAvailability> = {}): MyAvailability {
 const HERE: Coordinates = { latitude: -26.1076, longitude: 28.0567 };
 
 describe('TechnicianHome', () => {
+  const pushes = new Subject<RealtimeEvent>();
   let api: {
     availability: ReturnType<typeof vi.fn>;
     setAvailable: ReturnType<typeof vi.fn>;
@@ -39,6 +41,7 @@ describe('TechnicianHome', () => {
       imports: [TechnicianHome],
       providers: [
         provideZonelessChangeDetection(),
+        { provide: RealtimeService, useValue: { on: () => pushes } },
         provideRouter([]),
         { provide: TechnicianApiService, useValue: api },
         { provide: DeviceLocationService, useValue: { current: locate } },
@@ -78,6 +81,23 @@ describe('TechnicianHome', () => {
     expect(text(fixture)).toContain("You're off duty");
     expect(button(fixture).textContent).toContain('Go on duty');
     expect(api.reportLocation).toHaveBeenCalledWith(HERE);
+  });
+
+  it('picks up a change of status when told a job moved', async () => {
+    const fixture = setup(of(availability({ status: 'AVAILABLE' })));
+    await fixture.whenStable();
+    api.availability.mockReturnValue(of(availability({ status: 'ON_JOB', onJob: true })));
+
+    pushes.next({
+      type: 'JOB_CHANGED',
+      incidentId: 'i1',
+      dispatchId: 'd1',
+      jobId: 'j1',
+      status: 'ON_SITE',
+    });
+    fixture.detectChanges();
+
+    expect(text(fixture)).toContain("You're on a job");
   });
 
   it('goes on duty in one tap', async () => {

@@ -2,8 +2,9 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { debounceTime, distinctUntilChanged, interval } from 'rxjs';
+import { debounceTime, distinctUntilChanged, interval, merge } from 'rxjs';
 
+import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { Skeleton } from '../../../shared/skeleton/skeleton';
 import { ControllerApiService } from '../controller-api.service';
 import { JOB_STATUS_LABELS, JobStage, JobSummary, PRIORITY_LABELS } from '../controller.models';
@@ -38,6 +39,7 @@ export class JobList implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly realtime = inject(RealtimeService);
   private readonly countsService = inject(JobCountsService);
 
   readonly stages: JobStage[] = this.route.snapshot.data['stages'] ?? ['ACTIVE'];
@@ -82,7 +84,7 @@ export class JobList implements OnInit {
         this.page.set(0);
         this.load(true);
       });
-    interval(REFRESH_INTERVAL_MS)
+    merge(interval(REFRESH_INTERVAL_MS), this.realtime.on('JOB_CHANGED'))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.load(false));
     this.load(true);

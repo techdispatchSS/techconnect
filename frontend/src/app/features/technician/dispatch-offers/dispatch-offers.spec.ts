@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+import { RealtimeEvent, RealtimeService } from '../../../core/realtime/realtime.service';
 
 import { TechnicianApiService } from '../technician-api.service';
 import { DispatchOffer } from '../technician.models';
@@ -42,6 +43,7 @@ describe('timeLeft', () => {
 });
 
 describe('DispatchOffers', () => {
+  const pushes = new Subject<RealtimeEvent>();
   let api: {
     offers: ReturnType<typeof vi.fn>;
     accept: ReturnType<typeof vi.fn>;
@@ -54,6 +56,7 @@ describe('DispatchOffers', () => {
       imports: [DispatchOffers],
       providers: [
         provideZonelessChangeDetection(),
+        { provide: RealtimeService, useValue: { on: () => pushes } },
         { provide: TechnicianApiService, useValue: api },
       ],
     });
@@ -88,6 +91,23 @@ describe('DispatchOffers', () => {
     expect(text).toContain('3.4 km away');
     expect(text).toContain('Ask for the gate code at reception.');
     expect(el(fixture).querySelector('.do-timer')?.textContent?.trim()).toMatch(/^7:0\d$/);
+  });
+
+  it('shows a new offer as soon as it is told about one', () => {
+    const fixture = setup([]);
+    expect(el(fixture).querySelector('.do-card')).toBeNull();
+    api.offers.mockReturnValue(of([offer()]));
+
+    pushes.next({
+      type: 'DISPATCH_CHANGED',
+      incidentId: 'i1',
+      dispatchId: 'd1',
+      jobId: null,
+      status: 'PENDING',
+    });
+    fixture.detectChanges();
+
+    expect(el(fixture).querySelector('.do-card')).not.toBeNull();
   });
 
   it('warns that a broadcast goes to whoever accepts first', () => {

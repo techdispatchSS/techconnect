@@ -3,8 +3,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { interval } from 'rxjs';
+import { filter, interval } from 'rxjs';
 
+import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { ControllerApiService } from '../controller-api.service';
 import {
   DispatchResponseEntry,
@@ -42,6 +43,7 @@ export class TicketProgress implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly realtime = inject(RealtimeService);
   private readonly freshdesk = inject(FreshdeskStatusService);
 
   readonly priorityLabels = PRIORITY_LABELS;
@@ -146,6 +148,14 @@ export class TicketProgress implements OnInit {
           this.load();
         }
       });
+    // Told at once when this ticket's dispatch or job moves, decided or not.
+    this.realtime
+      .on('DISPATCH_CHANGED', 'JOB_CHANGED')
+      .pipe(
+        filter((event) => event.incidentId === this.incidentId),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => this.load());
   }
 
   /** Demo only: answers this dispatch as one of the technicians it was sent to. */

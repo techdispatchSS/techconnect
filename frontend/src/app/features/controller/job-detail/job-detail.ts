@@ -4,8 +4,9 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { interval } from 'rxjs';
+import { filter, interval, merge } from 'rxjs';
 
+import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { Skeleton } from '../../../shared/skeleton/skeleton';
 import { ControllerApiService } from '../controller-api.service';
 import { JOB_STATUS_LABELS, JobDetail, JobStatus, PRIORITY_LABELS } from '../controller.models';
@@ -42,6 +43,7 @@ export class JobDetailPage implements OnInit {
   private readonly api = inject(ControllerApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly realtime = inject(RealtimeService);
   private readonly freshdesk = inject(FreshdeskStatusService);
   private readonly counts = inject(JobCountsService);
 
@@ -101,7 +103,10 @@ export class JobDetailPage implements OnInit {
 
   ngOnInit(): void {
     this.load();
-    interval(REFRESH_INTERVAL_MS)
+    merge(
+      interval(REFRESH_INTERVAL_MS),
+      this.realtime.on('JOB_CHANGED').pipe(filter((event) => event.jobId === this.jobId)),
+    )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         // A closed job will not change; and a form being filled in must not be reset under the

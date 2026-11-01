@@ -72,6 +72,38 @@ export const routes: Routes = [
       import('./features/controller/controller.routes').then((m) => m.controllerRoutes),
   },
 
+  // --- Technician app: its own shell (Technician-only), matching the controller dashboard. ---
+  {
+    path: 'jobs',
+    loadComponent: () =>
+      import('./features/technician/technician-shell/technician-shell').then(
+        (m) => m.TechnicianShell,
+      ),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['TECHNICIAN'] },
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () =>
+          import('./features/technician/technician-home/technician-home').then(
+            (m) => m.TechnicianHome,
+          ),
+        data: { heading: 'My jobs' },
+        title: 'My jobs · TechConnect',
+      },
+      {
+        path: ':id',
+        loadComponent: () =>
+          import('./features/technician/technician-job/technician-job').then(
+            (m) => m.TechnicianJob,
+          ),
+        data: { heading: 'Job' },
+        title: 'Job · TechConnect',
+      },
+    ],
+  },
+
   // --- Authenticated: everything else inside the application shell ---
   {
     path: '',
@@ -83,27 +115,6 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/errors/forbidden/forbidden').then((m) => m.Forbidden),
         title: 'Not available · TechConnect',
-      },
-      // The technician's home. (The controller's /incidents is the real dashboard above.)
-      {
-        path: 'jobs',
-        loadComponent: () =>
-          import('./features/technician/technician-home/technician-home').then(
-            (m) => m.TechnicianHome,
-          ),
-        canActivate: [roleGuard],
-        data: { roles: ['TECHNICIAN'] },
-        title: 'My jobs · TechConnect',
-      },
-      {
-        path: 'jobs/:id',
-        loadComponent: () =>
-          import('./features/technician/technician-job/technician-job').then(
-            (m) => m.TechnicianJob,
-          ),
-        canActivate: [roleGuard],
-        data: { roles: ['TECHNICIAN'] },
-        title: 'Job · TechConnect',
       },
       // Root redirects by role, which is resolved at navigation time rather than baked in.
       {

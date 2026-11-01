@@ -4,6 +4,7 @@ import { Component, DestroyRef, computed, inject, output, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, interval, of, startWith, switchMap } from 'rxjs';
 
+import { priorityTone } from '../../controller/job-format';
 import { TechnicianApiService } from '../technician-api.service';
 import { DispatchOffer } from '../technician.models';
 
@@ -34,6 +35,7 @@ export class DispatchOffers {
   private readonly api = inject(TechnicianApiService);
 
   readonly accepted = output<DispatchOffer>();
+  readonly priorityTone = priorityTone;
 
   private readonly all = signal<DispatchOffer[] | null>(null);
   private readonly now = signal(Date.now());

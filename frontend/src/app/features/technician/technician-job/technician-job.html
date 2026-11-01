@@ -2,21 +2,29 @@
   <a class="tj-back" routerLink="/jobs">← My jobs</a>
 
   @if (job(); as current) {
-    <header class="tj-head">
+    <header class="controller-card tj-head">
       <p class="tj-status">{{ labels[current.detail.job.status] }}</p>
-      <h1 id="tj-title" class="tj-title">{{ current.detail.job.clientName }}</h1>
+      <h2 id="tj-title" class="tj-title">{{ current.detail.job.clientName }}</h2>
       @if (current.detail.job.siteAddress) {
         <p class="tj-address">{{ current.detail.job.siteAddress }}</p>
       }
       <ul class="tj-facts">
         @if (current.detail.job.priority) {
-          <li>{{ current.detail.job.priority | titlecase }} priority</li>
+          <li [class]="priorityTone(current.detail.job.priority)">
+            {{ current.detail.job.priority | titlecase }} priority
+          </li>
         }
         @if (current.detail.job.ticketRef) {
-          <li>Ticket {{ current.detail.job.ticketRef }}</li>
+          <li class="controller-pill controller-pill--low">
+            Ticket {{ current.detail.job.ticketRef }}
+          </li>
         }
         @if (current.detail.job.slaDueAt) {
-          <li [class.tj-overdue]="current.detail.job.overdue">
+          <li
+            class="controller-pill"
+            [class.controller-pill--low]="!current.detail.job.overdue"
+            [class.controller-pill--medium]="current.detail.job.overdue"
+          >
             SLA {{ current.detail.job.overdue ? 'passed' : 'due' }}
             {{ current.detail.job.slaDueAt | date: 'd MMM, HH:mm' }}
           </li>
@@ -27,26 +35,37 @@
     @if (steps().length > 0) {
       <div class="tj-actions">
         @if (pending(); as step) {
-          <div class="tj-confirm">
+          <div class="controller-card tj-confirm">
             @if (step === 'ON_HOLD') {
-              <label class="tj-label" for="tj-reason">Why is the job on hold?</label>
-              <textarea
-                id="tj-reason"
-                class="tj-reason"
-                rows="3"
-                maxlength="500"
-                [value]="reason()"
-                (input)="reason.set($any($event.target).value)"
-              ></textarea>
+              <div class="controller-field">
+                <label for="tj-reason">Why is the job on hold?</label>
+                <textarea
+                  id="tj-reason"
+                  class="controller-input"
+                  rows="3"
+                  maxlength="500"
+                  [value]="reason()"
+                  (input)="reason.set($any($event.target).value)"
+                ></textarea>
+              </div>
               <p class="tj-hint">The controller sees this.</p>
             } @else {
-              <p class="tj-label">Mark the work as complete? You can't undo this.</p>
+              <p class="tj-ask">Mark the work as complete? You can't undo this.</p>
             }
             <div class="tj-buttons">
-              <button type="button" class="tj-button tj-button--quiet" (click)="cancel()">
+              <button
+                type="button"
+                class="controller-btn controller-btn-secondary"
+                (click)="cancel()"
+              >
                 Cancel
               </button>
-              <button type="button" class="tj-button" [disabled]="saving()" (click)="confirm()">
+              <button
+                type="button"
+                class="controller-btn controller-btn-primary"
+                [disabled]="saving()"
+                (click)="confirm()"
+              >
                 {{ saving() ? 'Saving…' : stepLabels[step] }}
               </button>
             </div>
@@ -55,8 +74,9 @@
           @for (step of steps(); track step; let first = $first) {
             <button
               type="button"
-              class="tj-button"
-              [class.tj-button--quiet]="!first"
+              class="controller-btn controller-btn-block"
+              [class.controller-btn-primary]="first"
+              [class.controller-btn-secondary]="!first"
               [disabled]="saving()"
               (click)="tap(step)"
             >
@@ -78,89 +98,99 @@
       </p>
     }
 
-    <dl class="tj-details">
-      @if (current.detail.contactName || current.detail.contactPhone) {
-        <dt>Site contact</dt>
-        <dd>
-          {{ current.detail.contactName }}
-          @if (current.detail.contactPhone) {
-            <a class="tj-link" [href]="'tel:' + current.detail.contactPhone">
-              {{ current.detail.contactPhone }}
-            </a>
-          }
-        </dd>
-      }
-      @if (directions(); as url) {
-        <dt>Directions</dt>
-        <dd><a class="tj-link" [href]="url" target="_blank" rel="noopener">Open in maps</a></dd>
-      }
-      @if (current.detail.issueType) {
-        <dt>Issue</dt>
-        <dd>{{ current.detail.issueType }}</dd>
-      }
-      @if (current.detail.description) {
-        <dt>Description</dt>
-        <dd>{{ current.detail.description }}</dd>
-      }
-      @if (current.detail.notesForTechnician) {
-        <dt>From the controller</dt>
-        <dd>{{ current.detail.notesForTechnician }}</dd>
-      }
-    </dl>
-
-    @if (current.detail.resolutionNotes) {
-      <h2 class="tj-subtitle">Your report</h2>
-      <dl class="tj-details tj-report">
-        <dt>What you did</dt>
-        <dd>{{ current.detail.resolutionNotes }}</dd>
-        @if (current.detail.rootCause) {
-          <dt>Cause</dt>
-          <dd>{{ current.detail.rootCause }}</dd>
+    <div class="controller-card tj-section">
+      <h3 class="tj-subtitle">Job details</h3>
+      <dl class="tj-details">
+        @if (current.detail.contactName || current.detail.contactPhone) {
+          <dt>Site contact</dt>
+          <dd>
+            {{ current.detail.contactName }}
+            @if (current.detail.contactPhone) {
+              <a [href]="'tel:' + current.detail.contactPhone">
+                {{ current.detail.contactPhone }}
+              </a>
+            }
+          </dd>
         }
-        @if (current.detail.recommendations) {
-          <dt>Recommendations</dt>
-          <dd>{{ current.detail.recommendations }}</dd>
+        @if (directions(); as url) {
+          <dt>Directions</dt>
+          <dd><a [href]="url" target="_blank" rel="noopener">Open in maps</a></dd>
         }
-        <dt>Labour hours</dt>
-        <dd>{{ current.detail.labourHours }}</dd>
-        @if (current.detail.parts.length > 0) {
-          <dt>Parts used</dt>
-          @for (part of current.detail.parts; track $index) {
-            <dd>
-              {{ part.quantity }} × {{ part.name }}
-              @if (part.serialNumber) {
-                <span class="tj-why">Serial {{ part.serialNumber }}</span>
-              }
-            </dd>
-          }
+        @if (current.detail.issueType) {
+          <dt>Issue</dt>
+          <dd>{{ current.detail.issueType }}</dd>
         }
-        @if (current.detail.closingNotes) {
-          <dt>From the controller, on closing</dt>
-          <dd>{{ current.detail.closingNotes }}</dd>
+        @if (current.detail.description) {
+          <dt>Description</dt>
+          <dd>{{ current.detail.description }}</dd>
+        }
+        @if (current.detail.notesForTechnician) {
+          <dt>From the controller</dt>
+          <dd>{{ current.detail.notesForTechnician }}</dd>
         }
       </dl>
+    </div>
+
+    @if (current.detail.resolutionNotes) {
+      <div class="controller-card tj-section">
+        <h3 class="tj-subtitle">Your report</h3>
+        <dl class="tj-details tj-report">
+          <dt>What you did</dt>
+          <dd>{{ current.detail.resolutionNotes }}</dd>
+          @if (current.detail.rootCause) {
+            <dt>Cause</dt>
+            <dd>{{ current.detail.rootCause }}</dd>
+          }
+          @if (current.detail.recommendations) {
+            <dt>Recommendations</dt>
+            <dd>{{ current.detail.recommendations }}</dd>
+          }
+          <dt>Labour hours</dt>
+          <dd>{{ current.detail.labourHours }}</dd>
+          @if (current.detail.parts.length > 0) {
+            <dt>Parts used</dt>
+            @for (part of current.detail.parts; track $index) {
+              <dd>
+                {{ part.quantity }} × {{ part.name }}
+                @if (part.serialNumber) {
+                  <span class="tj-why">Serial {{ part.serialNumber }}</span>
+                }
+              </dd>
+            }
+          }
+          @if (current.detail.closingNotes) {
+            <dt>From the controller, on closing</dt>
+            <dd>{{ current.detail.closingNotes }}</dd>
+          }
+        </dl>
+      </div>
     }
 
-    <h2 class="tj-subtitle">History</h2>
-    <ol class="tj-history">
-      @for (entry of current.detail.history; track $index) {
-        <li>
-          <span class="tj-when">{{ entry.changedAt | date: 'd MMM, HH:mm' }}</span>
-          <span>
-            <strong>{{ labels[entry.status] }}</strong>
-            @if (entry.reason) {
-              <span class="tj-why">{{ entry.reason }}</span>
-            }
-          </span>
-        </li>
-      }
-    </ol>
+    <div class="controller-card tj-section">
+      <h3 class="tj-subtitle">History</h3>
+      <ol class="tj-timeline">
+        @for (entry of current.detail.history; track $index) {
+          <li>
+            <span class="tj-dot" aria-hidden="true"></span>
+            <span class="tj-entry">
+              <strong>{{ labels[entry.status] }}</strong>
+              @if (entry.reason) {
+                <span class="tj-why">{{ entry.reason }}</span>
+              }
+              <span class="tj-when">{{ entry.changedAt | date: 'd MMM, HH:mm' }}</span>
+            </span>
+          </li>
+        }
+      </ol>
+    </div>
   } @else if (loadFailed() === 'missing') {
-    <h1 id="tj-title" class="tj-title">Job not found</h1>
+    <h2 id="tj-title" class="tj-title">Job not found</h2>
     <p class="tj-next">It isn't one of your jobs, or it no longer exists.</p>
   } @else if (loadFailed() === 'error') {
-    <h1 id="tj-title" class="tj-title">Couldn't load this job</h1>
-    <button type="button" class="tj-button" (click)="load()">Try again</button>
+    <h2 id="tj-title" class="tj-title">Couldn't load this job</h2>
+    <button type="button" class="controller-btn controller-btn-primary" (click)="load()">
+      Try again
+    </button>
   } @else {
     <p class="tj-next" id="tj-title">Loading…</p>
   }

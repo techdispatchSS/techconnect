@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { JOB_STATUS_LABELS, JobSummary } from '../../controller/controller.models';
+import { statusTone } from '../../controller/job-format';
 import { IN_HAND } from '../job-steps';
 import { TechnicianApiService } from '../technician-api.service';
 
@@ -20,6 +21,7 @@ export class MyJobs {
   private readonly api = inject(TechnicianApiService);
 
   readonly labels = JOB_STATUS_LABELS;
+  readonly statusTone = statusTone;
   private readonly all = signal<JobSummary[] | null>(null);
   readonly loadFailed = signal(false);
 

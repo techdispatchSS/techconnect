@@ -2,7 +2,6 @@ import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal, viewChild } from '@angular/core';
 
-import { AuthService } from '../../../core/auth/auth.service';
 import { DeviceLocationService } from '../device-location.service';
 import { DispatchOffers } from '../dispatch-offers/dispatch-offers';
 import { MyJobs } from '../my-jobs/my-jobs';
@@ -27,7 +26,6 @@ export class TechnicianHome {
   private readonly api = inject(TechnicianApiService);
   private readonly location = inject(DeviceLocationService);
 
-  readonly name = inject(AuthService).displayName;
   readonly availability = signal<MyAvailability | null>(null);
   readonly loadFailed = signal(false);
   readonly saving = signal(false);

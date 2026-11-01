@@ -1,44 +1,37 @@
-:host {
-  display: block;
-  --mj-accent: #f08221;
-  --mj-ink: var(--mat-sys-on-surface, #17181c);
-  --mj-muted: var(--mat-sys-on-surface-variant, #5b5e66);
-  --mj-surface: var(--mat-sys-surface, #ffffff);
-  --mj-soft: var(--mat-sys-surface-container, #f1f2f4);
-  --mj-line: var(--mat-sys-outline-variant, #e3e4e8);
-}
-
 .mj-section {
-  margin-top: 1.75rem;
-  color: var(--mj-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .mj-title {
-  margin: 0 0 0.75rem;
-  font-size: 1.125rem;
+  font-size: 11.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--controller-color-accent-text);
 }
 
-.mj-card {
+// `:host` to outrank the shell's rule that turns every link in the page orange.
+:host a.mj-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-  padding: 0.875rem 1rem;
-  border: 1px solid var(--mj-line);
-  border-left: 4px solid var(--mj-accent);
-  border-radius: 12px;
-  background: var(--mj-surface);
-  color: inherit;
-  text-decoration: none;
+  gap: 12px;
+  border-left: 2px solid var(--controller-color-accent);
+  color: var(--controller-color-text);
 
+  &:hover {
+    background: rgba(240, 130, 33, 0.06);
+    color: var(--controller-color-text);
+    text-decoration: none;
+  }
   &:focus-visible {
-    outline: 3px solid var(--mj-accent);
+    outline: 2px solid var(--controller-color-accent);
     outline-offset: 2px;
   }
 }
-.mj-card--held {
-  border-left-color: var(--mj-muted);
+:host a.mj-card--held {
+  border-left-color: var(--controller-color-divider-strong);
 }
 
 .mj-main {
@@ -47,24 +40,47 @@
   min-width: 0;
 }
 
-.mj-address {
-  color: var(--mj-muted);
-  font-size: 0.875rem;
+.mj-client {
+  font-family: var(--controller-font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--controller-color-emphasis);
 }
 
+.mj-address {
+  font-size: 13px;
+  color: var(--controller-color-muted);
+}
+
+// The status pill from the controller's job lists, so a status reads the same on both.
 .mj-status {
   flex: none;
-  padding: 0.125rem 0.5rem;
-  border-radius: 6px;
-  background: var(--mj-soft);
-  font-size: 0.8125rem;
+  padding: 3px 9px;
+  border: 1px solid var(--controller-color-divider-strong);
+  font-size: 11.5px;
   font-weight: 600;
+  white-space: nowrap;
+}
+.mj-status--moving {
+  border-color: rgba(240, 130, 33, 0.6);
+  color: var(--controller-color-accent-text-soft);
+}
+.mj-status--held {
+  border-style: dashed;
+  color: var(--controller-color-muted);
+}
+.mj-status--review {
+  background: rgba(240, 130, 33, 0.14);
+  border-color: transparent;
+  color: var(--controller-color-accent-text-soft);
 }
 
 .mj-subtitle {
-  margin: 1.25rem 0 0.5rem;
-  font-size: 0.9375rem;
-  color: var(--mj-muted);
+  margin-top: 10px;
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--controller-color-muted);
 }
 
 .mj-finished {
@@ -75,31 +91,21 @@
   li {
     display: flex;
     justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--mj-line);
-    font-size: 0.875rem;
-  }
-  a {
-    color: inherit;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--controller-color-divider-soft);
+    font-size: 13.5px;
   }
 }
 
 .mj-when {
-  color: var(--mj-muted);
+  flex: none;
+  font-size: 12px;
+  color: var(--controller-color-muted);
 }
 
 .mj-empty {
   margin: 0;
-  color: var(--mj-muted);
-  font-size: 0.875rem;
-}
-
-.mj-retry {
-  border: 0;
-  background: none;
-  color: var(--mj-accent);
-  font: inherit;
-  text-decoration: underline;
-  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--controller-color-muted);
 }

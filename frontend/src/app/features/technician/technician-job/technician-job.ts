@@ -4,6 +4,7 @@ import { Component, OnInit, computed, inject, input, signal } from '@angular/cor
 import { RouterLink } from '@angular/router';
 
 import { JOB_STATUS_LABELS, JobStatus } from '../../controller/controller.models';
+import { priorityTone } from '../../controller/job-format';
 import { JobReportForm } from '../job-report-form/job-report-form';
 import { CONFIRM_STEPS, STEP_LABELS, directionsUrl, orderSteps } from '../job-steps';
 import { TechnicianApiService } from '../technician-api.service';
@@ -28,6 +29,7 @@ export class TechnicianJob implements OnInit {
   readonly id = input.required<string>();
 
   readonly labels = JOB_STATUS_LABELS;
+  readonly priorityTone = priorityTone;
   readonly stepLabels = STEP_LABELS;
   readonly job = signal<MyJob | null>(null);
   readonly loadFailed = signal<'missing' | 'error' | null>(null);

@@ -12,12 +12,12 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * A technician's report on finished work (PRD FR-06). Reaches the service through the
- * simulation endpoint today, and through the technician app once that exists.
+ * A technician's report on finished work (PRD FR-06), submitted from the technician app. Who
+ * wrote it comes from the token, never from the request.
  */
 public record JobReportRequest(
         @NotBlank @Size(max = 4000) String resolutionNotes,
-        @Size(max = 2000) String rootCause,
+        @NotBlank @Size(max = 2000) String rootCause,
         @Size(max = 2000) String recommendations,
         @NotNull @DecimalMin("0.0") @DecimalMax("999.99") BigDecimal labourHours,
         @Valid @Size(max = 50) List<Part> parts) {

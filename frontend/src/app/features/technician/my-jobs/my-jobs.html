@@ -19,7 +19,9 @@
             <span class="mj-address">{{ job.siteAddress }}</span>
           }
         </span>
-        <span class="mj-status">{{ labels[job.status] }}</span>
+        <span class="mj-status">
+          {{ job.status === 'COMPLETE' ? 'Report due' : labels[job.status] }}
+        </span>
       </a>
     } @empty {
       <p class="mj-empty">

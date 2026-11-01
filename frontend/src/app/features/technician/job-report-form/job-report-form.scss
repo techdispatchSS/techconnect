@@ -1,0 +1,140 @@
+:host {
+  display: block;
+  --jr-accent: #f08221;
+  --jr-on: #1f9d55;
+  --jr-ink: var(--mat-sys-on-surface, #17181c);
+  --jr-muted: var(--mat-sys-on-surface-variant, #5b5e66);
+  --jr-surface: var(--mat-sys-surface, #ffffff);
+  --jr-soft: var(--mat-sys-surface-container, #f1f2f4);
+  --jr-line: var(--mat-sys-outline-variant, #e3e4e8);
+  --jr-error: var(--mat-sys-error, #b3261e);
+}
+
+.jr-form {
+  margin: 1.5rem 0;
+  padding: 1.125rem;
+  border: 1px solid var(--jr-line);
+  border-top: 4px solid var(--jr-accent);
+  border-radius: 12px;
+  background: var(--jr-surface);
+  color: var(--jr-ink);
+}
+
+.jr-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+}
+
+.jr-lead {
+  margin: 0 0 0.5rem;
+  color: var(--jr-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.jr-label {
+  display: block;
+  margin: 0.875rem 0 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.jr-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.625rem;
+  border: 1px solid var(--jr-line);
+  border-radius: 8px;
+  background: var(--jr-surface);
+  color: inherit;
+  font: inherit;
+  // 16px or more, or iOS zooms the page in on focus.
+  font-size: 1rem;
+
+  &:focus-visible {
+    outline: 3px solid var(--jr-accent);
+    outline-offset: 1px;
+  }
+}
+.jr-input--short {
+  max-width: 8rem;
+}
+.jr-input--bad {
+  border-color: var(--jr-error);
+}
+
+.jr-field-error {
+  margin: 0.25rem 0 0;
+  color: var(--jr-error);
+  font-size: 0.8125rem;
+}
+
+.jr-subtitle {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1rem;
+}
+
+.jr-part {
+  min-width: 0;
+  margin: 0 0 0.75rem;
+  padding: 0.25rem 0.875rem 0.75rem;
+  border: 1px solid var(--jr-line);
+  border-radius: 10px;
+}
+.jr-part-legend {
+  padding: 0 0.25rem;
+  color: var(--jr-muted);
+  font-size: 0.8125rem;
+}
+.jr-part-row {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.jr-remove {
+  margin-top: 0.625rem;
+  padding: 0.25rem 0;
+  border: 0;
+  background: none;
+  color: var(--jr-error);
+  font: inherit;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.jr-button {
+  width: 100%;
+  min-height: 3rem;
+  margin-top: 0.75rem;
+  border: 0;
+  border-radius: 10px;
+  background: var(--jr-on);
+  color: #ffffff;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+  &:focus-visible {
+    outline: 3px solid var(--jr-accent);
+    outline-offset: 2px;
+  }
+}
+.jr-button--quiet {
+  margin-top: 0;
+  border: 1px solid var(--jr-line);
+  background: var(--jr-soft);
+  color: var(--jr-ink);
+}
+
+.jr-error {
+  margin: 0.75rem 0 0;
+  color: var(--jr-error);
+}

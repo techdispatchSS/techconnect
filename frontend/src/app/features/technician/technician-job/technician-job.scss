@@ -158,6 +158,10 @@
   }
 }
 
+.tj-report dd {
+  white-space: pre-line;
+}
+
 .tj-link {
   color: var(--tj-accent);
   font-weight: 600;

@@ -69,7 +69,13 @@
         }
       </div>
     } @else if (current.detail.job.status === 'COMPLETE') {
-      <p class="tj-next">Work complete. The job report comes next.</p>
+      <app-job-report-form [jobId]="id()" (submitted)="job.set($event)" (stale)="load()" />
+    } @else if (current.detail.job.status === 'SUBMITTED') {
+      <p class="tj-next">Report submitted. The controller will review it and close the job.</p>
+    } @else if (current.detail.job.status === 'CLOSED') {
+      <p class="tj-next">
+        Closed{{ current.detail.closedByName ? ' by ' + current.detail.closedByName : '' }}.
+      </p>
     }
 
     <dl class="tj-details">
@@ -101,6 +107,39 @@
         <dd>{{ current.detail.notesForTechnician }}</dd>
       }
     </dl>
+
+    @if (current.detail.resolutionNotes) {
+      <h2 class="tj-subtitle">Your report</h2>
+      <dl class="tj-details tj-report">
+        <dt>What you did</dt>
+        <dd>{{ current.detail.resolutionNotes }}</dd>
+        @if (current.detail.rootCause) {
+          <dt>Cause</dt>
+          <dd>{{ current.detail.rootCause }}</dd>
+        }
+        @if (current.detail.recommendations) {
+          <dt>Recommendations</dt>
+          <dd>{{ current.detail.recommendations }}</dd>
+        }
+        <dt>Labour hours</dt>
+        <dd>{{ current.detail.labourHours }}</dd>
+        @if (current.detail.parts.length > 0) {
+          <dt>Parts used</dt>
+          @for (part of current.detail.parts; track $index) {
+            <dd>
+              {{ part.quantity }} × {{ part.name }}
+              @if (part.serialNumber) {
+                <span class="tj-why">Serial {{ part.serialNumber }}</span>
+              }
+            </dd>
+          }
+        }
+        @if (current.detail.closingNotes) {
+          <dt>From the controller, on closing</dt>
+          <dd>{{ current.detail.closingNotes }}</dd>
+        }
+      </dl>
+    }
 
     <h2 class="tj-subtitle">History</h2>
     <ol class="tj-history">

@@ -14,8 +14,8 @@ type LocationState = 'unknown' | 'shared' | 'blocked';
 /**
  * The technician's home: going on and off duty (T-14), sharing where they are so the
  * controller can see how far away they are when dispatching (FR-05), and the job offers
- * waiting on their answer (FR-04), above the jobs they have in hand. The location goes up when the page opens and again
- * whenever the app comes back to the foreground.
+ * waiting on their answer (FR-04), above the jobs they have in hand. The location goes up when
+ * the page opens and again whenever the app comes back to the foreground.
  */
 @Component({
   selector: 'app-technician-home',

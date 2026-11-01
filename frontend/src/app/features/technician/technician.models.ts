@@ -46,6 +46,19 @@ export interface DispatchAnswer {
   readonly outcome: 'ACCEPTED' | 'DECLINED';
 }
 
+/** `POST /api/v1/technician/jobs/{id}/submit` — the job card (FR-06). */
+export interface JobReport {
+  readonly resolutionNotes: string;
+  readonly rootCause: string;
+  readonly recommendations: string | null;
+  readonly labourHours: number;
+  readonly parts: readonly {
+    readonly name: string;
+    readonly quantity: number;
+    readonly serialNumber: string | null;
+  }[];
+}
+
 /** `GET /api/v1/technician/jobs/{id}` — my job, and the steps the server will accept from here. */
 export interface MyJob {
   readonly detail: JobDetail;

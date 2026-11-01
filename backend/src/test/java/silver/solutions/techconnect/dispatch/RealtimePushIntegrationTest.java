@@ -30,6 +30,7 @@ import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
+import silver.solutions.techconnect.config.TechConnectProperties;
 import silver.solutions.techconnect.dto.response.common.RealtimeEvent;
 import silver.solutions.techconnect.entity.IncidentPriority;
 import silver.solutions.techconnect.entity.IncidentStatus;
@@ -49,6 +50,7 @@ class RealtimePushIntegrationTest extends AbstractDispatchIntegrationTest {
     @LocalServerPort private int port;
     @Autowired private SimpUserRegistry socketUsers;
     @Autowired private JobRepository jobs;
+    @Autowired private TechConnectProperties properties;
 
     private final List<StompSession> sessions = new ArrayList<>();
 
@@ -128,6 +130,15 @@ class RealtimePushIntegrationTest extends AbstractDispatchIntegrationTest {
         assertThatThrownBy(() -> connect("not-a-token")).isInstanceOf(ExecutionException.class);
     }
 
+    @Test
+    void aSocketIsOnlyForPagesServedFromTheAppsOwnAddress() throws Exception {
+        String token = controllerToken();
+
+        assertThat(connect(token, properties.appBaseUrl()).isConnected()).isTrue();
+        assertThatThrownBy(() -> connect(token, "https://evil.example"))
+                .isInstanceOf(ExecutionException.class);
+    }
+
     private LinkedBlockingQueue<RealtimeEvent> subscribe(String token, String destination) throws Exception {
         LinkedBlockingQueue<RealtimeEvent> received = new LinkedBlockingQueue<>();
         StompSession session = connect(token);
@@ -144,14 +155,22 @@ class RealtimePushIntegrationTest extends AbstractDispatchIntegrationTest {
     }
 
     private StompSession connect(String token) throws Exception {
+        return connect(token, null);
+    }
+
+    private StompSession connect(String token, String origin) throws Exception {
         WebSocketStompClient client = new WebSocketStompClient(new StandardWebSocketClient());
         client.setMessageConverter(new JacksonJsonMessageConverter());
         StompHeaders connect = new StompHeaders();
         if (token != null) {
             connect.add("Authorization", "Bearer " + token);
         }
+        WebSocketHttpHeaders handshake = new WebSocketHttpHeaders();
+        if (origin != null) {
+            handshake.setOrigin(origin);
+        }
         StompSession session = client
-                .connectAsync("ws://localhost:" + port + "/api/ws", new WebSocketHttpHeaders(), connect,
+                .connectAsync("ws://localhost:" + port + "/api/ws", handshake, connect,
                         new StompSessionHandlerAdapter() { })
                 .get(WITHIN_SECONDS, TimeUnit.SECONDS);
         sessions.add(session);

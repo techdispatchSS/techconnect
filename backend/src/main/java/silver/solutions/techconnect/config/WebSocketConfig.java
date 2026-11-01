@@ -14,9 +14,11 @@ import org.springframework.web.socket.config.annotation.WebSocketTransportRegist
 import silver.solutions.techconnect.security.StompAuthInterceptor;
 
 /**
- * STOMP over WebSocket at {@code /api/ws} (#16), same-origin only. The in-memory broker reaches
- * only this instance's sockets: with more than one backend running, a screen connected to another
- * instance gets the change at its next poll instead, which is why the screens keep polling.
+ * STOMP over WebSocket at {@code /api/ws} (#16), for pages served from the app's own address. That
+ * is named outright rather than left to Spring's same-origin check, which compares against what
+ * the proxies forward and fails behind TLS termination. The in-memory broker reaches only this
+ * instance's sockets: with more than one backend running, a screen connected to another instance
+ * gets the change at its next poll instead, which is why the screens keep polling.
  */
 @Configuration
 @EnableWebSocketMessageBroker
@@ -28,10 +30,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private static final int MAX_INBOUND_BYTES = 16 * 1024;
 
     private final StompAuthInterceptor authInterceptor;
+    private final TechConnectProperties properties;
     private TaskScheduler heartbeatScheduler;
 
-    public WebSocketConfig(StompAuthInterceptor authInterceptor) {
+    public WebSocketConfig(StompAuthInterceptor authInterceptor, TechConnectProperties properties) {
         this.authInterceptor = authInterceptor;
+        this.properties = properties;
     }
 
     @Autowired
@@ -42,7 +46,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws");
+        registry.addEndpoint("/ws").setAllowedOrigins(appOrigin());
+    }
+
+    /** An origin has no trailing slash, which the configured address might. */
+    private String appOrigin() {
+        return properties.appBaseUrl().trim().replaceAll("/+$", "");
     }
 
     @Override

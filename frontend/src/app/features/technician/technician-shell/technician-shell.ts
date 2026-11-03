@@ -28,6 +28,7 @@ import { ChangePasswordDialog } from '../../../layout/change-password-dialog/cha
 import { ProfileDialog } from '../../../layout/profile-dialog/profile-dialog';
 import { InstallButton } from '../../../shared/install-button/install-button';
 import { Logo } from '../../../shared/logo/logo';
+import { JobAlertsService } from '../job-alerts/job-alerts.service';
 
 /**
  * The technician app's frame: the same rail, header and account button as the controller
@@ -58,6 +59,7 @@ export class TechnicianShell implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly themeService = inject(ThemeService);
+  private readonly alerts = inject(JobAlertsService);
 
   readonly theme = this.themeService.theme;
 
@@ -108,6 +110,7 @@ export class TechnicianShell implements OnInit {
     // A stored token can still be signed and unexpired yet already revoked by the backend —
     // confirm the session once here so a dead one lands on the login screen immediately.
     this.account.me().subscribe({ error: () => undefined });
+    void this.alerts.start();
   }
 
   toggleTheme(): void {
@@ -141,6 +144,6 @@ export class TechnicianShell implements OnInit {
   }
 
   logout(): void {
-    this.auth.logout();
+    void this.alerts.beforeSignOut().finally(() => this.auth.logout());
   }
 }

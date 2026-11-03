@@ -84,6 +84,12 @@ services:
       # connected. Must stay off anywhere real operations run — it makes up incidents.
       TECHCONNECT_SIMULATION_ENABLED: ${TECHCONNECT_SIMULATION_ENABLED:-true}
       # Live Freshdesk (read-only). Blank = not connected; needs simulation set to false.
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+      FIREBASE_SERVICE_ACCOUNT_JSON: ${FIREBASE_SERVICE_ACCOUNT_JSON:-}
+      FIREBASE_WEB_API_KEY: ${FIREBASE_WEB_API_KEY:-}
+      FIREBASE_MESSAGING_SENDER_ID: ${FIREBASE_MESSAGING_SENDER_ID:-}
+      FIREBASE_WEB_APP_ID: ${FIREBASE_WEB_APP_ID:-}
+      FIREBASE_VAPID_KEY: ${FIREBASE_VAPID_KEY:-}
       FRESHDESK_DOMAIN: ${FRESHDESK_DOMAIN:-}
       FRESHDESK_API_KEY: ${FRESHDESK_API_KEY:-}
       # Ticket updates back to Freshdesk: DEMO (shown, never sent), LIVE or OFF.

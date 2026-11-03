@@ -72,6 +72,7 @@ public class DispatchService {
     private final FreshdeskUpdateService freshdesk;
     private final IncidentEventService events;
     private final TechnicianAvailabilityService availability;
+    private final PushService push;
 
     public DispatchService(
             IncidentRepository incidents,
@@ -86,7 +87,8 @@ public class DispatchService {
             IncidentLockService locks,
             FreshdeskUpdateService freshdesk,
             IncidentEventService events,
-            TechnicianAvailabilityService availability) {
+            TechnicianAvailabilityService availability,
+            PushService push) {
         this.incidents = incidents;
         this.dispatches = dispatches;
         this.dispatchResponses = dispatchResponses;
@@ -100,6 +102,7 @@ public class DispatchService {
         this.freshdesk = freshdesk;
         this.events = events;
         this.availability = availability;
+        this.push = push;
     }
 
     @Transactional(readOnly = true)
@@ -301,6 +304,8 @@ public class DispatchService {
                 dispatch.getId());
 
         Runnable send = () -> {
+            // First: a job alert takes moments, and an email can take a while to send.
+            push.offerJob(recipients, notice);
             for (User recipient : recipients) {
                 try {
                     notifications.sendDispatchNotice(recipient, notice);

@@ -5,9 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import silver.solutions.techconnect.config.TechConnectProperties;
 import silver.solutions.techconnect.integration.freshdesk.FreshdeskProperties;
+import silver.solutions.techconnect.integration.push.PushProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties({TechConnectProperties.class, FreshdeskProperties.class})
+@EnableConfigurationProperties({TechConnectProperties.class, FreshdeskProperties.class, PushProperties.class})
 public class TechConnectApplication {
 
 	public static void main(String[] args) {

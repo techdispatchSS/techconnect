@@ -2,7 +2,6 @@ import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal, viewChild } from '@angular/core';
 
-import { AuthService } from '../../../core/auth/auth.service';
 import { DeviceLocationService } from '../device-location.service';
 import { DispatchOffers } from '../dispatch-offers/dispatch-offers';
 import { MyJobs } from '../my-jobs/my-jobs';
@@ -14,8 +13,8 @@ type LocationState = 'unknown' | 'shared' | 'blocked';
 /**
  * The technician's home: going on and off duty (T-14), sharing where they are so the
  * controller can see how far away they are when dispatching (FR-05), and the job offers
- * waiting on their answer (FR-04), above the jobs they have in hand. The location goes up when the page opens and again
- * whenever the app comes back to the foreground.
+ * waiting on their answer (FR-04), above the jobs they have in hand. The location goes up when
+ * the page opens and again whenever the app comes back to the foreground.
  */
 @Component({
   selector: 'app-technician-home',
@@ -27,7 +26,6 @@ export class TechnicianHome {
   private readonly api = inject(TechnicianApiService);
   private readonly location = inject(DeviceLocationService);
 
-  readonly name = inject(AuthService).displayName;
   readonly availability = signal<MyAvailability | null>(null);
   readonly loadFailed = signal(false);
   readonly saving = signal(false);

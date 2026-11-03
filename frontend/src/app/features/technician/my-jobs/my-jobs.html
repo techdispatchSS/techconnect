@@ -4,12 +4,14 @@
   @if (loadFailed()) {
     <p class="mj-empty">
       Couldn't load your jobs.
-      <button type="button" class="mj-retry" (click)="reload()">Try again</button>
+      <button type="button" class="controller-btn controller-btn-ghost mj-retry" (click)="reload()">
+        Try again
+      </button>
     </p>
   } @else {
     @for (job of inHand(); track job.id) {
       <a
-        class="mj-card"
+        class="controller-card mj-card"
         [routerLink]="['/jobs', job.id]"
         [class.mj-card--held]="job.status === 'ON_HOLD'"
       >
@@ -19,7 +21,9 @@
             <span class="mj-address">{{ job.siteAddress }}</span>
           }
         </span>
-        <span class="mj-status">{{ labels[job.status] }}</span>
+        <span class="mj-status mj-status--{{ statusTone(job.status) }}">
+          {{ job.status === 'COMPLETE' ? 'Report due' : labels[job.status] }}
+        </span>
       </a>
     } @empty {
       <p class="mj-empty">

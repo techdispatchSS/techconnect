@@ -22,8 +22,8 @@ public record TechConnectProperties(
     /**
      * Stand-ins for parties that are not connected yet, so the dashboard can be exercised and
      * user-tested end to end: a simulated Freshdesk (tickets appear on demand and flow through
-     * the real sync path) and a "respond as technician" control for dispatches, since the
-     * technician app does not exist. Off unless explicitly enabled — never enable it against
+     * the real sync path) and a "respond as technician" control for dispatches, so a demo needs
+     * no second person on the technician app. Off unless explicitly enabled — never enable it against
      * real operations, because it makes up incidents.
      */
     public record Simulation(boolean enabled) {}

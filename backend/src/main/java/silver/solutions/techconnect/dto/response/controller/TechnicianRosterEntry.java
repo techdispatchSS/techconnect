@@ -22,7 +22,7 @@ public record TechnicianRosterEntry(
         /** The job they are on right now, if any. */
         CurrentJob currentJob,
         long jobsClosed,
-        /** When their app last reported a position; null until the technician app exists. */
+        /** When their app last reported a position; null until it first has. */
         Instant lastSeenAt) {
 
     public record CurrentJob(UUID jobId, String ticketRef, String clientName, JobStatus status) {

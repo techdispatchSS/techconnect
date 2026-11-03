@@ -1,0 +1,147 @@
+<form class="controller-card jr-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <h3 class="jr-title">Job report</h3>
+  <p class="jr-lead">Once you submit, the job goes to the controller and you can't change it.</p>
+
+  <div class="controller-field">
+    <label for="jr-resolution">What did you do to fix it?</label>
+    <textarea
+      id="jr-resolution"
+      class="controller-input"
+      rows="4"
+      maxlength="4000"
+      formControlName="resolutionNotes"
+      [class.jr-input--bad]="showError(form.controls.resolutionNotes)"
+    ></textarea>
+    @if (showError(form.controls.resolutionNotes)) {
+      <p class="jr-field-error">Say what was done.</p>
+    }
+  </div>
+
+  <div class="controller-field">
+    <label for="jr-cause">What caused the fault?</label>
+    <textarea
+      id="jr-cause"
+      class="controller-input"
+      rows="2"
+      maxlength="2000"
+      formControlName="rootCause"
+      [class.jr-input--bad]="showError(form.controls.rootCause)"
+    ></textarea>
+    @if (showError(form.controls.rootCause)) {
+      <p class="jr-field-error">Say what caused it.</p>
+    }
+  </div>
+
+  <div class="controller-field">
+    <label for="jr-recommendations">Recommendations (optional)</label>
+    <textarea
+      id="jr-recommendations"
+      class="controller-input"
+      rows="2"
+      maxlength="2000"
+      formControlName="recommendations"
+    ></textarea>
+  </div>
+
+  <div class="controller-field">
+    <label for="jr-hours">Labour hours</label>
+    <input
+      id="jr-hours"
+      class="controller-input jr-input--short"
+      type="number"
+      inputmode="decimal"
+      min="0"
+      max="999.99"
+      step="0.25"
+      formControlName="labourHours"
+      [class.jr-input--bad]="showError(form.controls.labourHours)"
+    />
+    @if (showError(form.controls.labourHours)) {
+      <p class="jr-field-error">Enter the hours worked, from 0 to 999.99.</p>
+    }
+  </div>
+
+  <h4 class="jr-subtitle">Parts used</h4>
+  <div class="jr-parts" formArrayName="parts">
+    @for (part of parts.controls; track part; let i = $index) {
+      <fieldset class="jr-part" [formGroupName]="i">
+        <legend class="jr-part-legend">Part {{ i + 1 }}</legend>
+
+        <div class="controller-field">
+          <label [for]="'jr-part-name-' + i">Name</label>
+          <input
+            class="controller-input"
+            type="text"
+            maxlength="255"
+            appTrimOnBlur
+            formControlName="name"
+            [id]="'jr-part-name-' + i"
+            [class.jr-input--bad]="showError(part.controls.name)"
+          />
+          @if (showError(part.controls.name)) {
+            <p class="jr-field-error">Name the part, or remove it.</p>
+          }
+        </div>
+
+        <div class="jr-part-row">
+          <div class="controller-field">
+            <label [for]="'jr-part-qty-' + i">Quantity</label>
+            <input
+              class="controller-input"
+              type="number"
+              inputmode="numeric"
+              min="1"
+              max="10000"
+              step="1"
+              formControlName="quantity"
+              [id]="'jr-part-qty-' + i"
+              [class.jr-input--bad]="showError(part.controls.quantity)"
+            />
+          </div>
+          <div class="controller-field">
+            <label [for]="'jr-part-serial-' + i">Serial no. (optional)</label>
+            <input
+              class="controller-input"
+              type="text"
+              maxlength="128"
+              appTrimOnBlur
+              formControlName="serialNumber"
+              [id]="'jr-part-serial-' + i"
+            />
+          </div>
+        </div>
+        @if (showError(part.controls.quantity)) {
+          <p class="jr-field-error">The quantity must be at least 1.</p>
+        }
+
+        <button
+          type="button"
+          class="controller-btn controller-btn-ghost jr-remove"
+          (click)="removePart(i)"
+        >
+          Remove part
+        </button>
+      </fieldset>
+    }
+  </div>
+  @if (parts.length < maxParts) {
+    <button
+      type="button"
+      class="controller-btn controller-btn-secondary controller-btn-block"
+      (click)="addPart()"
+    >
+      Add a part
+    </button>
+  }
+
+  @if (error(); as message) {
+    <p class="jr-error" role="alert">{{ message }}</p>
+  }
+  <button
+    type="submit"
+    class="controller-btn controller-btn-primary controller-btn-block"
+    [disabled]="saving()"
+  >
+    {{ saving() ? 'Submitting…' : 'Submit report' }}
+  </button>
+</form>

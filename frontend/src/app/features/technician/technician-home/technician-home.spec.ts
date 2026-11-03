@@ -1,10 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { provideZonelessChangeDetection, signal } from '@angular/core';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
-import { AuthService } from '../../../core/auth/auth.service';
 import { DeviceLocationService } from '../device-location.service';
 import { TechnicianApiService } from '../technician-api.service';
 import { Coordinates, MyAvailability } from '../technician.models';
@@ -42,7 +41,6 @@ describe('TechnicianHome', () => {
         provideRouter([]),
         { provide: TechnicianApiService, useValue: api },
         { provide: DeviceLocationService, useValue: { current: locate } },
-        { provide: AuthService, useValue: { displayName: signal('Thandi') } },
       ],
     });
     const fixture = TestBed.createComponent(TechnicianHome);

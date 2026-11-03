@@ -30,7 +30,7 @@ const DEMO_STEPS: Partial<Record<JobStatus, { to: JobStatus; label: string }>> =
  * close the job.
  *
  * <p>The demo strip only exists when the backend says simulation is on, and drives the same
- * service the technician app will, so a demo produces the history a real job would.
+ * service the technician app does, so a demo produces the history a real job would.
  */
 @Component({
   selector: 'app-job-detail',

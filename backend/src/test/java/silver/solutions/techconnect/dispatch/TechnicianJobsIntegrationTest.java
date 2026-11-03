@@ -26,6 +26,12 @@ import silver.solutions.techconnect.repository.JobRepository;
 /** A technician's own jobs and moving them along from their phone (FR-06, PRD §8.4). */
 class TechnicianJobsIntegrationTest extends AbstractDispatchIntegrationTest {
 
+    private static final String FULL_REPORT = """
+            {"resolutionNotes":"Replaced the PoE switch.","rootCause":"Failed PoE switch.",
+             "recommendations":"Fit a surge protector.","labourHours":2.5,
+             "parts":[{"name":"24-port PoE switch","quantity":1,"serialNumber":"SN-1"},
+                      {"name":"Patch lead","quantity":4}]}""";
+
     @Autowired private JobRepository jobs;
 
     private UUID acceptedJob(User technician, String client) throws Exception {
@@ -136,6 +142,93 @@ class TechnicianJobsIntegrationTest extends AbstractDispatchIntegrationTest {
     void controllersUseTheirOwnJobScreens() throws Exception {
         mvc.perform(get("/v1/technician/jobs").header("Authorization", "Bearer " + controllerToken()))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void aTechnicianSubmitsTheJobCardAndItIsLockedForTheControllerToClose() throws Exception {
+        User technician = technician("reporter", TechnicianStatus.AVAILABLE);
+        UUID jobId = acceptedJob(technician, "ReportCo");
+        String token = tokenFor(technician);
+        workToComplete(token, jobId);
+
+        submit(token, jobId, FULL_REPORT)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.detail.job.status").value("SUBMITTED"))
+                .andExpect(jsonPath("$.detail.job.submittedAt").isNotEmpty())
+                .andExpect(jsonPath("$.detail.resolutionNotes").value("Replaced the PoE switch."))
+                .andExpect(jsonPath("$.detail.rootCause").value("Failed PoE switch."))
+                .andExpect(jsonPath("$.detail.recommendations").value("Fit a surge protector."))
+                .andExpect(jsonPath("$.detail.labourHours").value(2.5))
+                .andExpect(jsonPath("$.detail.parts", hasSize(2)))
+                .andExpect(jsonPath("$.detail.parts[0].name").value("24-port PoE switch"))
+                .andExpect(jsonPath("$.detail.parts[0].serialNumber").value("SN-1"))
+                .andExpect(jsonPath("$.detail.parts[1].serialNumber").doesNotExist())
+                .andExpect(jsonPath("$.detail.history[4].changedByName").value(technician.getName()))
+                .andExpect(jsonPath("$.detail.canClose").value(true))
+                .andExpect(jsonPath("$.nextSteps", hasSize(0)));
+
+        // Locked: neither another submit nor a status change gets through, and nothing doubles up.
+        submit(token, jobId, FULL_REPORT).andExpect(status().isConflict());
+        move(token, jobId, "ON_HOLD", "Forgot something").andExpect(status().isConflict());
+        job(token, jobId).andExpect(jsonPath("$.detail.parts", hasSize(2)));
+
+        mvc.perform(post("/v1/controller/jobs/{id}/close", jobId)
+                        .header("Authorization", "Bearer " + controllerToken()))
+                .andExpect(status().isOk());
+        job(token, jobId).andExpect(jsonPath("$.detail.job.status").value("CLOSED"));
+    }
+
+    @Test
+    void aJobCardNeedsTheResolutionTheRootCauseAndTheHours() throws Exception {
+        User technician = technician("partial", TechnicianStatus.AVAILABLE);
+        UUID jobId = acceptedJob(technician, "PartialCo");
+        String token = tokenFor(technician);
+        workToComplete(token, jobId);
+
+        submit(token, jobId, """
+                {"rootCause":"Failed switch.","labourHours":1}""").andExpect(status().isBadRequest());
+        submit(token, jobId, """
+                {"resolutionNotes":"Replaced it.","rootCause":"  ","labourHours":1}""")
+                .andExpect(status().isBadRequest());
+        submit(token, jobId, """
+                {"resolutionNotes":"Replaced it.","rootCause":"Failed switch."}""")
+                .andExpect(status().isBadRequest());
+        submit(token, jobId, """
+                {"resolutionNotes":"Replaced it.","rootCause":"Failed switch.","labourHours":1,
+                 "parts":[{"name":"Switch","quantity":0}]}""").andExpect(status().isBadRequest());
+        assertThat(jobs.findById(jobId).orElseThrow().getStatus()).isEqualTo(JobStatus.COMPLETE);
+
+        // Recommendations and parts are optional.
+        submit(token, jobId, """
+                {"resolutionNotes":"Replaced it.","rootCause":"Failed switch.","labourHours":1}""")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.detail.parts", hasSize(0)));
+    }
+
+    @Test
+    void onlyTheHolderCanSubmitAndOnlyOnceTheWorkIsComplete() throws Exception {
+        User holder = technician("early", TechnicianStatus.AVAILABLE);
+        UUID jobId = acceptedJob(holder, "EarlyCo");
+
+        submit(tokenFor(holder), jobId, FULL_REPORT)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error")
+                        .value("Only a completed job can be submitted. This one is en route."));
+        submit(tokenFor(technician("stranger", TechnicianStatus.AVAILABLE)), jobId, FULL_REPORT)
+                .andExpect(status().isNotFound());
+    }
+
+    private void workToComplete(String token, UUID jobId) throws Exception {
+        for (String step : new String[] {"ON_SITE", "WORK_STARTED", "COMPLETE"}) {
+            move(token, jobId, step, null).andExpect(status().isOk());
+        }
+    }
+
+    private ResultActions submit(String token, UUID jobId, String body) throws Exception {
+        return mvc.perform(post("/v1/technician/jobs/{id}/submit", jobId)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body));
     }
 
     private ResultActions job(String token, UUID jobId) throws Exception {

@@ -69,6 +69,13 @@ describe('MyJobs', () => {
     expect(el(fixture).querySelector('.mj-finished')?.textContent).toContain('Done Co');
   });
 
+  it('nudges for the report once the work is complete', () => {
+    myJobs = vi.fn(() => of([jobSummary({ status: 'COMPLETE' })]));
+    const fixture = setup();
+
+    expect(el(fixture).querySelector('a.mj-card')?.textContent).toContain('Report due');
+  });
+
   it('says so when nothing is in hand', () => {
     myJobs = vi.fn(() => of([]));
     const fixture = setup();

@@ -326,12 +326,7 @@ public class JobService {
                         .toList(),
                 job.getClosingNotes(),
                 job.getClosedBy() == null ? null : names.get(job.getClosedBy()),
-                trail.stream()
-                        .map(h -> new JobDetailResponse.HistoryEntry(
-                                h.getStatus(), h.getPreviousStatus(), h.getReason(),
-                                h.getChangedBy(), names.getOrDefault(h.getChangedBy(), "Unknown"),
-                                h.getChangedAt()))
-                        .toList(),
+                entries(trail, names),
                 job.getStatus() == JobStatus.SUBMITTED);
     }
 
@@ -366,6 +361,29 @@ public class JobService {
     /** Where the technician can take a job from this status, in the order to offer them. */
     public static List<JobStatus> nextSteps(JobStatus from) {
         return List.copyOf(NEXT.getOrDefault(from, Set.of()));
+    }
+
+    /** The job's audit trail, oldest first (FR-09). */
+    @Transactional(readOnly = true)
+    public List<JobDetailResponse.HistoryEntry> history(UUID jobId) {
+        if (!jobs.existsById(jobId)) {
+            throw ApiException.notFound("Job not found");
+        }
+        List<JobStatusHistory> trail = history.findByJobIdOrderByChangedAtDesc(jobId).reversed();
+        Map<UUID, String> names = users
+                .findAllById(trail.stream().map(JobStatusHistory::getChangedBy).collect(Collectors.toSet()))
+                .stream().collect(Collectors.toMap(User::getId, User::getName));
+        return entries(trail, names);
+    }
+
+    private static List<JobDetailResponse.HistoryEntry> entries(
+            List<JobStatusHistory> trail, Map<UUID, String> names) {
+        return trail.stream()
+                .map(h -> new JobDetailResponse.HistoryEntry(
+                        h.getStatus(), h.getPreviousStatus(), h.getReason(),
+                        h.getChangedBy(), names.getOrDefault(h.getChangedBy(), "Unknown"),
+                        h.getChangedAt()))
+                .toList();
     }
 
     /** The job itself, for callers acting on a technician's behalf (the demo strip). */

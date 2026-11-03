@@ -17,7 +17,7 @@
   }
 
   @for (offer of offers(); track offer.dispatchId) {
-    <article class="do-card" [class.do-card--high]="offer.priority === 'HIGH'">
+    <article class="controller-card do-card">
       <header class="do-head">
         <div>
           <h3 class="do-client">{{ offer.clientName }}</h3>
@@ -32,19 +32,19 @@
 
       <ul class="do-facts">
         @if (offer.priority) {
-          <li class="do-priority">{{ offer.priority | titlecase }} priority</li>
+          <li [class]="priorityTone(offer.priority)">{{ offer.priority | titlecase }} priority</li>
         }
         @if (offer.distanceKm !== null) {
-          <li>{{ offer.distanceKm }} km away</li>
+          <li class="controller-pill controller-pill--low">{{ offer.distanceKm }} km away</li>
         }
         @if (offer.issueType) {
-          <li>{{ offer.issueType }}</li>
+          <li class="controller-pill controller-pill--low">{{ offer.issueType }}</li>
         }
         @if (offer.sla) {
-          <li>SLA {{ offer.sla }}</li>
+          <li class="controller-pill controller-pill--low">SLA {{ offer.sla }}</li>
         }
         @if (offer.ticketRef) {
-          <li>Ticket #{{ offer.ticketRef }}</li>
+          <li class="controller-pill controller-pill--low">Ticket {{ offer.ticketRef }}</li>
         }
       </ul>
 
@@ -61,7 +61,7 @@
       <div class="do-actions">
         <button
           type="button"
-          class="do-button do-button--decline"
+          class="controller-btn controller-btn-secondary"
           [disabled]="answering() !== null"
           (click)="decline(offer)"
         >
@@ -69,7 +69,7 @@
         </button>
         <button
           type="button"
-          class="do-button do-button--accept"
+          class="controller-btn controller-btn-primary"
           [disabled]="answering() !== null"
           (click)="accept(offer)"
         >

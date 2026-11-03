@@ -6,10 +6,12 @@ import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import silver.solutions.techconnect.dto.request.controller.JobReportRequest;
 import silver.solutions.techconnect.dto.request.technician.UpdateJobStatusRequest;
 import silver.solutions.techconnect.dto.response.controller.JobDetailResponse;
 import silver.solutions.techconnect.dto.response.controller.JobSummaryResponse;
@@ -53,6 +55,19 @@ public class TechnicianJobController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateJobStatusRequest request) {
         jobs.advance(id, principal.id(), request.status(), request.reason());
+        return mine(id, principal.id());
+    }
+
+    /**
+     * The job card, once the work is complete (FR-06). This locks the job: from here it is the
+     * controller's to review, so another submit or status change is a 409.
+     */
+    @PostMapping("/{id}/submit")
+    public MyJobResponse submit(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @PathVariable UUID id,
+            @Valid @RequestBody JobReportRequest report) {
+        jobs.submitReport(id, principal.id(), report);
         return mine(id, principal.id());
     }
 

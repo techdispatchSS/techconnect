@@ -1,0 +1,177 @@
+<div class="controller-shell" [class.controller-shell--handset]="isHandset()">
+  @if (isHandset() && sidebarOpen()) {
+    <button
+      type="button"
+      class="controller-shell-backdrop"
+      aria-label="Close navigation"
+      (click)="toggleSidebar()"
+    ></button>
+  }
+
+  <aside class="controller-shell-sidebar" [class.controller-shell-sidebar--open]="sidebarOpen()">
+    <div class="controller-shell-brand">
+      <span class="controller-shell-brand-text">
+        <app-logo variant="lockup" height="48px" />
+        <span class="controller-shell-brand-sub">Powered by Silver Solutions</span>
+      </span>
+    </div>
+
+    <div class="controller-shell-section-label">Work</div>
+    <nav class="controller-shell-nav">
+      <a
+        routerLink="/jobs"
+        routerLinkActive="controller-shell-nav-item--active"
+        class="controller-shell-nav-item"
+        (click)="closeSidebarOnHandset()"
+      >
+        <span class="controller-shell-nav-item-main">
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="M12 8v4.5l3 1.8" />
+          </svg>
+          <span>My jobs</span>
+        </span>
+      </a>
+    </nav>
+
+    <button
+      type="button"
+      class="controller-shell-user"
+      [matMenuTriggerFor]="userMenu"
+      aria-haspopup="menu"
+      [attr.aria-label]="'Account menu for ' + displayName()"
+    >
+      <span class="controller-shell-user-avatar">{{ initials() }}</span>
+      <span class="controller-shell-user-meta">
+        <span class="controller-shell-user-name">{{ displayName() }}</span>
+        <span class="controller-shell-user-role">Technician</span>
+      </span>
+      <svg
+        class="controller-shell-user-chevron"
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        aria-hidden="true"
+      >
+        <path d="m7 15 5-5 5 5" />
+      </svg>
+    </button>
+
+    <mat-menu #userMenu="matMenu" class="tc-menu" xPosition="before" yPosition="above">
+      <div class="tc-menu-header" aria-hidden="true">
+        <span class="tc-menu-avatar">{{ initials() }}</span>
+        <span class="tc-menu-id">
+          <strong>{{ displayName() }}</strong>
+          <span>Technician</span>
+        </span>
+      </div>
+      <button mat-menu-item type="button" (click)="editProfile()">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="8.5" r="3.6" />
+          <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
+        </svg>
+        <span>My profile</span>
+      </button>
+      <button mat-menu-item type="button" (click)="changePassword()">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          aria-hidden="true"
+        >
+          <circle cx="8" cy="12" r="3.5" />
+          <path d="M11.5 12H21M17 12v3M20 12v2" />
+        </svg>
+        <span>Change password</span>
+      </button>
+      <div class="tc-menu-divider" role="separator"></div>
+      <button mat-menu-item type="button" (click)="logout()">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          aria-hidden="true"
+        >
+          <path d="M9 4H5v16h4M15 8l4 4-4 4M19 12H9" />
+        </svg>
+        <span>Sign out</span>
+      </button>
+    </mat-menu>
+  </aside>
+
+  <div class="controller-shell-main">
+    <header class="controller-shell-header">
+      @if (isHandset()) {
+        <button
+          type="button"
+          class="controller-btn controller-btn-secondary controller-btn-icon"
+          (click)="toggleSidebar()"
+          aria-label="Toggle navigation"
+        >
+          ☰
+        </button>
+      }
+      <div class="controller-shell-header-titles">
+        <div class="controller-shell-breadcrumb">Work / {{ heading() }}</div>
+        <h1 class="controller-shell-title">{{ heading() }}</h1>
+      </div>
+      <app-install-button [compact]="true" />
+      <button
+        type="button"
+        class="controller-btn controller-btn-secondary controller-btn-icon"
+        (click)="toggleTheme()"
+        [attr.aria-label]="theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+      >
+        @if (theme() === 'dark') {
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <circle cx="12" cy="12" r="4.2" />
+            <path
+              d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"
+            />
+          </svg>
+        } @else {
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" />
+          </svg>
+        }
+      </button>
+    </header>
+
+    <div class="controller-shell-content">
+      <router-outlet />
+    </div>
+  </div>
+</div>

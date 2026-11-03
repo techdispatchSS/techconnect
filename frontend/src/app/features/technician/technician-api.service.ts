@@ -7,6 +7,7 @@ import {
   Coordinates,
   DispatchAnswer,
   DispatchOffer,
+  JobReport,
   MyAvailability,
   MyJob,
 } from './technician.models';
@@ -59,5 +60,10 @@ export class TechnicianApiService {
   /** One step on. 409 if it isn't allowed from where the job is; ON_HOLD needs a reason. */
   updateJobStatus(jobId: string, status: JobStatus, reason?: string): Observable<MyJob> {
     return this.http.put<MyJob>(`/v1/technician/jobs/${jobId}/status`, { status, reason });
+  }
+
+  /** Locks the job for the controller's review. 409 unless the work is complete. */
+  submitReport(jobId: string, report: JobReport): Observable<MyJob> {
+    return this.http.post<MyJob>(`/v1/technician/jobs/${jobId}/submit`, report);
   }
 }

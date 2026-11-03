@@ -27,10 +27,8 @@ const REFRESH_INTERVAL_MS = 10_000;
  * how every invited technician has responded. Reached from the queue instead of "Create
  * dispatch" once an incident is past `NEW` (see `IncidentQueue.openIncident`).
  *
- * <p>There is no on-site job timeline (en route / on site / work complete) here on purpose —
- * the technician app that would produce those events doesn't exist yet (see
- * `IncidentProgressResponse` on the backend), so there's nothing real to show beyond dispatch
- * and response state.
+ * <p>The on-site timeline (en route / on site / work complete) lives on the job, reached from
+ * the "View job" link; this page stays on dispatch and response state.
  */
 @Component({
   selector: 'app-ticket-progress',

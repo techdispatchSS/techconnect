@@ -7,6 +7,8 @@ import { filter } from 'rxjs';
 
 import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { JOB_STATUS_LABELS, JobStatus } from '../../controller/controller.models';
+import { priorityTone } from '../../controller/job-format';
+import { JobReportForm } from '../job-report-form/job-report-form';
 import { CONFIRM_STEPS, STEP_LABELS, directionsUrl, orderSteps } from '../job-steps';
 import { TechnicianApiService } from '../technician-api.service';
 import { MyJob } from '../technician.models';
@@ -14,11 +16,12 @@ import { MyJob } from '../technician.models';
 /**
  * One of the technician's jobs (FR-06): who to see and where, and the next step to tap. The
  * buttons are exactly the steps the server says are allowed from here. Going on hold asks for
- * a reason, which the controller sees; marking the work complete asks once more first.
+ * a reason, which the controller sees; marking the work complete asks once more first, then
+ * opens the job report. A submitted report is read-only from there on.
  */
 @Component({
   selector: 'app-technician-job',
-  imports: [DatePipe, RouterLink, TitleCasePipe],
+  imports: [DatePipe, JobReportForm, RouterLink, TitleCasePipe],
   templateUrl: './technician-job.html',
   styleUrl: './technician-job.scss',
 })
@@ -31,6 +34,7 @@ export class TechnicianJob implements OnInit {
   readonly id = input.required<string>();
 
   readonly labels = JOB_STATUS_LABELS;
+  readonly priorityTone = priorityTone;
   readonly stepLabels = STEP_LABELS;
   readonly job = signal<MyJob | null>(null);
   readonly loadFailed = signal<'missing' | 'error' | null>(null);

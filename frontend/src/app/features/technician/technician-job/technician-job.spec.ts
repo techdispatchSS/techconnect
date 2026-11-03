@@ -174,6 +174,30 @@ describe('TechnicianJob', () => {
     expect(buttons(fixture)).toEqual(['Resume work']);
   });
 
+  it('opens the report once the work is complete, and shows it read-only once submitted', () => {
+    const fixture = setup(of(myJob('COMPLETE', [])));
+    expect(el(fixture).querySelector('app-job-report-form')).not.toBeNull();
+    const submitted = myJob('SUBMITTED', []);
+    fixture.componentInstance.job.set({
+      ...submitted,
+      detail: {
+        ...submitted.detail,
+        resolutionNotes: 'Replaced the PoE switch.',
+        rootCause: 'Failed switch.',
+        labourHours: 2.5,
+        parts: [{ name: 'PoE switch', quantity: 1, serialNumber: 'SN-1' }],
+      },
+    });
+    fixture.detectChanges();
+
+    expect(el(fixture).querySelector('app-job-report-form')).toBeNull();
+    const text = el(fixture).textContent ?? '';
+    expect(text).toContain('The controller will review it');
+    expect(text).toContain('Replaced the PoE switch.');
+    expect(text).toContain('1 × PoE switch');
+    expect(text).toContain('Serial SN-1');
+  });
+
   it('asks once more before marking the work complete', () => {
     const fixture = setup(of(myJob('WORK_RESUMED', ['ON_HOLD', 'COMPLETE'])));
     api.updateJobStatus.mockReturnValue(of(myJob('COMPLETE', [])));
@@ -185,7 +209,7 @@ describe('TechnicianJob', () => {
     click(fixture, 'Mark work complete');
 
     expect(api.updateJobStatus).toHaveBeenCalledWith('j1', 'COMPLETE', undefined);
-    expect(el(fixture).textContent).toContain('The job report comes next.');
+    expect(el(fixture).querySelector('app-job-report-form')).not.toBeNull();
   });
 
   it('shows where the job really is when the server refuses a step', () => {

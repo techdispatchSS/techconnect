@@ -1,7 +1,8 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+import { RealtimeEvent, RealtimeService } from '../../../core/realtime/realtime.service';
 
 import { JobSummary } from '../../controller/controller.models';
 import { TechnicianApiService } from '../technician-api.service';
@@ -31,6 +32,7 @@ function jobSummary(overrides: Partial<JobSummary> = {}): JobSummary {
 }
 
 describe('MyJobs', () => {
+  const pushes = new Subject<RealtimeEvent>();
   let myJobs: ReturnType<typeof vi.fn>;
 
   function setup(): ComponentFixture<MyJobs> {
@@ -38,6 +40,7 @@ describe('MyJobs', () => {
       imports: [MyJobs],
       providers: [
         provideZonelessChangeDetection(),
+        { provide: RealtimeService, useValue: { on: () => pushes } },
         provideRouter([]),
         { provide: TechnicianApiService, useValue: { myJobs } },
       ],
@@ -67,6 +70,23 @@ describe('MyJobs', () => {
     expect(cards[0].textContent).toContain('En route');
     expect(cards[1].textContent).toContain('On hold');
     expect(el(fixture).querySelector('.mj-finished')?.textContent).toContain('Done Co');
+  });
+
+  it('re-reads when told a job moved', () => {
+    myJobs = vi.fn(() => of([]));
+    const fixture = setup();
+    myJobs.mockReturnValue(of([jobSummary()]));
+
+    pushes.next({
+      type: 'JOB_CHANGED',
+      incidentId: 'i1',
+      dispatchId: 'd1',
+      jobId: 'j1',
+      status: 'ON_SITE',
+    });
+    fixture.detectChanges();
+
+    expect(el(fixture).querySelectorAll('a.mj-card').length).toBe(1);
   });
 
   it('nudges for the report once the work is complete', () => {

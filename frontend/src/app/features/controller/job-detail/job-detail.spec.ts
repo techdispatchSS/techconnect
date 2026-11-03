@@ -2,7 +2,8 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+import { RealtimeEvent, RealtimeService } from '../../../core/realtime/realtime.service';
 
 import { ControllerApiService } from '../controller-api.service';
 import { FreshdeskStatus, JobDetail, JobStatus } from '../controller.models';
@@ -71,6 +72,7 @@ function detail(status: JobStatus, overrides: Partial<JobDetail> = {}): JobDetai
 }
 
 describe('JobDetailPage', () => {
+  const pushes = new Subject<RealtimeEvent>();
   let fixture: ComponentFixture<JobDetailPage>;
   let el: HTMLElement;
   let getJob: ReturnType<typeof vi.fn>;
@@ -101,6 +103,7 @@ describe('JobDetailPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        { provide: RealtimeService, useValue: { on: () => pushes } },
         provideRouter([]),
         {
           provide: ActivatedRoute,

@@ -1,7 +1,8 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, interval, of, startWith, switchMap } from 'rxjs';
+import { catchError, interval, merge, of, startWith, switchMap } from 'rxjs';
 
+import { RealtimeService } from '../../core/realtime/realtime.service';
 import { ControllerApiService } from './controller-api.service';
 import { JobCounts } from './controller.models';
 
@@ -14,14 +15,14 @@ const POLL_INTERVAL_MS = 30_000;
 @Injectable({ providedIn: 'root' })
 export class JobCountsService {
   private readonly api = inject(ControllerApiService);
+  private readonly realtime = inject(RealtimeService);
 
   readonly counts = signal<JobCounts | null>(null);
 
   start(destroyRef: DestroyRef): void {
     this.counts.set(null);
-    interval(POLL_INTERVAL_MS)
+    merge(interval(POLL_INTERVAL_MS).pipe(startWith(0)), this.realtime.on('JOB_CHANGED'))
       .pipe(
-        startWith(0),
         switchMap(() => this.api.jobCounts().pipe(catchError(() => of(null)))),
         takeUntilDestroyed(destroyRef),
       )

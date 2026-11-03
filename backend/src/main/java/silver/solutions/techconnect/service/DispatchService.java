@@ -72,6 +72,7 @@ public class DispatchService {
     private final FreshdeskUpdateService freshdesk;
     private final IncidentEventService events;
     private final TechnicianAvailabilityService availability;
+    private final RealtimeEvents realtime;
 
     public DispatchService(
             IncidentRepository incidents,
@@ -86,7 +87,8 @@ public class DispatchService {
             IncidentLockService locks,
             FreshdeskUpdateService freshdesk,
             IncidentEventService events,
-            TechnicianAvailabilityService availability) {
+            TechnicianAvailabilityService availability,
+            RealtimeEvents realtime) {
         this.incidents = incidents;
         this.dispatches = dispatches;
         this.dispatchResponses = dispatchResponses;
@@ -100,6 +102,7 @@ public class DispatchService {
         this.freshdesk = freshdesk;
         this.events = events;
         this.availability = availability;
+        this.realtime = realtime;
     }
 
     @Transactional(readOnly = true)
@@ -220,6 +223,7 @@ public class DispatchService {
         dispatch.setLastNotifiedAt(Instant.now());
         dispatches.save(dispatch);
         notifyAfterCommit(incident, dispatch, technicians, false);
+        realtime.dispatchChanged(dispatch);
         events.record(incident.getId(), IncidentEventType.DISPATCH_SENT, actorId, dispatch.getId(),
                 (request.dispatchType() == DispatchType.ASSIGN ? "Assigned to " : "Broadcast to ")
                         + names(technicians));

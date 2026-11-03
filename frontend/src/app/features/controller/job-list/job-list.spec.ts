@@ -1,7 +1,8 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+import { RealtimeEvent, RealtimeService } from '../../../core/realtime/realtime.service';
 
 import { ControllerApiService } from '../controller-api.service';
 import { JobCountsService } from '../job-counts.service';
@@ -36,6 +37,7 @@ function page(rows: JobSummary[]): PageResponse<JobSummary> {
 }
 
 describe('JobList', () => {
+  const pushes = new Subject<RealtimeEvent>();
   let fixture: ComponentFixture<JobList>;
   let el: HTMLElement;
   let listJobs: ReturnType<typeof vi.fn>;
@@ -53,6 +55,7 @@ describe('JobList', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        { provide: RealtimeService, useValue: { on: () => pushes } },
         provideRouter([]),
         { provide: ActivatedRoute, useValue: { snapshot: { data: { stages } } } },
         { provide: ControllerApiService, useValue: { listJobs } },
@@ -81,6 +84,21 @@ describe('JobList', () => {
     expect(el.textContent).toContain('Thandi Mokoena');
     expect(el.textContent).toContain('On site');
     expect(el.textContent).toContain('left');
+  });
+
+  it('re-reads at once when told a job moved', async () => {
+    await setup(['ACTIVE']);
+    expect(listJobs).toHaveBeenCalledTimes(1);
+
+    pushes.next({
+      type: 'JOB_CHANGED',
+      incidentId: 'i1',
+      dispatchId: 'd1',
+      jobId: 'j1',
+      status: 'ON_SITE',
+    });
+
+    expect(listJobs).toHaveBeenCalledTimes(2);
   });
 
   it('has no tabs when there is only one stage to show', async () => {

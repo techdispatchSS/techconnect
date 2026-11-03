@@ -57,6 +57,7 @@ public class DispatchLifecycleService {
     private final JobService jobs;
     private final FreshdeskUpdateService freshdesk;
     private final IncidentEventService events;
+    private final RealtimeEvents realtime;
     private final TransactionTemplate transactions;
 
     public DispatchLifecycleService(
@@ -66,6 +67,7 @@ public class DispatchLifecycleService {
             JobService jobs,
             FreshdeskUpdateService freshdesk,
             IncidentEventService events,
+            RealtimeEvents realtime,
             PlatformTransactionManager transactionManager) {
         this.dispatches = dispatches;
         this.responses = responses;
@@ -73,6 +75,7 @@ public class DispatchLifecycleService {
         this.jobs = jobs;
         this.freshdesk = freshdesk;
         this.events = events;
+        this.realtime = realtime;
         this.transactions = new TransactionTemplate(transactionManager);
     }
 
@@ -135,6 +138,7 @@ public class DispatchLifecycleService {
                     technicianId, dispatchId, "Accepted the job");
             // The job is gone for everyone else; they will not be answering it.
             lapsePending(dispatchId);
+            realtime.dispatchChanged(dispatch);
             log.info("Dispatch {} accepted by technician {}", dispatchId, technicianId);
             return Outcome.ACCEPTED;
         }
@@ -148,6 +152,8 @@ public class DispatchLifecycleService {
         if (!anyoneLeft) {
             // Nobody who was asked can still take it — no point holding the window open.
             expire(dispatch, "Everyone declined");
+        } else {
+            realtime.dispatchChanged(dispatch);
         }
         log.info("Dispatch {} declined by technician {}", dispatchId, technicianId);
         return Outcome.DECLINED;
@@ -192,6 +198,7 @@ public class DispatchLifecycleService {
                 null, dispatch.getId(), reason);
         requeueIfUnstaffed(dispatch.getIncidentId());
         freshdesk.dispatchExpired(dispatch.getIncidentId());
+        realtime.dispatchChanged(dispatch);
         log.info("Dispatch {} expired for incident {}", dispatch.getId(), dispatch.getIncidentId());
     }
 

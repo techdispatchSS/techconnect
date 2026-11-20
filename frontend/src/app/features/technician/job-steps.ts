@@ -30,9 +30,20 @@ export function orderSteps(steps: readonly JobStatus[]): JobStatus[] {
   return [...steps].sort((a, b) => Number(a === 'ON_HOLD') - Number(b === 'ON_HOLD'));
 }
 
-/** A directions link for the site, opened in the phone's maps app. */
-export function directionsUrl(address: string | null): string | null {
-  return address
-    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`
+/**
+ * Driving directions to the site in Google Maps: the app on a phone that has it, where it starts
+ * navigating straight away, and the website otherwise. The site's position when it is known, as
+ * an address can be vague or ambiguous; the address when it isn't.
+ */
+export function directionsUrl(
+  address: string | null,
+  latitude: number | null = null,
+  longitude: number | null = null,
+): string | null {
+  const destination =
+    latitude !== null && longitude !== null ? `${latitude},${longitude}` : address;
+  return destination
+    ? 'https://www.google.com/maps/dir/?api=1' +
+        `&destination=${encodeURIComponent(destination)}&travelmode=driving&dir_action=navigate`
     : null;
 }

@@ -45,7 +45,19 @@ export class TechnicianJob implements OnInit {
   readonly reason = signal('');
 
   readonly steps = computed(() => orderSteps(this.job()?.nextSteps ?? []));
-  readonly directions = computed(() => directionsUrl(this.job()?.detail.job.siteAddress ?? null));
+  readonly directions = computed(() => {
+    const detail = this.job()?.detail;
+    return detail
+      ? directionsUrl(detail.job.siteAddress, detail.siteLatitude, detail.siteLongitude)
+      : null;
+  });
+  /** On the way there: getting to the site is the thing to do, ahead of saying they've arrived. */
+  readonly enRoute = computed(() => this.job()?.detail.job.status === 'EN_ROUTE');
+  /** Until the work is done, the way back to the site stays one tap away. */
+  readonly showNavigate = computed(() => {
+    const status = this.job()?.detail.job.status;
+    return !!this.directions() && !!status && !['COMPLETE', 'SUBMITTED', 'CLOSED'].includes(status);
+  });
 
   ngOnInit(): void {
     this.load();

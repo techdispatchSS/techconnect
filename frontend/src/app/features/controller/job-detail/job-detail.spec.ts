@@ -45,6 +45,8 @@ function detail(status: JobStatus, overrides: Partial<JobDetail> = {}): JobDetai
     },
     contactName: 'Pat',
     contactPhone: '011 555 0100',
+    siteLatitude: null,
+    siteLongitude: null,
     issueType: 'CCTV',
     description: 'Cameras are offline.',
     jobType: 'Incident',

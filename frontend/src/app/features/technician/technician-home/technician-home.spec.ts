@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { RealtimeEvent, RealtimeService } from '../../../core/realtime/realtime.service';
 
@@ -96,6 +96,26 @@ describe('TechnicianHome', () => {
     fixture.detectChanges();
 
     expect(text(fixture)).toContain("You're on a job");
+  });
+
+  it('goes straight to a job once it is accepted, where navigating is the first thing on offer', () => {
+    const fixture = setup(of(availability({ status: 'AVAILABLE' })));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    fixture.componentInstance.onAccepted('j9');
+
+    expect(navigate).toHaveBeenCalledWith(['/jobs', 'j9']);
+  });
+
+  it('stays put and refreshes if the accept did not say which job', () => {
+    const fixture = setup(of(availability({ status: 'AVAILABLE' })));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+    api.availability.mockClear();
+
+    fixture.componentInstance.onAccepted(null);
+
+    expect(navigate).not.toHaveBeenCalled();
+    expect(api.availability).toHaveBeenCalled();
   });
 
   it('goes on duty in one tap', async () => {

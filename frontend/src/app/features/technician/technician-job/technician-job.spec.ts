@@ -33,6 +33,8 @@ function myJob(status: JobStatus, nextSteps: JobStatus[]): MyJob {
     },
     contactName: 'Sipho',
     contactPhone: '+27 82 000 0000',
+    siteLatitude: -26.1076,
+    siteLongitude: 28.0567,
     issueType: 'CCTV',
     description: 'Cameras on the east fence are down.',
     jobType: null,
@@ -110,7 +112,9 @@ describe('TechnicianJob', () => {
     expect(text).toContain('Acme Mining');
     expect(text).toContain('Sipho');
     expect(el(fixture).querySelector('a[href="tel:+27 82 000 0000"]')).not.toBeNull();
-    expect(el(fixture).querySelector('a[href*="google.com/maps"]')).not.toBeNull();
+    const navigate = el(fixture).querySelector<HTMLAnchorElement>('a.tj-navigate');
+    expect(navigate?.getAttribute('href')).toContain('destination=-26.1076%2C28.0567');
+    expect(navigate?.getAttribute('target')).toBe('_blank');
     expect(text).toContain('Ask for the gate code at reception.');
     expect(text).toContain('Dispatch accepted');
   });
@@ -148,6 +152,29 @@ describe('TechnicianJob', () => {
 
     expect(api.updateJobStatus).toHaveBeenCalledWith('j1', 'ON_SITE', undefined);
     expect(buttons(fixture)).toEqual(['Start work']);
+  });
+
+  it('makes navigating the main thing while en route, and arriving the next', () => {
+    const fixture = setup(of(myJob('EN_ROUTE', ['ON_SITE'])));
+    const navigate = el(fixture).querySelector('a.tj-navigate')!;
+    const arrived = el(fixture).querySelector('.tj-actions button')!;
+
+    expect(navigate.classList).toContain('controller-btn-primary');
+    expect(arrived.classList).toContain('controller-btn-secondary');
+  });
+
+  it('keeps navigation to hand on site, and drops it once the work is done', () => {
+    const onSite = setup(of(myJob('ON_SITE', ['WORK_STARTED'])));
+    expect(el(onSite).querySelector('a.tj-navigate')?.classList).toContain(
+      'controller-btn-secondary',
+    );
+    expect(el(onSite).querySelector('.tj-actions button')?.classList).toContain(
+      'controller-btn-primary',
+    );
+
+    TestBed.resetTestingModule();
+    api = { myJob: vi.fn(), updateJobStatus: vi.fn() };
+    expect(el(setup(of(myJob('COMPLETE', [])))).querySelector('a.tj-navigate')).toBeNull();
   });
 
   it('offers completing before going on hold', () => {

@@ -13,6 +13,7 @@ import silver.solutions.techconnect.dto.response.technician.DispatchOfferRespons
 import silver.solutions.techconnect.security.AuthenticatedUser;
 import silver.solutions.techconnect.service.DispatchLifecycleService;
 import silver.solutions.techconnect.service.DispatchOfferService;
+import silver.solutions.techconnect.service.JobService;
 
 /**
  * A technician's answer to a dispatch they were invited to (FR-04). TECHNICIAN-only — enforced
@@ -26,10 +27,13 @@ public class TechnicianDispatchController {
 
     private final DispatchLifecycleService lifecycle;
     private final DispatchOfferService offers;
+    private final JobService jobs;
 
-    public TechnicianDispatchController(DispatchLifecycleService lifecycle, DispatchOfferService offers) {
+    public TechnicianDispatchController(
+            DispatchLifecycleService lifecycle, DispatchOfferService offers, JobService jobs) {
         this.lifecycle = lifecycle;
         this.offers = offers;
+        this.jobs = jobs;
     }
 
     /** The jobs offered to the caller that are still waiting on their answer. */
@@ -38,10 +42,13 @@ public class TechnicianDispatchController {
         return offers.awaitingAnswer(principal.id());
     }
 
+    /** Says which job it opened, so the app can take the technician straight to it. */
     @PostMapping("/{id}/accept")
     public DispatchAnswerResponse accept(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
-        return DispatchLifecycleService.toResponse(id, lifecycle.respond(principal.id(), id, true));
+        DispatchAnswerResponse answer =
+                DispatchLifecycleService.toResponse(id, lifecycle.respond(principal.id(), id, true));
+        return answer.withJob(jobs.forDispatch(id).getId());
     }
 
     @PostMapping("/{id}/decline")

@@ -1,7 +1,8 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
+import { RealtimeEvent, RealtimeService } from '../../../core/realtime/realtime.service';
 
 import { ControllerApiService } from '../controller-api.service';
 import {
@@ -102,6 +103,7 @@ function update(
 }
 
 describe('TicketProgress', () => {
+  const pushes = new Subject<RealtimeEvent>();
   let fixture: ComponentFixture<TicketProgress>;
   let el: HTMLElement;
   let getIncidentProgress: ReturnType<typeof vi.fn>;
@@ -132,6 +134,7 @@ describe('TicketProgress', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        { provide: RealtimeService, useValue: { on: () => pushes } },
         provideRouter([]),
         {
           provide: ActivatedRoute,

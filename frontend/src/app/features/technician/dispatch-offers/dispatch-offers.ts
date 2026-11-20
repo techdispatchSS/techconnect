@@ -2,13 +2,14 @@ import { TitleCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, interval, of, startWith, switchMap } from 'rxjs';
+import { catchError, interval, merge, of, startWith, switchMap } from 'rxjs';
 
 import { priorityTone } from '../../controller/job-format';
+import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { TechnicianApiService } from '../technician-api.service';
 import { DispatchOffer } from '../technician.models';
 
-/** Until job state is pushed over a socket (#16), new offers are fetched on this beat. */
+/** New offers arrive over the socket; this beat covers it being down. */
 const POLL_INTERVAL_MS = 30_000;
 
 /** "7:05" left to answer, or null once the window has passed. */
@@ -33,6 +34,7 @@ export function timeLeft(expiresAt: string, now: number): string | null {
 })
 export class DispatchOffers {
   private readonly api = inject(TechnicianApiService);
+  private readonly realtime = inject(RealtimeService);
 
   readonly accepted = output<DispatchOffer>();
   readonly priorityTone = priorityTone;
@@ -50,9 +52,8 @@ export class DispatchOffers {
 
   constructor() {
     const destroyRef = inject(DestroyRef);
-    interval(POLL_INTERVAL_MS)
+    merge(interval(POLL_INTERVAL_MS).pipe(startWith(0)), this.realtime.on('DISPATCH_CHANGED'))
       .pipe(
-        startWith(0),
         switchMap(() => this.api.offers().pipe(catchError(() => of(null)))),
         takeUntilDestroyed(destroyRef),
       )

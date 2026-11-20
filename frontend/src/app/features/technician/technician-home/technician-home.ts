@@ -1,7 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { DeviceLocationService } from '../device-location.service';
 import { DispatchOffers } from '../dispatch-offers/dispatch-offers';
 import { MyJobs } from '../my-jobs/my-jobs';
@@ -47,6 +49,16 @@ export class TechnicianHome {
 
   constructor() {
     this.load();
+    // Accepting or finishing a job moves their status without them doing anything here.
+    inject(RealtimeService)
+      .on('JOB_CHANGED')
+      .pipe(takeUntilDestroyed())
+      .subscribe(() =>
+        this.api.availability().subscribe({
+          next: (availability) => this.availability.set(availability),
+          error: () => undefined,
+        }),
+      );
 
     const onVisible = () => {
       if (document.visibilityState === 'visible' && this.availability()) {

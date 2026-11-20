@@ -118,6 +118,9 @@ public class SecurityConfig {
                         // way to read, list or look up an application or its status.
                         .requestMatchers(HttpMethod.POST, "/v1/applications").permitAll()
                         .requestMatchers("/actuator/health/**").permitAll()
+                        // The socket's handshake can't carry a bearer header. It gets its token
+                        // in the STOMP CONNECT frame instead: see StompAuthInterceptor.
+                        .requestMatchers("/ws").permitAll()
                         // Docs are additionally disabled outright under the "prod" profile
                         // (see application-prod.properties) so they 404 instead of merely
                         // being access-controlled — a permitAll rule here still hands out

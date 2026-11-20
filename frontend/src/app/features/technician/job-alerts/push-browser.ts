@@ -37,7 +37,7 @@ export class PushBrowser {
   }
 
   async getToken(config: PushConfig): Promise<string> {
-    const { getToken } = await import('firebase/messaging');
+    const { getToken } = await import('@firebase/messaging');
     const registration = await navigator.serviceWorker.register(SERVICE_WORKER);
     return getToken(await this.messaging(config), {
       vapidKey: config.vapidKey,
@@ -46,14 +46,14 @@ export class PushBrowser {
   }
 
   async deleteToken(config: PushConfig): Promise<void> {
-    const { deleteToken } = await import('firebase/messaging');
+    const { deleteToken } = await import('@firebase/messaging');
     await deleteToken(await this.messaging(config));
   }
 
   private async messaging(config: PushConfig) {
     const [{ getApps, initializeApp }, { getMessaging }] = await Promise.all([
-      import('firebase/app'),
-      import('firebase/messaging'),
+      import('@firebase/app'),
+      import('@firebase/messaging'),
     ]);
     const app =
       getApps()[0] ??

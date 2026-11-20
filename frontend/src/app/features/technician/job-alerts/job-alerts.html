@@ -1,0 +1,64 @@
+@switch (alerts.state()) {
+  @case ('off') {
+    <section class="controller-card ja-card" aria-labelledby="ja-title">
+      <h2 id="ja-title" class="ja-title">Job alerts</h2>
+      <p class="ja-text">Get told about job offers on this device, even with the app closed.</p>
+      <button
+        type="button"
+        class="controller-btn controller-btn-primary controller-btn-block"
+        [disabled]="alerts.busy()"
+        (click)="alerts.turnOn()"
+      >
+        {{ alerts.busy() ? 'Turning on…' : 'Turn on job alerts' }}
+      </button>
+      @if (alerts.error(); as message) {
+        <p class="ja-error" role="alert">{{ message }}</p>
+      }
+    </section>
+  }
+  @case ('on') {
+    <section class="controller-card ja-card" aria-labelledby="ja-title">
+      <div class="ja-row">
+        <div>
+          <h2 id="ja-title" class="ja-title">Job alerts are on</h2>
+          <p class="ja-text">This device will alert you when a job is offered.</p>
+        </div>
+        <button
+          type="button"
+          class="controller-btn controller-btn-secondary"
+          [disabled]="alerts.busy()"
+          (click)="alerts.turnOff()"
+        >
+          Turn off
+        </button>
+      </div>
+      @if (alerts.error(); as message) {
+        <p class="ja-error" role="alert">{{ message }}</p>
+      }
+    </section>
+  }
+  @case ('needs-install') {
+    <section class="controller-card ja-card" aria-labelledby="ja-title">
+      <h2 id="ja-title" class="ja-title">Job alerts</h2>
+      <p class="ja-text">
+        To get alerts on an iPhone, <a routerLink="/install">add TechConnect to your Home Screen</a>
+        first, then open it from there.
+      </p>
+    </section>
+  }
+  @case ('blocked') {
+    <section class="controller-card ja-card" aria-labelledby="ja-title">
+      <h2 id="ja-title" class="ja-title">Job alerts are blocked</h2>
+      <p class="ja-text">
+        Allow notifications for TechConnect in your device or browser settings, then reopen the app.
+        Job offers still come by email.
+      </p>
+    </section>
+  }
+  @case ('unsupported') {
+    <section class="controller-card ja-card" aria-labelledby="ja-title">
+      <h2 id="ja-title" class="ja-title">Job alerts</h2>
+      <p class="ja-text">This browser can't show job alerts. Job offers still come by email.</p>
+    </section>
+  }
+}

@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 
 import { AccountService } from '../../../core/auth/account.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { JobAlertsService } from '../job-alerts/job-alerts.service';
 import { TechnicianShell } from './technician-shell';
 
 describe('TechnicianShell', () => {
@@ -23,6 +24,10 @@ describe('TechnicianShell', () => {
         { provide: AuthService, useValue: { displayName: signal('Thandi Mokoena'), logout } },
         { provide: AccountService, useValue: { me: () => of({}) } },
         { provide: MatDialog, useValue: { open } },
+        {
+          provide: JobAlertsService,
+          useValue: { start: vi.fn(), beforeSignOut: () => Promise.resolve() },
+        },
       ],
     });
     const fixture = TestBed.createComponent(TechnicianShell);
@@ -48,10 +53,11 @@ describe('TechnicianShell', () => {
     expect(el.querySelector('.controller-shell-title')?.textContent).toContain('My jobs');
   });
 
-  it('signs out through the auth service', () => {
+  it('signs out through the auth service, once alerts are dealt with', async () => {
     const fixture = setup();
 
     fixture.componentInstance.logout();
+    await fixture.whenStable();
 
     expect(logout).toHaveBeenCalled();
   });

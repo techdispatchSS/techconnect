@@ -14,9 +14,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * One recorded transition of a {@link Job}'s status (FR-09 / §9.5). Insert-only — no update or
- * delete path is exposed anywhere in the application, matching the table's own comment in
- * V1__init.sql.
+ * One recorded transition of a {@link Job}'s status (FR-09 / §9.5). Insert-only: the repository
+ * has no update or delete method, and the database refuses them too (V17).
  */
 @Entity
 @Table(name = "job_status_history")

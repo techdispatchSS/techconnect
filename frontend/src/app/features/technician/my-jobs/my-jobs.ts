@@ -1,7 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 
+import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { JOB_STATUS_LABELS, JobSummary } from '../../controller/controller.models';
 import { statusTone } from '../../controller/job-format';
 import { IN_HAND } from '../job-steps';
@@ -31,6 +33,10 @@ export class MyJobs {
 
   constructor() {
     this.reload();
+    inject(RealtimeService)
+      .on('JOB_CHANGED')
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.reload());
   }
 
   reload(): void {

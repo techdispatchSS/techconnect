@@ -112,6 +112,7 @@ public class JobService {
     private final TechnicianProfileRepository profiles;
     private final FreshdeskUpdateService freshdesk;
     private final IncidentEventService events;
+    private final RealtimeEvents realtime;
 
     public JobService(
             JobRepository jobs,
@@ -122,7 +123,8 @@ public class JobService {
             UserRepository users,
             TechnicianProfileRepository profiles,
             FreshdeskUpdateService freshdesk,
-            IncidentEventService events) {
+            IncidentEventService events,
+            RealtimeEvents realtime) {
         this.jobs = jobs;
         this.history = history;
         this.parts = parts;
@@ -132,6 +134,7 @@ public class JobService {
         this.profiles = profiles;
         this.freshdesk = freshdesk;
         this.events = events;
+        this.realtime = realtime;
     }
 
     // --- writes -------------------------------------------------------------------------------
@@ -403,6 +406,7 @@ public class JobService {
         history.save(entry);
         // Every transition is also a line on the Freshdesk ticket (sent, or only recorded in demo).
         freshdesk.jobChanged(job, previous, status, reason, by);
+        realtime.jobChanged(job);
     }
 
     private void setIncidentStatus(UUID incidentId, IncidentStatus status) {

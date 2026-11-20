@@ -2,7 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
+import { RealtimeEvent, RealtimeService } from '../../../core/realtime/realtime.service';
 
 import { JobDetail, JobStatus } from '../../controller/controller.models';
 import { TechnicianApiService } from '../technician-api.service';
@@ -59,6 +60,7 @@ function myJob(status: JobStatus, nextSteps: JobStatus[]): MyJob {
 }
 
 describe('TechnicianJob', () => {
+  const pushes = new Subject<RealtimeEvent>();
   let api: { myJob: ReturnType<typeof vi.fn>; updateJobStatus: ReturnType<typeof vi.fn> };
 
   function setup(start: Observable<MyJob>): ComponentFixture<TechnicianJob> {
@@ -67,6 +69,7 @@ describe('TechnicianJob', () => {
       imports: [TechnicianJob],
       providers: [
         provideZonelessChangeDetection(),
+        { provide: RealtimeService, useValue: { on: () => pushes } },
         provideRouter([]),
         { provide: TechnicianApiService, useValue: api },
       ],
@@ -110,6 +113,30 @@ describe('TechnicianJob', () => {
     expect(el(fixture).querySelector('a[href*="google.com/maps"]')).not.toBeNull();
     expect(text).toContain('Ask for the gate code at reception.');
     expect(text).toContain('Dispatch accepted');
+  });
+
+  it('re-reads only when this job is the one that moved', () => {
+    const fixture = setup(of(myJob('EN_ROUTE', ['ON_SITE'])));
+    expect(api.myJob).toHaveBeenCalledTimes(1);
+
+    pushes.next({
+      type: 'JOB_CHANGED',
+      incidentId: 'i1',
+      dispatchId: 'd1',
+      jobId: 'another',
+      status: 'ON_SITE',
+    });
+    expect(api.myJob).toHaveBeenCalledTimes(1);
+
+    pushes.next({
+      type: 'JOB_CHANGED',
+      incidentId: 'i1',
+      dispatchId: 'd1',
+      jobId: 'j1',
+      status: 'ON_SITE',
+    });
+    fixture.detectChanges();
+    expect(api.myJob).toHaveBeenCalledTimes(2);
   });
 
   it('moves the job on with one tap and shows the next steps the server allows', () => {

@@ -14,6 +14,9 @@ public record JobDetailResponse(
         JobSummaryResponse job,
         String contactName,
         String contactPhone,
+        /** Where the site is, for navigation. Null unless the incident was located. */
+        Double siteLatitude,
+        Double siteLongitude,
         String issueType,
         String description,
         String jobType,

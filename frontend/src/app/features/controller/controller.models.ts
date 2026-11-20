@@ -291,6 +291,9 @@ export interface JobDetail {
   job: JobSummary;
   contactName: string | null;
   contactPhone: string | null;
+  /** Where the site is, for navigation; null unless the incident was located. */
+  siteLatitude: number | null;
+  siteLongitude: number | null;
   issueType: string | null;
   description: string | null;
   jobType: string | null;

@@ -120,12 +120,15 @@ describe('DispatchOffers', () => {
     const fixture = setup([offer()]);
     const accepted = vi.fn();
     fixture.componentInstance.accepted.subscribe(accepted);
-    api.accept.mockReturnValue(of({ dispatchId: 'd1', outcome: 'ACCEPTED' }));
+    api.accept.mockReturnValue(of({ dispatchId: 'd1', outcome: 'ACCEPTED', jobId: 'j9' }));
 
     click(fixture, 'Accept');
 
     expect(api.accept).toHaveBeenCalledWith('d1');
-    expect(accepted).toHaveBeenCalledWith(expect.objectContaining({ dispatchId: 'd1' }));
+    expect(accepted).toHaveBeenCalledWith({
+      offer: expect.objectContaining({ dispatchId: 'd1' }),
+      jobId: 'j9',
+    });
     expect(el(fixture).textContent).toContain("You've accepted the job at Acme Mining.");
     expect(el(fixture).querySelector('.do-card')).toBeNull();
   });
@@ -134,7 +137,7 @@ describe('DispatchOffers', () => {
     const fixture = setup([offer()]);
     const accepted = vi.fn();
     fixture.componentInstance.accepted.subscribe(accepted);
-    api.decline.mockReturnValue(of({ dispatchId: 'd1', outcome: 'DECLINED' }));
+    api.decline.mockReturnValue(of({ dispatchId: 'd1', outcome: 'DECLINED', jobId: null }));
 
     click(fixture, 'Decline');
 

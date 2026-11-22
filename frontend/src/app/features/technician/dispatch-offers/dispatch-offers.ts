@@ -36,7 +36,8 @@ export class DispatchOffers {
   private readonly api = inject(TechnicianApiService);
   private readonly realtime = inject(RealtimeService);
 
-  readonly accepted = output<DispatchOffer>();
+  /** The job an accept opened, so the page around it can take the technician there. */
+  readonly accepted = output<{ readonly offer: DispatchOffer; readonly jobId: string | null }>();
   readonly priorityTone = priorityTone;
 
   private readonly all = signal<DispatchOffer[] | null>(null);
@@ -90,7 +91,7 @@ export class DispatchOffers {
     this.answering.set(offer.dispatchId);
     this.notice.set(null);
     (accept ? this.api.accept(offer.dispatchId) : this.api.decline(offer.dispatchId)).subscribe({
-      next: () => {
+      next: (answer) => {
         this.answering.set(null);
         this.all.update((all) => (all ?? []).filter((o) => o.dispatchId !== offer.dispatchId));
         this.notice.set({
@@ -100,7 +101,7 @@ export class DispatchOffers {
             : `Declined the job at ${offer.clientName}.`,
         });
         if (accept) {
-          this.accepted.emit(offer);
+          this.accepted.emit({ offer, jobId: answer.jobId });
         }
       },
       error: (error: unknown) => {

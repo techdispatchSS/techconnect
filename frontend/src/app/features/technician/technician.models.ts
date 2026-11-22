@@ -44,6 +44,8 @@ export interface DispatchOffer {
 export interface DispatchAnswer {
   readonly dispatchId: string;
   readonly outcome: 'ACCEPTED' | 'DECLINED';
+  /** The job an accept opened; null on a decline. */
+  readonly jobId: string | null;
 }
 
 /** `POST /api/v1/technician/jobs/{id}/submit` — the job card (FR-06). */

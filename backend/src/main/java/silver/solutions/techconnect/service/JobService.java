@@ -314,6 +314,8 @@ public class JobService {
                 summary(job, lookups),
                 incident.getContactName(),
                 incident.getContactPhone(),
+                incident.getSiteLatitude() == null ? null : incident.getSiteLatitude().doubleValue(),
+                incident.getSiteLongitude() == null ? null : incident.getSiteLongitude().doubleValue(),
                 incident.getIssueType(),
                 incident.getDescription(),
                 dispatch == null ? null : dispatch.getJobType(),

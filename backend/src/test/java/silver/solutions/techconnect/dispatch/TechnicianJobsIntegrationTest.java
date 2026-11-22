@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
+import java.math.BigDecimal;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,12 +40,18 @@ class TechnicianJobsIntegrationTest extends AbstractDispatchIntegrationTest {
         Incident incident = incident(client, IncidentStatus.NEW, IncidentPriority.HIGH);
         incident.setContactName("Sipho");
         incident.setContactPhone("+27 82 000 0000");
+        incident.setSiteLatitude(new BigDecimal("-26.107600"));
+        incident.setSiteLongitude(new BigDecimal("28.056700"));
         incidents.save(incident);
         UUID dispatchId = dispatch(controllerToken(), incident, "ASSIGN", technician);
-        mvc.perform(post("/v1/technician/dispatches/{id}/accept", dispatchId)
-                        .header("Authorization", "Bearer " + tokenFor(technician)))
-                .andExpect(status().isOk());
-        return jobs.findByDispatchId(dispatchId).orElseThrow().getId();
+        UUID jobId = UUID.fromString(JsonPath.read(mvc.perform(
+                                post("/v1/technician/dispatches/{id}/accept", dispatchId)
+                                        .header("Authorization", "Bearer " + tokenFor(technician)))
+                        .andExpect(status().isOk())
+                        .andReturn().getResponse().getContentAsString(), "$.jobId"));
+        // The accept names the job it opened, so the app can go straight to it.
+        assertThat(jobs.findByDispatchId(dispatchId).orElseThrow().getId()).isEqualTo(jobId);
+        return jobId;
     }
 
     @Test
@@ -64,6 +72,8 @@ class TechnicianJobsIntegrationTest extends AbstractDispatchIntegrationTest {
                 .andExpect(jsonPath("$.detail.job.status").value("EN_ROUTE"))
                 .andExpect(jsonPath("$.detail.contactName").value("Sipho"))
                 .andExpect(jsonPath("$.detail.contactPhone").value("+27 82 000 0000"))
+                .andExpect(jsonPath("$.detail.siteLatitude").value(-26.1076))
+                .andExpect(jsonPath("$.detail.siteLongitude").value(28.0567))
                 .andExpect(jsonPath("$.detail.history", hasSize(1)))
                 .andExpect(jsonPath("$.nextSteps", contains("ON_SITE")));
     }

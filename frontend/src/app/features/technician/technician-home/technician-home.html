@@ -62,7 +62,7 @@
     </div>
 
     <app-job-alerts />
-    <app-dispatch-offers (accepted)="onAccepted()" />
+    <app-dispatch-offers (accepted)="onAccepted($event.jobId)" />
     <app-my-jobs />
   } @else if (loadFailed()) {
     <div class="controller-card th-card">

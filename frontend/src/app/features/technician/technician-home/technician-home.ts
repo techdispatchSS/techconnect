@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 
 import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { DeviceLocationService } from '../device-location.service';
@@ -28,6 +29,7 @@ type LocationState = 'unknown' | 'shared' | 'blocked';
 export class TechnicianHome {
   private readonly api = inject(TechnicianApiService);
   private readonly location = inject(DeviceLocationService);
+  private readonly router = inject(Router);
 
   readonly availability = signal<MyAvailability | null>(null);
   readonly loadFailed = signal(false);
@@ -81,8 +83,15 @@ export class TechnicianHome {
     });
   }
 
-  /** Accepting puts them on a job: re-read their status, and the new job joins their list. */
-  onAccepted(): void {
+  /**
+   * Accepting puts them on a job, so they go straight to it, where navigating to the site is the
+   * first thing on offer. Without the job (an older server) they stay here, with it in the list.
+   */
+  onAccepted(jobId: string | null): void {
+    if (jobId) {
+      void this.router.navigate(['/jobs', jobId]);
+      return;
+    }
     this.load();
     this.myJobs()?.reload();
   }

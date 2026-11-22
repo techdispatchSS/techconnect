@@ -86,7 +86,7 @@ public class DispatchLifecycleService {
      */
     public static DispatchAnswerResponse toResponse(UUID dispatchId, Outcome outcome) {
         return switch (outcome) {
-            case ACCEPTED, DECLINED -> new DispatchAnswerResponse(dispatchId, outcome.name());
+            case ACCEPTED, DECLINED -> new DispatchAnswerResponse(dispatchId, outcome.name(), null);
             case TAKEN -> throw ApiException.conflict(
                     "Another technician has already accepted this job.");
             case EXPIRED -> throw ApiException.conflict(

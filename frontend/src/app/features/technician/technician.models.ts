@@ -61,6 +61,16 @@ export interface JobReport {
   }[];
 }
 
+/** `GET /api/v1/technician/push/config` — null values unless enabled. None of this is secret. */
+export interface PushConfig {
+  readonly enabled: boolean;
+  readonly apiKey: string;
+  readonly projectId: string;
+  readonly messagingSenderId: string;
+  readonly appId: string;
+  readonly vapidKey: string;
+}
+
 /** `GET /api/v1/technician/jobs/{id}` — my job, and the steps the server will accept from here. */
 export interface MyJob {
   readonly detail: JobDetail;

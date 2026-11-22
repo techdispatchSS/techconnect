@@ -61,6 +61,7 @@
       </p>
     </div>
 
+    <app-job-alerts />
     <app-dispatch-offers (accepted)="onAccepted($event.jobId)" />
     <app-my-jobs />
   } @else if (loadFailed()) {

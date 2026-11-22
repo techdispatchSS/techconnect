@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { DeviceLocationService } from '../device-location.service';
 import { DispatchOffers } from '../dispatch-offers/dispatch-offers';
+import { JobAlerts } from '../job-alerts/job-alerts';
 import { MyJobs } from '../my-jobs/my-jobs';
 import { TechnicianApiService } from '../technician-api.service';
 import { MyAvailability } from '../technician.models';
@@ -21,7 +22,7 @@ type LocationState = 'unknown' | 'shared' | 'blocked';
  */
 @Component({
   selector: 'app-technician-home',
-  imports: [DatePipe, DispatchOffers, MyJobs],
+  imports: [DatePipe, DispatchOffers, JobAlerts, MyJobs],
   templateUrl: './technician-home.html',
   styleUrl: './technician-home.scss',
 })

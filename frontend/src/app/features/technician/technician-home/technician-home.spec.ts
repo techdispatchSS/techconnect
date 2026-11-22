@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { RealtimeEvent, RealtimeService } from '../../../core/realtime/realtime.service';
 
 import { DeviceLocationService } from '../device-location.service';
+import { JobAlertsService } from '../job-alerts/job-alerts.service';
 import { TechnicianApiService } from '../technician-api.service';
 import { Coordinates, MyAvailability } from '../technician.models';
 import { TechnicianHome } from './technician-home';
@@ -42,6 +43,10 @@ describe('TechnicianHome', () => {
         provideZonelessChangeDetection(),
         { provide: RealtimeService, useValue: { on: () => pushes } },
         provideRouter([]),
+        {
+          provide: JobAlertsService,
+          useValue: { state: signal('hidden'), busy: signal(false), error: signal(null) },
+        },
         { provide: TechnicianApiService, useValue: api },
         { provide: DeviceLocationService, useValue: { current: locate } },
       ],

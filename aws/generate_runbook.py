@@ -132,7 +132,7 @@ values_table = Table([
     ["ECS Application URL", "<changes on every recreate: https://<random>.ecs.eu-west-1.on.aws>"],
     ["ECR repository", "techdispatch-backend"],
     ["SSM parameter path", "/techdispatch/prod/*"],
-    ["GitHub deploy role", "techconnect-gha-deploy"],
+    ["GitHub deploy role", "techdispatch-gha-deploy"],
     ["GitHub repository", "techdispatchSS/techconnect"],
 ], colWidths=[130, 370])
 values_table.setStyle(TableStyle([
@@ -677,12 +677,20 @@ steps([
     "<b>Roles</b> &rarr; <b>Create role</b> &rarr; Trusted entity type <b>Web identity</b> &rarr; select the "
     "provider just created &rarr; Audience <font face='Courier'>sts.amazonaws.com</font> &rarr; GitHub "
     "organization/repository: <font face='Courier'>techdispatchSS/techconnect</font>.",
-    "Name it <font face='Courier'>techconnect-gha-deploy</font>. Attach an inline policy scoped to exactly: "
+    "Name it <font face='Courier'>techdispatch-gha-deploy</font> (it exists under the pre-rename name; "
+    "reuse it). Attach an inline policy scoped to exactly: "
     "ECR push to the one repo, S3 sync to the one bucket, CloudFront invalidation on the one distribution, "
     "and <font face='Courier'>ecs:UpdateExpressGatewayService</font> on the one service &mdash; not broad "
     "account-wide permissions. The service is matched by its name prefix "
     "(<font face='Courier'>service/default/techconnect-backend*</font>), because Express Mode adds a suffix "
-    "and recreating the service changes it.",
+    "and recreating the service changes it. "
+    "Express Mode's update also registers a new task definition, so the policy needs "
+    "<font face='Courier'>ecs:RegisterTaskDefinition</font> on "
+    "<font face='Courier'>task-definition/default-techconnect-backend:*</font>, and "
+    "<font face='Courier'>iam:PassRole</font> on the roles that task definition uses. Pushing needs "
+    "<font face='Courier'>ecr:BatchGetImage</font> too: <font face='Courier'>docker push</font> ends by "
+    "checking the manifest, and fails with 403 without it. The full policy is "
+    "<font face='Courier'>aws/permissions-policy.json</font>.",
     "In GitHub: repo <b>Settings &rarr; Secrets and variables &rarr; Actions</b> &rarr; add secret "
     "<font face='Courier'>AWS_DEPLOY_ROLE_ARN</font>, and variables <font face='Courier'>AWS_REGION</font>, "
     "<font face='Courier'>ECR_REPOSITORY_NAME</font>, <font face='Courier'>EXPRESS_SERVICE_ARN</font>, "
@@ -695,10 +703,10 @@ code("""aws iam create-open-id-connect-provider \\
   --client-id-list sts.amazonaws.com \\
   --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1
 
-aws iam create-role --role-name techconnect-gha-deploy \\
+aws iam create-role --role-name techdispatch-gha-deploy \\
   --assume-role-policy-document file://trust-policy.json
 
-aws iam put-role-policy --role-name techconnect-gha-deploy \\
+aws iam put-role-policy --role-name techdispatch-gha-deploy \\
   --policy-name techconnect-deploy-perms --policy-document file://permissions-policy.json""")
 note_(
     "<font face='Courier'>trust-policy.json</font> needs a "
@@ -866,7 +874,7 @@ steps([
     "GitHub &rarr; <font face='Courier'>techdispatchSS/techconnect</font> &rarr; <b>Settings &rarr; Secrets "
     "and variables &rarr; Actions &rarr; Variables</b> &rarr; set <font face='Courier'>EXPRESS_SERVICE_ARN</font> "
     "to the new service ARN.",
-    "IAM &rarr; role <font face='Courier'>techconnect-gha-deploy</font> &rarr; update the inline policy from "
+    "IAM &rarr; role <font face='Courier'>techdispatch-gha-deploy</font> &rarr; update the inline policy from "
     "<font face='Courier'>aws/permissions-policy.json</font>, which matches the service by its name prefix "
     "so it survives a recreate.",
     "Same role &rarr; <b>Trust relationships</b> &rarr; update from "
@@ -877,9 +885,9 @@ steps([
 ])
 code("""gh variable set EXPRESS_SERVICE_ARN --repo techdispatchSS/techconnect --body "<new-service-arn>"
 
-aws iam put-role-policy --role-name techconnect-gha-deploy \\
+aws iam put-role-policy --role-name techdispatch-gha-deploy \\
   --policy-name techconnect-deploy-perms --policy-document file://aws/permissions-policy.json
-aws iam update-assume-role-policy --role-name techconnect-gha-deploy \\
+aws iam update-assume-role-policy --role-name techdispatch-gha-deploy \\
   --policy-document file://aws/trust-policy.json
 
 gh workflow run deploy.yml --repo techdispatchSS/techconnect --ref main

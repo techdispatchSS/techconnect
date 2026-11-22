@@ -1,6 +1,7 @@
 package silver.solutions.techconnect.controller;
 
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,6 +51,12 @@ public class JobController {
     @GetMapping("/{id}")
     public JobDetailResponse get(@PathVariable UUID id) {
         return jobs.detail(id);
+    }
+
+    /** The job's audit trail, oldest first (FR-09). */
+    @GetMapping("/{id}/history")
+    public List<JobDetailResponse.HistoryEntry> history(@PathVariable UUID id) {
+        return jobs.history(id);
     }
 
     /** Signs off a submitted job; the incident closes with it. 409 unless it is submitted. */

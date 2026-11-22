@@ -11,7 +11,8 @@ from reportlab.platypus import (
 from reportlab.pdfbase.pdfmetrics import registerFont
 from reportlab.pdfbase.ttfonts import TTFont
 
-OUT = r"C:\Users\User\Desktop\Indomisa\Repos\techdispatch\aws\techconnect-aws-runbook.pdf"
+import os
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "techconnect-aws-runbook.pdf")
 
 styles = getSampleStyleSheet()
 
@@ -46,7 +47,8 @@ def steps(items):
     ))
 
 def code(t):
-    story.append(Preformatted(t, code_style))
+    # Wrap anything wider than the page, continuing indented, instead of running off the edge.
+    story.append(Preformatted(t, code_style, maxLineLength=96, splitChars=" ,", newLineChars="      "))
 
 def note_(t):
     story.append(Paragraph(t, note))
@@ -63,7 +65,9 @@ meta_table = Table([
     ["Account ID", "440427555121"],
     ["Region", "eu-west-1"],
     ["Application", "TechConnect (backend: Spring Boot / Java 21, frontend: Angular)"],
-    ["Last verified", "September 2026"],
+    ["Live site", "https://www.tech-connect.app (CloudFront d1upytvz2jcmv0.cloudfront.net)"],
+    ["GitHub repo", "techdispatchSS/techconnect"],
+    ["Last updated", "November 2026"],
 ], colWidths=[110, 360])
 meta_table.setStyle(TableStyle([
     ("FONTSIZE", (0, 0), (-1, -1), 9.5),
@@ -101,6 +105,53 @@ steps([
     "Cost budget + SNS + Lambda alert",
     "Verification checklist",
 ])
+note_(
+    "<b>Only the ECS service is gone?</b> If the database, secrets, roles, image, S3 bucket, CloudFront and "
+    "GitHub deploy role still exist, skip the build order and follow <b>section 13, Reinstating the ECS "
+    "service</b>. The current values for every resource are in <b>section 0</b> on the next page."
+)
+
+story.append(PageBreak())
+
+# ============================================================== 0. Current values
+h1_("0. Current Production Values")
+p("The resources as they stand in production. Use these values when recreating or reinstating anything; "
+  "a placeholder in angle brackets means the value changes when the resource is recreated, or wasn't "
+  "recorded here.")
+values_table = Table([
+    ["Live site", "https://www.tech-connect.app"],
+    ["CloudFront distribution", "E13ZDO8FDSC304 (d1upytvz2jcmv0.cloudfront.net)"],
+    ["Frontend S3 bucket", "techdispatch-frontend-first-start"],
+    ["RDS instance", "techconnect-prod"],
+    ["RDS endpoint", "techconnect-prod.cfmyiuuec1xu.eu-west-1.rds.amazonaws.com"],
+    ["RDS VPC", "vpc-02070c32d4aca6821"],
+    ["RDS security group", "sg-0e3e40bc88bb12606 (default)"],
+    ["ECS task security group", "sg-01108306be790d712 (already allowed by RDS)"],
+    ["ECS cluster / service", "default / techconnect-backend"],
+    ["ECS service ARN", "<changes on every recreate: read it after section 5 or 13>"],
+    ["ECS Application URL", "<changes on every recreate: https://<random>.ecs.eu-west-1.on.aws>"],
+    ["ECR repository", "techdispatch-backend"],
+    ["SSM parameter path", "/techdispatch/prod/*"],
+    ["GitHub deploy role", "techconnect-gha-deploy"],
+    ["GitHub repository", "techdispatchSS/techconnect"],
+], colWidths=[130, 370])
+values_table.setStyle(TableStyle([
+    ("FONTSIZE", (0, 0), (-1, -1), 8.3),
+    ("FONTNAME", (1, 0), (1, -1), "Courier"),
+    ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ("TOPPADDING", (0, 0), (-1, -1), 5),
+    ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#e4e4e7")),
+    ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#f4f4f5")),
+]))
+story.append(values_table)
+story.append(Spacer(1, 8))
+note_(
+    "<b>Wrong VPC to avoid:</b> <font face='Courier'>vpc-0c4e97394ad99f3cc</font> is the account's default "
+    "VPC (subnets <font face='Courier'>172.31.x</font>). ECS Express Mode may offer it first, but the database "
+    "is not in it, so a service created there cannot reach RDS. Always pick "
+    "<font face='Courier'>vpc-02070c32d4aca6821</font>."
+)
 
 story.append(PageBreak())
 
@@ -113,7 +164,8 @@ h2_("Console steps")
 steps([
     "RDS console &rarr; <b>Databases</b> &rarr; <b>Create database</b>.",
     "Engine: <b>PostgreSQL</b>. Templates: <b>Free tier</b> (or Dev/Test if outside the free tier window).",
-    "DB instance identifier: <font face='Courier'>techconnect-db</font>. Instance class: <font face='Courier'>db.t4g.micro</font> "
+    "DB instance identifier: <font face='Courier'>techconnect-prod</font> (the existing production "
+    "instance). Instance class: <font face='Courier'>db.t4g.micro</font> "
     "or <font face='Courier'>db.t3.micro</font> (free-tier eligible).",
     "Master username: <font face='Courier'>techconnect</font>. Master password: generate one and save it &mdash; "
     "it becomes the value you store in SSM in the next section.",
@@ -129,7 +181,7 @@ steps([
 
 h2_("CLI alternative")
 code("""aws rds create-db-instance \\
-  --db-instance-identifier techconnect-db \\
+  --db-instance-identifier techconnect-prod \\
   --db-instance-class db.t4g.micro \\
   --engine postgres \\
   --master-username techconnect \\
@@ -141,7 +193,7 @@ code("""aws rds create-db-instance \\
   --region eu-west-1
 
 # Wait for it to become available, then fetch the endpoint:
-aws rds describe-db-instances --db-instance-identifier techconnect-db \\
+aws rds describe-db-instances --db-instance-identifier techconnect-prod \\
   --query "DBInstances[0].Endpoint.Address" --output text --region eu-west-1""")
 
 story.append(PageBreak())
@@ -252,8 +304,9 @@ aws iam create-role --role-name ecsInfrastructureRoleForExpressServices \\
     "Statement": [{"Effect": "Allow", "Principal": {"Service": "ecs.amazonaws.com"}, "Action": "sts:AssumeRole"}]
   }'
 
+INFRA=arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRoleforExpressGatewayServices
 aws iam attach-role-policy --role-name ecsInfrastructureRoleForExpressServices \\
-  --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRoleforExpressGatewayServices""")
+  --policy-arn "$INFRA\"""")
 
 story.append(PageBreak())
 
@@ -305,11 +358,16 @@ steps([
     "instead of a reference is a real mistake that's easy to make and causes AccessDenied errors that look "
     "like an IAM problem but aren't).",
     "Health check path: <font face='Courier'>/api/actuator/health</font>.",
+    "Service name: <font face='Courier'>techconnect-backend</font>, in cluster "
+    "<font face='Courier'>default</font>.",
     "Execution role: <font face='Courier'>ecsTaskExecutionRole</font>. Infrastructure role: "
-    "<font face='Courier'>ecsInfrastructureRoleForExpressServices</font>.",
-    "Networking: choose the same VPC as the RDS instance from section 1 (a mismatch here is a common, "
-    "hard-to-diagnose failure &mdash; ECS Express Mode can silently pick a different default VPC than "
-    "your database lives in, and security groups can't reference each other across VPCs).",
+    "<font face='Courier'>ecsInfrastructureRoleForExpressServices</font>. Task role: the role that can read "
+    "and write the documents bucket (technician application uploads fail without it).",
+    "Networking: VPC <font face='Courier'>vpc-02070c32d4aca6821</font> (the RDS instance's VPC, never the "
+    "default VPC <font face='Courier'>vpc-0c4e97394ad99f3cc</font>), the subnets of the RDS subnet group, "
+    "and security group <font face='Courier'>sg-01108306be790d712</font>, which the RDS security group "
+    "already allows. A mismatch here is a common, hard-to-diagnose failure: security groups can't reference "
+    "each other across VPCs.",
     "Create, and wait for the deployment to reach steady state. Note the <b>Application URL</b> "
     "(<font face='Courier'>https://&lt;random&gt;.ecs.eu-west-1.on.aws</font>) &mdash; this is the value "
     "you'll point CloudFront's second origin at in section 8, and it changes every time the service is "
@@ -318,17 +376,20 @@ steps([
 
 h2_("Environment variables")
 env_table = Table([
-    ["POSTGRES_HOST", "<RDS endpoint from section 1>"],
+    ["POSTGRES_HOST", "techconnect-prod.cfmyiuuec1xu.eu-west-1.rds.amazonaws.com"],
     ["POSTGRES_PORT", "5432"],
     ["POSTGRES_DB", "techconnect"],
     ["POSTGRES_USER", "techconnect"],
     ["MAIL_HOST", "email-smtp.eu-west-1.amazonaws.com"],
     ["MAIL_PORT", "587"],
-    ["TECHCONNECT_MAIL_FROM", "<a verified SES sender address>"],
-    ["TECHCONNECT_BOOTSTRAP_ADMIN_EMAIL", "<the first admin's email>"],
+    ["TECHCONNECT_MAIL_FROM", "no-reply@tech-connect.app"],
+    ["TECHCONNECT_BOOTSTRAP_ADMIN_EMAIL", "admin@tech-connect.app"],
     ["SPRING_PROFILES_ACTIVE", "prod"],
-    ["TECHCONNECT_APP_BASE_URL", "<filled in after section 8 &mdash; see section 9>"],
-], colWidths=[190, 280])
+    ["TECHCONNECT_APP_BASE_URL", "https://www.tech-connect.app"],
+    ["AWS_REGION", "eu-west-1"],
+    ["AWS_DOCUMENTS_BUCKET", "<the documents bucket>"],
+    ["TECHCONNECT_TRUSTED_PROXY_HOPS", "2"],
+], colWidths=[180, 320])
 env_table.setStyle(TableStyle([
     ("FONTSIZE", (0, 0), (-1, -1), 8.3),
     ("FONTNAME", (0, 0), (0, -1), "Courier"),
@@ -339,6 +400,53 @@ env_table.setStyle(TableStyle([
     ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#f4f4f5")),
 ]))
 story.append(env_table)
+story.append(Spacer(1, 8))
+
+p("<b>Secrets</b> (type <b>Secret</b>, value from the SSM parameter ARN):")
+secrets_table = Table([
+    ["POSTGRES_PASSWORD", "arn:aws:ssm:eu-west-1:440427555121:parameter/techdispatch/prod/db-password"],
+    ["TECHCONNECT_JWT_SECRET", "arn:aws:ssm:eu-west-1:440427555121:parameter/techdispatch/prod/jwt-secret"],
+    ["MAIL_USERNAME", "arn:aws:ssm:eu-west-1:440427555121:parameter/techdispatch/prod/mail-username"],
+    ["MAIL_PASSWORD", "arn:aws:ssm:eu-west-1:440427555121:parameter/techdispatch/prod/mail-password"],
+], colWidths=[130, 370])
+secrets_table.setStyle(TableStyle([
+    ("FONTSIZE", (0, 0), (-1, -1), 7.4),
+    ("FONTNAME", (0, 0), (-1, -1), "Courier"),
+    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ("TOPPADDING", (0, 0), (-1, -1), 5),
+    ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#e4e4e7")),
+    ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#f4f4f5")),
+]))
+story.append(secrets_table)
+story.append(Spacer(1, 8))
+
+note_(
+    "<b>TECHCONNECT_APP_BASE_URL needs <font face='Courier'>https://</font> and the address people actually "
+    "use</b>: <font face='Courier'>https://www.tech-connect.app</font>, not the bare CloudFront domain and "
+    "never without the scheme. Activation and reset emails link to it, and the live-updates socket only "
+    "accepts browsers on exactly this origin; anything else silently falls back to slower polling."
+)
+note_(
+    "<b>TECHCONNECT_TRUSTED_PROXY_HOPS=2</b> is for CloudFront in front of the load balancer. Left at the "
+    "default of 1, every visitor behind the same CloudFront location shares one rate-limit counter on the "
+    "public application form."
+)
+p("<b>Optional settings</b>, only when the feature is being switched on:")
+optional_table = Table([
+    ["FRESHDESK_DOMAIN", "the Freshdesk account host; blank = not connected"],
+    ["FRESHDESK_API_KEY", "Secret (SSM), only with FRESHDESK_DOMAIN"],
+    ["FRESHDESK_PUSH_MODE", "DEMO (default); LIVE once mapping is agreed"],
+    ["TECHCONNECT_SIMULATION_ENABLED", "false in production (demo controls)"],
+], colWidths=[180, 320])
+optional_table.setStyle(TableStyle([
+    ("FONTSIZE", (0, 0), (-1, -1), 8.3),
+    ("FONTNAME", (0, 0), (0, -1), "Courier"),
+    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ("TOPPADDING", (0, 0), (-1, -1), 5),
+    ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#e4e4e7")),
+    ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#f4f4f5")),
+]))
+story.append(optional_table)
 story.append(Spacer(1, 8))
 
 note_(
@@ -356,26 +464,30 @@ note_(
 )
 
 h2_("CLI alternative")
-code("""aws ecs create-express-gateway-service \\
-  --service-name techdispatch-backend \\
-  --execution-role-arn arn:aws:iam::440427555121:role/ecsTaskExecutionRole \\
-  --infrastructure-role-arn arn:aws:iam::440427555121:role/ecsInfrastructureRoleForExpressServices \\
+code("""ROLES=arn:aws:iam::440427555121:role
+aws ecs create-express-gateway-service \\
+  --service-name techconnect-backend \\
+  --execution-role-arn "$ROLES/ecsTaskExecutionRole" \\
+  --infrastructure-role-arn "$ROLES/ecsInfrastructureRoleForExpressServices" \\
   --health-check-path "/api/actuator/health" \\
   --cpu 256 --memory 512 \\
   --primary-container '{
     "image": "440427555121.dkr.ecr.eu-west-1.amazonaws.com/techdispatch-backend:latest",
     "containerPort": 8080,
     "environment": [
-      {"name": "POSTGRES_HOST", "value": "<rds-endpoint>"},
+      {"name": "POSTGRES_HOST", "value": "techconnect-prod.cfmyiuuec1xu.eu-west-1.rds.amazonaws.com"},
       {"name": "POSTGRES_PORT", "value": "5432"},
       {"name": "POSTGRES_DB", "value": "techconnect"},
       {"name": "POSTGRES_USER", "value": "techconnect"},
       {"name": "MAIL_HOST", "value": "email-smtp.eu-west-1.amazonaws.com"},
       {"name": "MAIL_PORT", "value": "587"},
-      {"name": "TECHCONNECT_MAIL_FROM", "value": "<verified-ses-sender>"},
-      {"name": "TECHCONNECT_BOOTSTRAP_ADMIN_EMAIL", "value": "<admin-email>"},
+      {"name": "TECHCONNECT_MAIL_FROM", "value": "no-reply@tech-connect.app"},
+      {"name": "TECHCONNECT_BOOTSTRAP_ADMIN_EMAIL", "value": "admin@tech-connect.app"},
       {"name": "SPRING_PROFILES_ACTIVE", "value": "prod"},
-      {"name": "TECHCONNECT_APP_BASE_URL", "value": "placeholder-filled-in-after-section-8"}
+      {"name": "TECHCONNECT_APP_BASE_URL", "value": "https://www.tech-connect.app"},
+      {"name": "AWS_REGION", "value": "eu-west-1"},
+      {"name": "AWS_DOCUMENTS_BUCKET", "value": "<documents-bucket>"},
+      {"name": "TECHCONNECT_TRUSTED_PROXY_HOPS", "value": "2"}
     ],
     "secrets": [
       {"name": "POSTGRES_PASSWORD", "valueFrom": "arn:aws:ssm:eu-west-1:440427555121:parameter/techdispatch/prod/db-password"},
@@ -384,7 +496,8 @@ code("""aws ecs create-express-gateway-service \\
       {"name": "MAIL_PASSWORD", "valueFrom": "arn:aws:ssm:eu-west-1:440427555121:parameter/techdispatch/prod/mail-password"}
     ]
   }' \\
-  --network-configuration '{"awsvpcConfiguration":{"subnets":["<rds-vpc-private-subnet-ids>"]}}' \\
+  --task-role-arn <documents-bucket-task-role-arn> \\
+  --network-configuration '{"awsvpcConfiguration":{"subnets":["<subnets-of-the-rds-subnet-group>"],"securityGroups":["sg-01108306be790d712"]}}' \\
   --monitor-resources
 
 # Note the returned serviceArn and Application URL from the output.""")
@@ -511,7 +624,8 @@ p("CloudFront's CLI interface for a multi-origin, multi-behavior distribution is
   "document rather than incremental commands, which makes the console meaningfully faster for this "
   "specific resource. If you do want the CLI form:")
 code("""aws cloudfront create-origin-access-control \\
-  --origin-access-control-config Name=techconnect-oac,SigningProtocol=sigv4,SigningBehavior=always,OriginAccessControlOriginType=s3
+  --origin-access-control-config '{"Name": "techconnect-oac", "SigningProtocol": "sigv4",
+    "SigningBehavior": "always", "OriginAccessControlOriginType": "s3"}'
 
 # Then build a full distribution-config.json (two origins, two cache behaviors, two custom
 # error responses) and run:
@@ -527,8 +641,10 @@ story.append(PageBreak())
 
 # ============================================================== 9. Post-deploy config
 h1_("9. Post-Deploy Config Update")
-p("Once the CloudFront distribution exists, you have its domain &mdash; feed that back into the backend "
-  "so activation/reset links point at the right place.")
+p("Once the CloudFront distribution exists, feed the address people use back into the backend, so "
+  "activation/reset links and the live-updates socket work. In production that is the custom domain "
+  "<font face='Courier'>https://www.tech-connect.app</font> (a CNAME to the distribution), not the "
+  "<font face='Courier'>.cloudfront.net</font> name.")
 
 h2_("Console steps")
 steps([
@@ -536,13 +652,14 @@ steps([
     "(<font face='Courier'>dxxxxxxxxxxxxx.cloudfront.net</font>).",
     "ECS console &rarr; your Express service &rarr; <b>Update service</b> &rarr; edit the "
     "<font face='Courier'>TECHCONNECT_APP_BASE_URL</font> environment variable to "
-    "<font face='Courier'>https://dxxxxxxxxxxxxx.cloudfront.net</font> &rarr; deploy.",
+    "<font face='Courier'>https://www.tech-connect.app</font> (with <font face='Courier'>https://</font>, "
+    "no trailing slash) &rarr; deploy.",
 ])
 
 h2_("CLI alternative")
 code("""aws ecs update-express-gateway-service \\
   --service-arn <service-arn-from-section-5> \\
-  --primary-container '{"environment":[{"name":"TECHCONNECT_APP_BASE_URL","value":"https://dxxxxxxxxxxxxx.cloudfront.net"}]}'""")
+  --primary-container '{"environment":[{"name":"TECHCONNECT_APP_BASE_URL","value":"https://www.tech-connect.app"}]}'""")
 
 story.append(PageBreak())
 
@@ -559,11 +676,13 @@ steps([
     "&rarr; Audience <font face='Courier'>sts.amazonaws.com</font>.",
     "<b>Roles</b> &rarr; <b>Create role</b> &rarr; Trusted entity type <b>Web identity</b> &rarr; select the "
     "provider just created &rarr; Audience <font face='Courier'>sts.amazonaws.com</font> &rarr; GitHub "
-    "organization/repository: your actual repo (e.g. <font face='Courier'>your-org/your-repo</font>).",
+    "organization/repository: <font face='Courier'>techdispatchSS/techconnect</font>.",
     "Name it <font face='Courier'>techconnect-gha-deploy</font>. Attach an inline policy scoped to exactly: "
     "ECR push to the one repo, S3 sync to the one bucket, CloudFront invalidation on the one distribution, "
     "and <font face='Courier'>ecs:UpdateExpressGatewayService</font> on the one service &mdash; not broad "
-    "account-wide permissions.",
+    "account-wide permissions. The service is matched by its name prefix "
+    "(<font face='Courier'>service/default/techconnect-backend*</font>), because Express Mode adds a suffix "
+    "and recreating the service changes it.",
     "In GitHub: repo <b>Settings &rarr; Secrets and variables &rarr; Actions</b> &rarr; add secret "
     "<font face='Courier'>AWS_DEPLOY_ROLE_ARN</font>, and variables <font face='Courier'>AWS_REGION</font>, "
     "<font face='Courier'>ECR_REPOSITORY_NAME</font>, <font face='Courier'>EXPRESS_SERVICE_ARN</font>, "
@@ -585,7 +704,10 @@ note_(
     "<font face='Courier'>trust-policy.json</font> needs a "
     "<font face='Courier'>token.actions.githubusercontent.com:sub</font> condition scoped to "
     "<font face='Courier'>repo:&lt;org&gt;/&lt;repo&gt;:*</font> &mdash; without it, any GitHub Actions "
-    "workflow anywhere could assume this role."
+    "workflow anywhere could assume this role. The repository was renamed from "
+    "<font face='Courier'>techdispatch</font> to <font face='Courier'>techconnect</font>, and GitHub puts the "
+    "<b>current</b> name in that claim, so the condition must read "
+    "<font face='Courier'>repo:techdispatchSS/techconnect:*</font> or every deploy fails to assume the role."
 )
 
 story.append(PageBreak())
@@ -668,6 +790,110 @@ steps([
     "whether the email itself sends successfully). Open it, activate the account, log in.",
     "<font face='Courier'>psql</font> into RDS directly (temporarily allow your IP on its security group, "
     "then revert) and confirm the expected tables/rows exist.",
+])
+
+story.append(PageBreak())
+
+# ============================================================== 13. Reinstating ECS
+h1_("13. Reinstating the ECS Service")
+p("Use this when only the ECS side is gone or broken (the service, or the cluster with it) and everything "
+  "else still exists: RDS, SSM secrets, IAM roles, the ECR image, the S3 bucket, CloudFront and the GitHub "
+  "deploy role. It takes about 30 minutes. The values are in section 0.")
+
+h2_("Step 1: Confirm what still exists")
+code("""export AWS_REGION=eu-west-1
+aws sts get-caller-identity                     # a working session first
+aws rds describe-db-instances --db-instance-identifier techconnect-prod \\
+  --query "DBInstances[0].DBInstanceStatus"     # must be "available"
+aws ecr describe-images --repository-name techdispatch-backend \\
+  --image-ids imageTag=latest --query "imageDetails[0].imagePushedAt"
+aws ssm get-parameters --names /techdispatch/prod/db-password /techdispatch/prod/jwt-secret \\
+  /techdispatch/prod/mail-username /techdispatch/prod/mail-password --query "InvalidParameters"
+aws iam get-role --role-name ecsTaskExecutionRole --query "Role.Arn"
+aws iam get-role --role-name ecsInfrastructureRoleForExpressServices --query "Role.Arn"
+aws ecs describe-clusters --clusters default --query "clusters[0].status"   # "ACTIVE", or recreate below""")
+p("Anything missing here: rebuild it from its own section first. If the ECR image is missing, push one "
+  "(section 4) or let the GitHub deploy do it after step 7.")
+
+h2_("Step 2: Find the database's network")
+code("""aws rds describe-db-instances --db-instance-identifier techconnect-prod \\
+  --query "DBInstances[0].{vpc:DBSubnetGroup.VpcId, subnets:DBSubnetGroup.Subnets[].SubnetIdentifier, sgs:VpcSecurityGroups[].VpcSecurityGroupId}"
+# Expect vpc-02070c32d4aca6821 and sg-0e3e40bc88bb12606. Use these subnets in step 4.""")
+
+h2_("Step 3: Recreate the cluster, if it was deleted")
+code("""aws ecs create-cluster --cluster-name default""")
+
+h2_("Step 4: Create the Express service")
+steps([
+    "ECS console &rarr; <b>Clusters</b> &rarr; <b>default</b> &rarr; <b>Express services</b> &rarr; "
+    "<b>Create</b>. Name <font face='Courier'>techconnect-backend</font>, image "
+    "<font face='Courier'>440427555121.dkr.ecr.eu-west-1.amazonaws.com/techdispatch-backend:latest</font>, "
+    "port <font face='Courier'>8080</font>, health check <font face='Courier'>/api/actuator/health</font>.",
+    "Environment variables and secrets exactly as in section 5's tables, including "
+    "<font face='Courier'>TECHCONNECT_APP_BASE_URL=https://www.tech-connect.app</font>.",
+    "Roles: execution, infrastructure and task role as in section 5.",
+    "<b>Networking: VPC <font face='Courier'>vpc-02070c32d4aca6821</font></b>, the subnets from step 2, "
+    "security group <font face='Courier'>sg-01108306be790d712</font>. Remove any security group the console "
+    "pre-fills from the default VPC.",
+    "Create, wait for steady state, then copy the new <b>service ARN</b> and <b>Application URL</b>.",
+])
+p("The CLI form is section 5's <font face='Courier'>create-express-gateway-service</font> command as written. "
+  "Then read the new values:")
+code("""aws ecs list-services --cluster default
+aws ecs describe-express-gateway-service --service-arn <new-service-arn>   # Application URL""")
+
+h2_("Step 5: Let the service reach the database")
+p("With <font face='Courier'>sg-01108306be790d712</font>, the RDS security group already allows the task. "
+  "If Express Mode put the task in a different security group, add a PostgreSQL 5432 rule for it on "
+  "<font face='Courier'>sg-0e3e40bc88bb12606</font> as in section 6. Check the backend logs show Flyway "
+  "migrating or validating, not a connection timeout.")
+
+h2_("Step 6: Point CloudFront at the new service")
+steps([
+    "CloudFront console &rarr; distribution <font face='Courier'>E13ZDO8FDSC304</font> &rarr; "
+    "<b>Origins</b> &rarr; the ECS origin &rarr; <b>Edit</b> &rarr; replace the origin domain with the new "
+    "Application URL hostname (no <font face='Courier'>https://</font>) &rarr; save.",
+    "The <font face='Courier'>/api/*</font> behavior keeps pointing at that origin; nothing else changes. "
+    "Wait for the distribution to finish deploying.",
+])
+
+h2_("Step 7: Update GitHub so deploys reach the new service")
+p("The service ARN changes on every recreate, and the deploy workflow "
+  "(<font face='Courier'>.github/workflows/deploy.yml</font>) redeploys whatever "
+  "<font face='Courier'>EXPRESS_SERVICE_ARN</font> names. Without this step the next push to "
+  "<font face='Courier'>main</font> fails, or redeploys nothing.")
+steps([
+    "GitHub &rarr; <font face='Courier'>techdispatchSS/techconnect</font> &rarr; <b>Settings &rarr; Secrets "
+    "and variables &rarr; Actions &rarr; Variables</b> &rarr; set <font face='Courier'>EXPRESS_SERVICE_ARN</font> "
+    "to the new service ARN.",
+    "IAM &rarr; role <font face='Courier'>techconnect-gha-deploy</font> &rarr; update the inline policy from "
+    "<font face='Courier'>aws/permissions-policy.json</font>, which matches the service by its name prefix "
+    "so it survives a recreate.",
+    "Same role &rarr; <b>Trust relationships</b> &rarr; update from "
+    "<font face='Courier'>aws/trust-policy.json</font>, which names the renamed repository "
+    "<font face='Courier'>techdispatchSS/techconnect</font>.",
+    "Run the <b>Deploy to AWS</b> workflow by hand (Actions &rarr; Deploy to AWS &rarr; Run workflow) and "
+    "check both jobs pass.",
+])
+code("""gh variable set EXPRESS_SERVICE_ARN --repo techdispatchSS/techconnect --body "<new-service-arn>"
+
+aws iam put-role-policy --role-name techconnect-gha-deploy \\
+  --policy-name techconnect-deploy-perms --policy-document file://aws/permissions-policy.json
+aws iam update-assume-role-policy --role-name techconnect-gha-deploy \\
+  --policy-document file://aws/trust-policy.json
+
+gh workflow run deploy.yml --repo techdispatchSS/techconnect --ref main
+gh run watch --repo techdispatchSS/techconnect""")
+
+h2_("Step 8: Verify, and remove a wrong-VPC service")
+steps([
+    "Run section 12's checklist against <font face='Courier'>https://www.tech-connect.app</font>.",
+    "Sign in as a technician and a controller in two browsers and confirm a job update appears on the "
+    "other screen within seconds (the live-updates socket; slower means the base URL or origin is wrong).",
+    "If an earlier attempt created a service in the default VPC "
+    "<font face='Courier'>vpc-0c4e97394ad99f3cc</font>, delete it once the new one is healthy: "
+    "<font face='Courier'>aws ecs delete-express-gateway-service --service-arn &lt;wrong-service-arn&gt;</font>. "
+    "Express Mode removes the load balancer and security groups it created for it.",
 ])
 
 story.append(Spacer(1, 20))

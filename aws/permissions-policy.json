@@ -7,6 +7,6 @@
     {"Effect": "Allow", "Action": ["s3:PutObject","s3:DeleteObject","s3:ListBucket"],
      "Resource": ["arn:aws:s3:::techdispatch-frontend-first-start", "arn:aws:s3:::techdispatch-frontend-first-start/*"]},
     {"Effect": "Allow", "Action": ["cloudfront:CreateInvalidation"], "Resource": "arn:aws:cloudfront::440427555121:distribution/E13ZDO8FDSC304"},
-    {"Effect": "Allow", "Action": ["ecs:UpdateExpressGatewayService"], "Resource": "arn:aws:ecs:eu-west-1:440427555121:service/default/techdispatch-backend-0898"}
+    {"Effect": "Allow", "Action": ["ecs:UpdateExpressGatewayService"], "Resource": "arn:aws:ecs:eu-west-1:440427555121:service/default/techconnect-backend*"}
   ]
 }

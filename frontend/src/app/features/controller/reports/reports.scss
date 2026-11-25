@@ -89,14 +89,23 @@
   text-transform: uppercase;
   color: var(--controller-color-accent-text);
 }
-.rp-two {
+.rp-three {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
   align-items: start;
 }
-@media (max-width: 1000px) {
-  .rp-two {
+@media (max-width: 1200px) {
+  .rp-three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* Priority's table across the top; dispatching and jobs side by side beneath it. */
+  .rp-three > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 700px) {
+  .rp-three {
     grid-template-columns: 1fr;
   }
 }
@@ -174,6 +183,12 @@
 }
 .rp-facts dt {
   color: var(--controller-color-muted);
+}
+.rp-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  opacity: 0.75;
 }
 .rp-facts dd {
   margin: 0 0 0 auto;

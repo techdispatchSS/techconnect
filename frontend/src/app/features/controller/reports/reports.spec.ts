@@ -96,8 +96,30 @@ describe('Reports', () => {
 
     expect(el.textContent).toContain('77.8%');
     expect(el.textContent).toContain('7 on time · 2 late');
+    expect(el.textContent).toContain('80% of offers taken');
     expect(el.textContent).toContain('6.5 min');
     expect(el.textContent).toContain('Thandi Mokoena');
+  });
+
+  it('keeps the job averages in the Jobs box, apart from dispatching', async () => {
+    await setup();
+
+    const box = (title: string) =>
+      Array.from(el.querySelectorAll('.rp-section')).find(
+        (s) => s.querySelector('.rp-title')?.textContent?.trim() === title,
+      )!;
+    const dispatching = box('Dispatching').textContent!;
+    const jobs = box('Jobs').textContent!;
+
+    expect(dispatching).toContain('Job offers sent');
+    expect(dispatching).toContain('Technician invitations');
+    expect(jobs).toContain('Jobs created');
+    expect(dispatching).not.toContain('labour');
+    expect(dispatching).not.toContain('time to close');
+    expect(jobs).toContain('Average labour per job');
+    expect(jobs).toContain('2.2 h');
+    expect(jobs).toContain('Average time to close');
+    expect(jobs).toContain('7 · 6');
   });
 
   it('shows a dash, not 0%, for a measure with nothing behind it', async () => {

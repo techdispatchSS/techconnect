@@ -182,6 +182,8 @@
   font-size: 13px;
 }
 .rp-facts dt {
+  flex: 1 1 auto;
+  min-width: 0;
   color: var(--controller-color-muted);
 }
 .rp-hint {
@@ -191,7 +193,10 @@
   opacity: 0.75;
 }
 .rp-facts dd {
+  flex: none;
   margin: 0 0 0 auto;
   text-align: right;
+  /* "6 · 3" and "< 6 min" are one value each: never split them across lines. */
+  white-space: nowrap;
   color: var(--controller-color-emphasis);
 }

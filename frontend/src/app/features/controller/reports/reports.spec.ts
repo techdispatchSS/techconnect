@@ -96,6 +96,7 @@ describe('Reports', () => {
 
     expect(el.textContent).toContain('77.8%');
     expect(el.textContent).toContain('7 on time · 2 late');
+    expect(el.textContent).toContain('80% of offers taken');
     expect(el.textContent).toContain('6.5 min');
     expect(el.textContent).toContain('Thandi Mokoena');
   });
@@ -110,6 +111,9 @@ describe('Reports', () => {
     const dispatching = box('Dispatching').textContent!;
     const jobs = box('Jobs').textContent!;
 
+    expect(dispatching).toContain('Job offers sent');
+    expect(dispatching).toContain('Technician invitations');
+    expect(jobs).toContain('Jobs created');
     expect(dispatching).not.toContain('labour');
     expect(dispatching).not.toContain('time to close');
     expect(jobs).toContain('Average labour per job');

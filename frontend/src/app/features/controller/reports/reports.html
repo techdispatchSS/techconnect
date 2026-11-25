@@ -97,7 +97,7 @@
       </div>
     </section>
 
-    <div class="rp-two">
+    <div class="rp-three">
       <section class="controller-card rp-section">
         <h6 class="rp-title">By priority</h6>
         <table class="controller-table">
@@ -145,6 +145,24 @@
               {{ r.dispatching.accepts }} · {{ r.dispatching.declines }} ·
               {{ r.dispatching.noResponses }}
             </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="controller-card rp-section">
+        <h6 class="rp-title">Jobs</h6>
+        <dl class="rp-facts">
+          <div>
+            <dt>Jobs opened</dt>
+            <dd>{{ r.jobs.opened }}</dd>
+          </div>
+          <div>
+            <dt>Submitted · closed</dt>
+            <dd>{{ r.jobs.submitted }} · {{ r.jobs.closed }}</dd>
+          </div>
+          <div>
+            <dt>Average time on site</dt>
+            <dd>{{ fmtHours(r.jobs.averageHoursOnSite) }}</dd>
           </div>
           <div>
             <dt>Average labour per job</dt>
